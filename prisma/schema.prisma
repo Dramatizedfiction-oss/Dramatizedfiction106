@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String?
+  email         String?  @unique
+  image         String?
+  role          Role     @default(READER)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  series        Series[]
+  episodes      Episode[]
+  stats         UserStats?
+}
+
+model Series {
+  id            String    @id @default(cuid())
+  title         String
+  description   String
+  genre         String
+  tags          String[]
+  coverImage    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  author        User      @relation(fields: [authorId], references: [id])
+  authorId      String
+
+  episodes      Episode[]
+  reads         Int       @default(0)
+  followers     Int       @default(0)
+}
+
+model Episode {
+  id            String    @id @default(cuid())
+  title         String
+  episodeNumber Int
+  body          String
+  teaser        String?
+  readTime      Int
+  readerCount   Int       @default(0)
+  locked        Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  series        Series    @relation(fields: [seriesId], references: [id])
+  seriesId      String
+
+  author        User      @relation(fields: [authorId], references: [id])
+  authorId      String
+}
+
+model UserStats {
+  id            String   @id @default(cuid())
+  totalReads    Int      @default(0)
+  totalEpisodes Int      @default(0)
+  totalSeries   Int      @default(0)
+
+  user          User     @relation(fields: [userId], references: [id])
+  userId        String   @unique
+}
+
+model Settings {
+  id            String   @id @default(cuid())
+  siteName      String   @default("Dramatized Fiction")
+  enableAds     Boolean  @default(false)
+  enablePayments Boolean @default(false)
+  updatedAt     DateTime @updatedAt
+}
+
+enum Role {
+  READER
+  AUTHOR
+  ADMIN
+  CEO
+}
+model AuthorPayout {
+  id            String   @id @default(cuid())
+  author        User     @relation(fields: [authorId], references: [id])
+  authorId      String
+  amount        Int
+  status        PayoutStatus @default(PENDING)
+  createdAt     DateTime @default(now())
+  processedAt   DateTime?
+}
+
+model Subscription {
+  id            String   @id @default(cuid())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        String
+  stripeSubId   String   @unique
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  canceledAt    DateTime?
+}
+
+model RevenueEvent {
+  id            String   @id @default(cuid())
+  type          RevenueType
+  amount        Int
+  userId        String?
+  seriesId      String?
+  episodeId     String?
+  createdAt     DateTime @default(now())
+}
+
+enum PayoutStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum RevenueType {
+  SUBSCRIPTION
+  AD_WATCH
+  EPISODE_READ
+}
+import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+
+export async function GET(req: Request) {
+  const session = await auth();
+
+  // If not logged in → must watch ad
+  if (!session) {
+    return Response.json({ mustWatchAd: true });
+  }
+
+  // If user is a subscriber → skip ads
+  const sub = await prisma.subscription.findFirst({
+    where: { userId: session.user.id, active: true }
+  });
+
+  if (sub) {
+    return Response.json({ mustWatchAd: false });
+  }
+
+  // Check global settings
+  const settings = await prisma.settings.findFirst();
+  if (!settings?.enableAds) {
+    return Response.json({ mustWatchAd: false });
+  }
+
+  // Default: must watch ad
+  return Response.json({ mustWatchAd: true });
+}
+model Book {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  coverUrl    String?
+  status      String   // "WIP", "Published", "Coming Soon"
+  createdAt   DateTime @default(now())
+
+  author      User     @relation(fields: [authorId], references: [id])
+  authorId    String
+}
+npx prisma db push
+

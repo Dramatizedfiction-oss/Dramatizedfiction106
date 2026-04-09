@@ -1,0 +1,194 @@
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background-color: #020617;
+  color: #e2e8f0;
+}
+.bookshelf-outer {
+  width: 320px;
+  height: 220px;
+  padding: 10px;
+  border-radius: 18px;
+  background: radial-gradient(circle at top left, #3b2a1a, #1a120b);
+  box-shadow:
+    0 0 0 3px #2b1b10,
+    0 18px 35px rgba(0, 0, 0, 0.7),
+    inset 0 0 12px rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bookshelf-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  background: #f8fafc;
+  box-shadow:
+    inset 0 0 0 3px #3b2a1a,
+    inset 0 10px 18px rgba(0, 0, 0, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Oak-colored liquid that fills from bottom up */
+.bookshelf-liquid {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(
+    180deg,
+    #c28a4a 0%,
+    #8b5a2b 40%,
+    #5a3717 100%
+  );
+  box-shadow:
+    inset 0 8px 14px rgba(255, 255, 255, 0.25),
+    inset 0 -8px 18px rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: bookshelf-slosh 4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+/* Sheen / fake 3D highlight */
+.bookshelf-liquid-sheen {
+  width: 40%;
+  height: 80%;
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.4), transparent);
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  animation: bookshelf-sheen 3s ease-in-out infinite;
+}
+
+/* Subtle 3D sloshing motion */
+@keyframes bookshelf-slosh {
+  0% {
+    transform: skewX(0deg) translateX(0);
+  }
+  25% {
+    transform: skewX(-2deg) translateX(-4px);
+  }
+  50% {
+    transform: skewX(2deg) translateX(4px);
+  }
+  75% {
+    transform: skewX(-1deg) translateX(-2px);
+  }
+  100% {
+    transform: skewX(0deg) translateX(0);
+  }
+}
+
+/* Light moving across the liquid */
+@keyframes bookshelf-sheen {
+  0% {
+    transform: translateX(-40%);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateX(40%);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(-40%);
+    opacity: 0.3;
+  }
+}
+/* OUTER DARK OAK FRAME */
+.oak-bookshelf-frame {
+  width: 340px;
+  height: 240px;
+  padding: 12px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #2d1b0f, #1a0f08);
+  box-shadow:
+    0 0 0 4px #3b2415,
+    inset 0 0 18px rgba(0, 0, 0, 0.7),
+    0 20px 40px rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* WHITE SHELF INTERIOR */
+.oak-bookshelf-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  background: #f8fafc;
+  box-shadow:
+    inset 0 0 0 4px #3b2415,
+    inset 0 12px 20px rgba(0, 0, 0, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+/* OAK LIQUID FILL */
+.oak-liquid {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(
+    180deg,
+    #d19a5a 0%,
+    #a06a32 40%,
+    #6a3f1a 100%
+  );
+  box-shadow:
+    inset 0 10px 18px rgba(255, 255, 255, 0.25),
+    inset 0 -10px 20px rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: oak-liquid-slosh 4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+/* LIGHT SHEEN FOR 3D EFFECT */
+.oak-liquid-sheen {
+  width: 40%;
+  height: 80%;
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.4), transparent);
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  animation: oak-sheen-move 3s ease-in-out infinite;
+}
+
+/* SLOSHING MOTION */
+@keyframes oak-liquid-slosh {
+  0% { transform: skewX(0deg) translateX(0); }
+  25% { transform: skewX(-2deg) translateX(-4px); }
+  50% { transform: skewX(2deg) translateX(4px); }
+  75% { transform: skewX(-1deg) translateX(-2px); }
+  100% { transform: skewX(0deg) translateX(0); }
+}
+
+/* MOVING SHEEN */
+@keyframes oak-sheen-move {
+  0% { transform: translateX(-40%); opacity: 0.3; }
+  50% { transform: translateX(40%); opacity: 0.6; }
+  100% { transform: translateX(-40%); opacity: 0.3; }
+}
