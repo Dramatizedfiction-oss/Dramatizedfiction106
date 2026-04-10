@@ -7,6 +7,6 @@ export async function POST(req: Request) {
 
   const data = await req.json();
 
-  // TODO: handle book creation logic
   return NextResponse.json({ success: true, data });
 }
+
