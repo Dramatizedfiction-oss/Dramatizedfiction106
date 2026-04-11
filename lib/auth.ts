@@ -1,7 +1,8 @@
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "./prisma";
+// auth.ts
 import NextAuth from "next-auth";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import EmailProvider from "next-auth/providers/email";
+import { prisma } from "@/lib/prisma"; // adjust if your prisma file is elsewhere
 
 export const {
   handlers: { GET, POST },
@@ -11,6 +12,8 @@ export const {
 } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
+  trustHost: true, // REQUIRED for Vercel
+  secret: process.env.AUTH_SECRET, // REQUIRED for Vercel
   providers: [
     EmailProvider({
       server: process.env.EMAIL_SERVER,
@@ -32,3 +35,5 @@ export const {
     }
   }
 });
+
+export default auth;
