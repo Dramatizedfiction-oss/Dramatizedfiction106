@@ -7,7 +7,7 @@ export const metadata = {
 };
 
 import "./globals.css";
-import { auth } from "@/lib/auth";
+import { auth } from "@/auth";
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 
