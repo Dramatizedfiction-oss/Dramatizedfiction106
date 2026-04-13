@@ -6,6 +6,11 @@ export default async function WriterStatsPage() {
   const session = await auth();
   requireRole(session, ["AUTHOR", "ADMIN", "CEO"]);
 
+  // NextAuth v5 safety check
+  if (!session?.user?.id) {
+    return <p className="p-8 text-red-400">You must be logged in.</p>;
+  }
+
   const stats = await prisma.userStats.findUnique({
     where: { userId: session.user.id }
   });
@@ -39,3 +44,4 @@ export default async function WriterStatsPage() {
     </main>
   );
 }
+
