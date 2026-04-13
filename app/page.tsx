@@ -6,12 +6,13 @@ export default async function HomePage() {
 
   let continueEpisode = null;
 
-  if (session) {
-    continueEpisode = await prisma.episode.findFirst({
-      where: { readers: { some: { id: session.user.id } } },
-      orderBy: { updatedAt: "desc" }
-    });
-  }
+ if (session?.user?.id) {
+  continueEpisode = await prisma.episode.findFirst({
+    where: { readers: { some: { id: session.user.id } } },
+    orderBy: { updatedAt: "desc" }
+  });
+}
+
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center text-center p-8 space-y-6">
