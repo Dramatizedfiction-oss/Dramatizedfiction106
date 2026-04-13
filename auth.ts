@@ -1,5 +1,5 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "./prisma"; // adjust if needed
+import { prisma } from "@/lib/prisma";
 import NextAuth from "next-auth";
 import EmailProvider from "next-auth/providers/email";
 
