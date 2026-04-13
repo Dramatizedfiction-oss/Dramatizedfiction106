@@ -1,7 +1,7 @@
 import { getNextEpisode } from "@/lib/nextEpisode";
 import { prisma } from "@/lib/prisma";
 import { canAccessEpisode } from "@/lib/ads";
-import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export default async function EpisodeReaderPage({ params }) {
   // Fetch the episode + series
