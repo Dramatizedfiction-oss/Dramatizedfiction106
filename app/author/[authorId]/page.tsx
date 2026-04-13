@@ -22,38 +22,55 @@ export default async function AuthorProfilePage({
     <main className="p-8 space-y-6">
       <h1 className="text-3xl font-bold">{author.name}</h1>
 
+      {/* SERIES */}
       <section>
         <h2 className="text-xl font-semibold mb-2">Series</h2>
+
         {author.series.length === 0 && (
           <p className="text-slate-400">No series yet.</p>
         )}
+
         <ul className="space-y-2">
-          {author.series.map((s) => (
-            <li key={s.id}>
-              <Link href={`/series/${s.id}`} className="text-blue-400">
-                {s.title}
-              </Link>
-            </li>
-          ))}
+          {author.series.map(
+            (s: { id: string; title: string }) => (
+              <li key={s.id}>
+                <Link
+                  href={`/series/${s.id}`}
+                  className="text-blue-400"
+                >
+                  {s.title}
+                </Link>
+              </li>
+            )
+          )}
         </ul>
       </section>
 
+      {/* EPISODES */}
       <section>
         <h2 className="text-xl font-semibold mb-2">Episodes</h2>
+
         {author.episodes.length === 0 && (
           <p className="text-slate-400">No episodes yet.</p>
         )}
+
         <ul className="space-y-2">
-          {author.episodes.map((e) => (
-            <li key={e.id}>
-              <Link href={`/episode/${e.id}`} className="text-blue-400">
-                {e.title}
-              </Link>
-            </li>
-          ))}
+          {author.episodes.map(
+            (e: { id: string; title: string }) => (
+              <li key={e.id}>
+                <Link
+                  href={`/episode/${e.id}`}
+                  className="text-blue-400"
+                >
+                  {e.title}
+                </Link>
+              </li>
+            )
+          )}
         </ul>
       </section>
     </main>
   );
 }
+
 
