@@ -1,5 +1,5 @@
 import { getNextEpisode } from "@/lib/nextEpisode";
-import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
 import { canAccessEpisode } from "@/lib/ads";
 import { prisma } from "@/lib/prisma";
 
