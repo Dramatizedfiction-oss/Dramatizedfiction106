@@ -7,6 +7,11 @@ export default async function WriterEpisodesPage() {
   const session = await auth();
   requireRole(session, ["AUTHOR", "ADMIN", "CEO"]);
 
+  // NextAuth v5 safety check
+  if (!session?.user?.id) {
+    return <p className="p-8 text-red-400">You must be logged in.</p>;
+  }
+
   const episodes = await prisma.episode.findMany({
     where: { authorId: session.user.id },
     orderBy: { createdAt: "desc" }
