@@ -1,33 +1,24 @@
-import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { requireRole } from "@/lib/utils";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   const session = await auth();
-  requireRole(session, ["AUTHOR", "ADMIN", "CEO"]);
+  if (!session) {
+    return Response.redirect("/login");
+  }
 
-  const body = await req.json();
-  const { title, episodeNumber, bodyText, teaser, readTime, seriesId } = body;
+  const { title, content, readTime, seriesId } = await req.json();
 
-  const episode = await prisma.episode.create({
+  await prisma.episode.create({
     data: {
       title,
-      episodeNumber,
-      body: bodyText,
-      teaser,
+      content,
       readTime,
       seriesId,
       authorId: session.user.id
     }
   });
 
-  return Response.json(episode);
+  return Response.json({ success: true });
 }
 
-export async function GET() {
-  const episodes = await prisma.episode.findMany({
-    orderBy: { createdAt: "desc" }
-  });
-
-  return Response.json(episodes);
-}
