@@ -1,5 +1,5 @@
 import { stripe } from "@/lib/stripe";
-import { auth } from "@/lib/auth";
+import { auth } from "@/auth";
 import { requireRole } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 
