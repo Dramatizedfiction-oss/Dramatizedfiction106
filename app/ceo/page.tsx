@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/auth";
 import { requireRole } from "@/lib/utils";
 
 export default async function CEODashboard() {
