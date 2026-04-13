@@ -3,7 +3,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session) {
+
+  // NextAuth v5 safety check
+  if (!session?.user?.id) {
     return Response.redirect("/login");
   }
 
@@ -21,4 +23,5 @@ export async function POST(req: Request) {
 
   return Response.json({ success: true });
 }
+
 
