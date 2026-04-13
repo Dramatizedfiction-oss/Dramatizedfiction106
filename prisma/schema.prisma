@@ -82,6 +82,7 @@ enum Role {
   ADMIN
   CEO
 }
+
 model AuthorPayout {
   id            String   @id @default(cuid())
   author        User     @relation(fields: [authorId], references: [id])
@@ -123,14 +124,15 @@ enum RevenueType {
   AD_WATCH
   EPISODE_READ
 }
+
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 
 export async function GET(req: Request) {
   const session = await auth();
 
-  // If not logged in → must watch ad
-  if (!session) {
+  // If not logged in OR missing user.id → must watch ad
+  if (!session?.user?.id) {
     return Response.json({ mustWatchAd: true });
   }
 
@@ -152,6 +154,7 @@ export async function GET(req: Request) {
   // Default: must watch ad
   return Response.json({ mustWatchAd: true });
 }
+
 model Book {
   id          String   @id @default(cuid())
   title       String
@@ -163,5 +166,6 @@ model Book {
   author      User     @relation(fields: [authorId], references: [id])
   authorId    String
 }
+
 npx prisma db push
 
