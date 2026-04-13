@@ -7,6 +7,11 @@ export async function POST() {
   const session = await auth();
   requireRole(session, ["AUTHOR", "ADMIN", "CEO"]);
 
+  // NextAuth v5 safety check
+  if (!session?.user?.id) {
+    return Response.redirect("/login");
+  }
+
   // Create Stripe Connect account
   const account = await stripe.accounts.create({
     type: "express",
