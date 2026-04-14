@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import EpisodeCard from "@/components/EpisodeCard";
+import type { Episode } from "@prisma/client";
 
 export default async function SeriesPage({
   params,
@@ -42,7 +43,7 @@ export default async function SeriesPage({
       </div>
 
       <div className="space-y-4">
-        {series.episodes.map((ep) => (
+        {series.episodes.map((ep: Episode) => (
           <EpisodeCard key={ep.id} episode={ep} />
         ))}
       </div>
