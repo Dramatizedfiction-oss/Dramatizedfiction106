@@ -7,6 +7,11 @@ export default async function WriterSeriesPage() {
   const session = await auth();
   requireRole(session, ["AUTHOR", "ADMIN", "CEO"]);
 
+  // Strict-mode fix: TS requires a null check even after requireRole()
+  if (!session?.user?.id) {
+    return <div className="p-8">Not authorized.</div>;
+  }
+
   const series = await prisma.series.findMany({
     where: { authorId: session.user.id },
     orderBy: { createdAt: "desc" }
@@ -36,3 +41,4 @@ export default async function WriterSeriesPage() {
     </main>
   );
 }
+
