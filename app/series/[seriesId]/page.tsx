@@ -1,7 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import EpisodeCard from "@/components/EpisodeCard";
 
-export default async function SeriesPage({ params }) {
+export default async function SeriesPage({
+  params,
+}: {
+  params: { seriesId: string };
+}) {
   const series = await prisma.series.findUnique({
     where: { id: params.seriesId },
     include: { episodes: { orderBy: { episodeNumber: "asc" } } }
