@@ -15,16 +15,25 @@ export default async function CEOUsersPage() {
       <h1 className="text-3xl font-bold">User Management</h1>
 
       <div className="space-y-4">
-        {users.map((u) => (
-          <div
-            key={u.id}
-            className="bg-slate-900 p-4 rounded-lg border border-slate-800"
-          >
-            <p className="font-semibold">{u.name || "Unnamed User"}</p>
-            <p className="text-slate-400 text-sm">{u.email}</p>
-            <p className="text-slate-500 text-xs mt-1">Role: {u.role}</p>
-          </div>
-        ))}
+        {users.map(
+          (
+            u: {
+              id: string;
+              name: string | null;
+              email: string | null;
+              role: string;
+            }
+          ) => (
+            <div
+              key={u.id}
+              className="bg-slate-900 p-4 rounded-lg border border-slate-800"
+            >
+              <p className="font-semibold">{u.name || "Unnamed User"}</p>
+              <p className="text-slate-400 text-sm">{u.email}</p>
+              <p className="text-slate-500 text-xs mt-1">Role: {u.role}</p>
+            </div>
+          )
+        )}
       </div>
     </main>
   );
