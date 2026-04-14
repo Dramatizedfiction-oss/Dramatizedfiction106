@@ -3,6 +3,19 @@ import { auth } from "@/auth";
 import { requireRole } from "@/lib/utils";
 import EpisodeCard from "@/components/EpisodeCard";
 
+// TEMP FIX: avoid implicit any while Prisma client updates
+type EpisodeLite = {
+  id: string;
+  title: string;
+  episodeNumber: number;
+  teaser?: string | null;
+  readTime: number;
+  readerCount: number;
+  locked: boolean;
+  coverImage?: string | null;
+};
+
+
 export default async function WriterEpisodesPage() {
   const session = await auth();
   requireRole(session, ["AUTHOR", "ADMIN", "CEO"]);
@@ -34,9 +47,9 @@ export default async function WriterEpisodesPage() {
       )}
 
       <div className="space-y-4">
-        {episodes.map((ep) => (
-          <EpisodeCard key={ep.id} episode={ep} />
-        ))}
+        {episodes.map((ep: EpisodeLite) => (
+  <EpisodeCard key={ep.id} episode={ep} />
+))}
       </div>
     </main>
   );
