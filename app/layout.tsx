@@ -12,10 +12,9 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className="flex">
-        <Sidebar session={session} />
+        <Sidebar user={session?.user || null} />
         <div className="flex-1">{children}</div>
       </body>
     </html>
   );
 }
-
