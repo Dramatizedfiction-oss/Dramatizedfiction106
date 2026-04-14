@@ -3,7 +3,11 @@ import { auth } from "@/auth";
 import { canAccessEpisode } from "@/lib/ads";
 import { prisma } from "@/lib/prisma";
 
-export default async function EpisodeReaderPage({ params }) {
+export default async function EpisodeReaderPage({
+  params,
+}: {
+  params: { episodeId: string };
+}) {
   // Fetch the episode + series
   const episode = await prisma.episode.findUnique({
     where: { id: params.episodeId },
