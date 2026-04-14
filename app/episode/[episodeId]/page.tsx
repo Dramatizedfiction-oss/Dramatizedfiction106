@@ -50,6 +50,9 @@ export default async function EpisodeReaderPage({
     data: { readerCount: { increment: 1 } }
   });
 
+  // Fetch next episode BEFORE returning JSX
+  const next = await getNextEpisode(episode.seriesId, episode.episodeNumber);
+
   // Render the episode normally
   return (
     <main className="p-8 max-w-3xl mx-auto space-y-8">
@@ -66,28 +69,21 @@ export default async function EpisodeReaderPage({
       <article className="prose prose-invert max-w-none">
         {episode.body}
       </article>
-// Fetch next episode
-const next = await getNextEpisode(episode.seriesId, episode.episodeNumber);
 
-return (
-  <main className="p-8 max-w-3xl mx-auto space-y-8">
-    {/* existing episode content */}
+      {next && (
+        <div className="mt-12 p-6 bg-slate-900 border border-slate-800 rounded-lg">
+          <h2 className="text-xl font-bold mb-2">Up Next</h2>
+          <p className="text-slate-400 mb-4">{next.title}</p>
 
-    {next && (
-      <div className="mt-12 p-6 bg-slate-900 border border-slate-800 rounded-lg">
-        <h2 className="text-xl font-bold mb-2">Up Next</h2>
-        <p className="text-slate-400 mb-4">{next.title}</p>
+          <a
+            href={`/episode/${next.id}`}
+            className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded font-semibold inline-block"
+          >
+            Continue to Episode {next.episodeNumber}
+          </a>
+        </div>
+      )}
 
-        <a
-          href={`/episode/${next.id}`}
-          className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded font-semibold inline-block"
-        >
-          Continue to Episode {next.episodeNumber}
-        </a>
-      </div>
-    )}
-  </main>
-);
       <div className="pt-10">
         <a
           href={`/series/${episode.seriesId}`}
@@ -99,3 +95,4 @@ return (
     </main>
   );
 }
+
