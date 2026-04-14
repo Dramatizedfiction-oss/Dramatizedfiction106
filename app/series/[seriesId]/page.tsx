@@ -1,6 +1,17 @@
 import { prisma } from "@/lib/prisma";
 import EpisodeCard from "@/components/EpisodeCard";
-import type { Episode } from "@prisma/client";
+
+// TEMP FIX: Vercel Prisma client is outdated and missing Episode type
+type EpisodeLite = {
+  id: string;
+  title: string;
+  episodeNumber: number;
+  teaser?: string | null;
+  readTime: number;
+  readerCount: number;
+  locked: boolean;
+  coverImage?: string | null;
+};
 
 export default async function SeriesPage({
   params,
@@ -43,10 +54,11 @@ export default async function SeriesPage({
       </div>
 
       <div className="space-y-4">
-        {series.episodes.map((ep: Episode) => (
+        {series.episodes.map((ep: EpisodeLite) => (
           <EpisodeCard key={ep.id} episode={ep} />
         ))}
       </div>
     </main>
   );
 }
+
