@@ -1,6 +1,15 @@
 import Link from "next/link";
 
-export default function SeriesCard({ series }) {
+type SeriesCardProps = {
+  series: {
+    id: string;
+    title: string;
+    description?: string | null;
+    coverImage?: string | null;
+  };
+};
+
+export default function SeriesCard({ series }: SeriesCardProps) {
   return (
     <Link
       href={`/series/${series.id}`}
@@ -21,7 +30,7 @@ export default function SeriesCard({ series }) {
       <div className="p-4 space-y-1">
         <h2 className="text-lg font-semibold">{series.title}</h2>
         <p className="text-sm text-slate-400 line-clamp-2">
-          {series.description}
+          {series.description || "No description yet."}
         </p>
       </div>
     </Link>

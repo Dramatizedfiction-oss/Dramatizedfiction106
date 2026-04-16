@@ -6,9 +6,8 @@ export async function POST(req: Request) {
   const session = await auth();
   requireRole(session, ["AUTHOR", "ADMIN", "CEO"]);
 
-  // Ensure session.user.id exists (NextAuth v5 requirement)
   if (!session?.user?.id) {
-    return Response.redirect("/login");
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const body = await req.json();

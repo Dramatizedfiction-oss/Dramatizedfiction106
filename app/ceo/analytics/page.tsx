@@ -39,11 +39,9 @@ export default async function CEOAnalyticsPage() {
         <h2 className="text-2xl font-semibold mb-4">Trending Series</h2>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {trending.map(
-            (s: { id: string; title: string; coverImage?: string }) => (
-              <SeriesCard key={s.id} series={s} />
-            )
-          )}
+          {trending.map((s) => (
+            <SeriesCard key={s.id} series={s} />
+          ))}
         </div>
       </section>
     </main>

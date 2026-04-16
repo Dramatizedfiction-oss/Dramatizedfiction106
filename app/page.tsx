@@ -6,12 +6,15 @@ export default async function HomePage() {
 
   let continueEpisode = null;
 
- if (session?.user?.id) {
-  continueEpisode = await prisma.episode.findFirst({
-    where: { readers: { some: { id: session.user.id } } },
-    orderBy: { updatedAt: "desc" }
-  });
-}
+  if (session?.user?.id) {
+    const latestRead = await prisma.readEvent.findFirst({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      include: { episode: true }
+    });
+
+    continueEpisode = latestRead?.episode ?? null;
+  }
 
 
   return (

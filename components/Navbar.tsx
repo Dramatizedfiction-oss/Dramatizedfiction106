@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 
-export default function Navbar({ user }) {
+type NavbarUser = {
+  role: string;
+} | null;
+
+export default function Navbar({ user }: { user: NavbarUser }) {
   const [open, setOpen] = useState(false);
 
   return (

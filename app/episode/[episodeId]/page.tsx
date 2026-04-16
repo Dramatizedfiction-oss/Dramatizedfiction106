@@ -50,6 +50,28 @@ export default async function EpisodeReaderPage({
     data: { readerCount: { increment: 1 } }
   });
 
+  await prisma.series.update({
+    where: { id: episode.seriesId },
+    data: { reads: { increment: 1 } }
+  });
+
+  await prisma.revenueEvent.create({
+    data: {
+      type: "EPISODE_READ",
+      amount: 1,
+      userId: session?.user?.id ?? null,
+      seriesId: episode.seriesId,
+      episodeId: episode.id
+    }
+  });
+
+  await prisma.readEvent.create({
+    data: {
+      userId: session?.user?.id ?? null,
+      episodeId: episode.id
+    }
+  });
+
   // Fetch next episode BEFORE returning JSX
   const next = await getNextEpisode(episode.seriesId, episode.episodeNumber);
 

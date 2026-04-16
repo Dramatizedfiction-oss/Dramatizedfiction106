@@ -8,54 +8,101 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  name          String?
-  email         String?  @unique
-  image         String?
-  role          Role     @default(READER)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String         @id @default(cuid())
+  name            String?
+  email           String?        @unique
+  emailVerified   DateTime?
+  image           String?
+  role            Role           @default(READER)
+  stripeAccountId String?        @unique
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
-  series        Series[]
-  episodes      Episode[]
-  stats         UserStats?
+  accounts        Account[]
+  sessions        Session[]
+  series          Series[]
+  episodes        Episode[]
+  books           Book[]
+  stats           UserStats?
+  payouts         AuthorPayout[]
+  subscriptions   Subscription[]
+  adImpressions   AdImpression[]
+  readEvents      ReadEvent[]
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?  @db.Text
+  access_token      String?  @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?  @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([sessionToken])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@id([identifier, token])
 }
 
 model Series {
-  id            String    @id @default(cuid())
-  title         String
-  description   String
-  genre         String
-  tags          String[]
-  coverImage    String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  genre       String
+  tags        String[]
+  coverImage  String?
+  reads       Int       @default(0)
+  followers   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  author        User      @relation(fields: [authorId], references: [id])
-  authorId      String
-
-  episodes      Episode[]
-  reads         Int       @default(0)
-  followers     Int       @default(0)
+  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+  episodes Episode[]
 }
 
 model Episode {
-  id            String    @id @default(cuid())
+  id            String         @id @default(cuid())
   title         String
   episodeNumber Int
   body          String
   teaser        String?
   readTime      Int
-  readerCount   Int       @default(0)
-  locked        Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  readerCount   Int            @default(0)
+  locked        Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
-  series        Series    @relation(fields: [seriesId], references: [id])
+  series        Series         @relation(fields: [seriesId], references: [id], onDelete: Cascade)
   seriesId      String
-
-  author        User      @relation(fields: [authorId], references: [id])
+  author        User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId      String
+  adImpressions AdImpression[]
+  readEvents    ReadEvent[]
+
+  @@unique([seriesId, episodeNumber])
 }
 
 model UserStats {
@@ -64,16 +111,85 @@ model UserStats {
   totalEpisodes Int      @default(0)
   totalSeries   Int      @default(0)
 
-  user          User     @relation(fields: [userId], references: [id])
-  userId        String   @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
 }
 
 model Settings {
-  id            String   @id @default(cuid())
-  siteName      String   @default("Dramatized Fiction")
-  enableAds     Boolean  @default(false)
-  enablePayments Boolean @default(false)
-  updatedAt     DateTime @updatedAt
+  id             String   @id @default(cuid())
+  siteName       String   @default("Dramatized Fiction")
+  enableAds      Boolean  @default(false)
+  enablePayments Boolean  @default(false)
+  updatedAt      DateTime @updatedAt
+}
+
+model AuthorPayout {
+  id          String       @id @default(cuid())
+  amount      Int
+  status      PayoutStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  processedAt DateTime?
+
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+}
+
+model Subscription {
+  id          String    @id @default(cuid())
+  stripeSubId String    @unique
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  canceledAt  DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+}
+
+model RevenueEvent {
+  id        String      @id @default(cuid())
+  type      RevenueType
+  amount    Int
+  userId    String?
+  seriesId  String?
+  episodeId String?
+  createdAt DateTime    @default(now())
+}
+
+model AdImpression {
+  id        String   @id @default(cuid())
+  userId    String?
+  episodeId String
+  createdAt DateTime @default(now())
+
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  episode Episode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+
+  @@index([userId, episodeId])
+}
+
+model ReadEvent {
+  id        String   @id @default(cuid())
+  userId    String?
+  episodeId String
+  createdAt DateTime @default(now())
+
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  episode Episode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([episodeId, createdAt])
+}
+
+model Book {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  coverUrl    String?
+  status      String
+  createdAt   DateTime @default(now())
+
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
 }
 
 enum Role {
@@ -81,36 +197,6 @@ enum Role {
   AUTHOR
   ADMIN
   CEO
-}
-
-model AuthorPayout {
-  id            String   @id @default(cuid())
-  author        User     @relation(fields: [authorId], references: [id])
-  authorId      String
-  amount        Int
-  status        PayoutStatus @default(PENDING)
-  createdAt     DateTime @default(now())
-  processedAt   DateTime?
-}
-
-model Subscription {
-  id            String   @id @default(cuid())
-  user          User     @relation(fields: [userId], references: [id])
-  userId        String
-  stripeSubId   String   @unique
-  active        Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  canceledAt    DateTime?
-}
-
-model RevenueEvent {
-  id            String   @id @default(cuid())
-  type          RevenueType
-  amount        Int
-  userId        String?
-  seriesId      String?
-  episodeId     String?
-  createdAt     DateTime @default(now())
 }
 
 enum PayoutStatus {
@@ -124,48 +210,3 @@ enum RevenueType {
   AD_WATCH
   EPISODE_READ
 }
-
-import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
-
-export async function GET(req: Request) {
-  const session = await auth();
-
-  // If not logged in OR missing user.id → must watch ad
-  if (!session?.user?.id) {
-    return Response.json({ mustWatchAd: true });
-  }
-
-  // If user is a subscriber → skip ads
-  const sub = await prisma.subscription.findFirst({
-    where: { userId: session.user.id, active: true }
-  });
-
-  if (sub) {
-    return Response.json({ mustWatchAd: false });
-  }
-
-  // Check global settings
-  const settings = await prisma.settings.findFirst();
-  if (!settings?.enableAds) {
-    return Response.json({ mustWatchAd: false });
-  }
-
-  // Default: must watch ad
-  return Response.json({ mustWatchAd: true });
-}
-
-model Book {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  coverUrl    String?
-  status      String   // "WIP", "Published", "Coming Soon"
-  createdAt   DateTime @default(now())
-
-  author      User     @relation(fields: [authorId], references: [id])
-  authorId    String
-}
-
-npx prisma db push
-

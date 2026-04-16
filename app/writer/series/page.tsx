@@ -7,8 +7,8 @@ import SeriesCard from "@/components/SeriesCard";
 type Series = {
   id: string;
   title: string;
-  description?: string;
-  coverImage?: string;
+  description: string;
+  coverImage?: string | null;
   authorId: string;
   createdAt: Date;
 };

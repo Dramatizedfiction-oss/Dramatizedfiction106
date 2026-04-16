@@ -1,16 +1,19 @@
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { auth } from "@/auth";
 import { requireRole } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
+
+export const runtime = "nodejs";
 
 export async function POST() {
   const session = await auth();
   requireRole(session, ["AUTHOR", "ADMIN", "CEO"]);
 
-  // NextAuth v5 safety check
   if (!session?.user?.id) {
-    return Response.redirect("/login");
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const stripe = getStripe();
 
   // Create Stripe Connect account
   const account = await stripe.accounts.create({

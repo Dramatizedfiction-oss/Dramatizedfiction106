@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import BookshelfMeter from "@/components/BookshelfMeter";
 
 const TARGET_READS = 5000;
+export const dynamic = "force-dynamic";
 
 export default async function GoalPage() {
   const now = new Date();

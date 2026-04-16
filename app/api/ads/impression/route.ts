@@ -6,10 +6,14 @@ export async function POST(req: Request) {
   const session = await auth();
   const { episodeId } = await req.json();
 
+  if (!episodeId) {
+    return Response.json({ error: "Missing episodeId" }, { status: 400 });
+  }
+
   // Log ad impression
   await prisma.adImpression.create({
     data: {
-      userId: session?.user?.id,
+      userId: session?.user?.id ?? null,
       episodeId
     }
   });
@@ -19,7 +23,7 @@ export async function POST(req: Request) {
     data: {
       type: "AD_WATCH",
       amount: 1, // placeholder, CEO can adjust later
-      userId: session?.user?.id,
+      userId: session?.user?.id ?? null,
       episodeId
     }
   });

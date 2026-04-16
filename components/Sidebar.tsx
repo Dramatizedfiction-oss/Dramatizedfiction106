@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function Sidebar({ user }) {
+type SidebarUser = {
+  role: string;
+} | null;
+
+export default function Sidebar({ user }: { user: SidebarUser }) {
   const path = usePathname();
 
   if (!user) return null;
@@ -71,7 +75,7 @@ export default function Sidebar({ user }) {
   );
 }
 
-function link(path, href) {
+function link(path: string, href: string) {
   return `block px-3 py-2 rounded ${
     path.startsWith(href)
       ? "bg-blue-600 text-white"

@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import Carousel from "@/components/Carousel";
 
+export const dynamic = "force-dynamic";
+
 export default async function ExplorePage() {
-  // Trending series (most views)
+  // Trending series
   const trending = await prisma.series.findMany({
-    orderBy: { views: "desc" },
+    orderBy: { reads: "desc" },
     take: 10
   });
 
@@ -14,9 +16,9 @@ export default async function ExplorePage() {
     take: 10
   });
 
-  // Top rated (if you add ratings later)
+  // Most followed
   const topRated = await prisma.series.findMany({
-    orderBy: { rating: "desc" },
+    orderBy: { followers: "desc" },
     take: 10
   });
 

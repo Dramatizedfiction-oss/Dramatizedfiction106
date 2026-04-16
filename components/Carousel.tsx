@@ -3,10 +3,21 @@
 import Link from "next/link";
 import { useRef } from "react";
 
-export default function Carousel({ title, items }) {
-  const scrollRef = useRef(null);
+type CarouselItem = {
+  id: string;
+  title: string;
+  description?: string | null;
+};
 
-  const scroll = (direction) => {
+type CarouselProps = {
+  title: string;
+  items: CarouselItem[];
+};
+
+export default function Carousel({ title, items }: CarouselProps) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  const scroll = (direction: "left" | "right") => {
     if (!scrollRef.current) return;
     const amount = direction === "left" ? -300 : 300;
     scrollRef.current.scrollBy({ left: amount, behavior: "smooth" });
@@ -37,7 +48,9 @@ export default function Carousel({ title, items }) {
               className="min-w-[200px] bg-slate-900 border border-slate-800 rounded-lg p-4 hover:bg-slate-800 transition"
             >
               <h3 className="font-semibold">{item.title}</h3>
-              <p className="text-slate-400 text-sm">{item.description}</p>
+              <p className="text-slate-400 text-sm">
+                {item.description || "No description yet."}
+              </p>
             </Link>
           ))}
         </div>

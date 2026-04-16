@@ -1,6 +1,17 @@
 import Link from "next/link";
 
-export default function EpisodeCard({ episode }) {
+type EpisodeCardProps = {
+  episode: {
+    id: string;
+    title: string;
+    episodeNumber: number;
+    teaser?: string | null;
+    readTime: number;
+    readerCount: number;
+  };
+};
+
+export default function EpisodeCard({ episode }: EpisodeCardProps) {
   return (
     <Link
       href={`/episode/${episode.id}`}
