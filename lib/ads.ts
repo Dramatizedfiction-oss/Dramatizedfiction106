@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
+import { isPhaseThreeActive } from "@/lib/phases";
 
 export async function canAccessEpisode(userId: string | null, episodeId: string) {
-  const settings = await prisma.settings.findFirst();
+  const adsPhaseActive = await isPhaseThreeActive();
 
-  // Ads disabled globally
-  if (!settings?.enableAds) return true;
+  if (!adsPhaseActive) return true;
 
   // Subscribers skip ads
   if (userId) {

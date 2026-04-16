@@ -65,9 +65,6 @@ export default function Sidebar({ user }: { user: SidebarUser }) {
             <Link href="/ceo/analytics" className={link(path, "/ceo/analytics")}>
               Analytics
             </Link>
-            <Link href="/ceo/ads" className={link(path, "/ceo/ads")}>
-              Ads
-            </Link>
           </nav>
         </div>
       )}

@@ -116,11 +116,13 @@ model UserStats {
 }
 
 model Settings {
-  id             String   @id @default(cuid())
-  siteName       String   @default("Dramatized Fiction")
-  enableAds      Boolean  @default(false)
-  enablePayments Boolean  @default(false)
-  updatedAt      DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  siteName           String   @default("Dramatized Fiction")
+  enableAds          Boolean  @default(false)
+  enablePayments     Boolean  @default(false)
+  phaseTwoUnlocked   Boolean  @default(false)
+  phaseThreeUnlocked Boolean  @default(false)
+  updatedAt          DateTime @updatedAt
 }
 
 model AuthorPayout {

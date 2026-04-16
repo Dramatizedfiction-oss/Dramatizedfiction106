@@ -1,10 +1,17 @@
 import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { isPhaseTwoActive } from "@/lib/phases";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const phaseTwoActive = await isPhaseTwoActive();
+
+  if (!phaseTwoActive) {
+    return new Response("Phase 2 is inactive", { status: 403 });
+  }
+
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
 

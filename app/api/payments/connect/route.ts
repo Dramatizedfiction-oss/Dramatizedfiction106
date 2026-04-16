@@ -2,10 +2,17 @@ import { getStripe } from "@/lib/stripe";
 import { auth } from "@/auth";
 import { requireRole } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
+import { isPhaseTwoActive } from "@/lib/phases";
 
 export const runtime = "nodejs";
 
 export async function POST() {
+  const phaseTwoActive = await isPhaseTwoActive();
+
+  if (!phaseTwoActive) {
+    return Response.json({ error: "Phase 2 is inactive" }, { status: 403 });
+  }
+
   const session = await auth();
   requireRole(session, ["AUTHOR", "ADMIN", "CEO"]);
 

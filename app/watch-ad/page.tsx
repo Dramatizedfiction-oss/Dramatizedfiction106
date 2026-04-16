@@ -1,16 +1,23 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 
 export default function WatchAdPage() {
   const params = useSearchParams();
+  const router = useRouter();
   const episodeId = params.get("episode");
 
   async function finishAd() {
-    await fetch("/api/ads/impression", {
+    const response = await fetch("/api/ads/impression", {
       method: "POST",
       body: JSON.stringify({ episodeId })
     });
+
+    if (!response.ok) {
+      router.push(episodeId ? `/episode/${episodeId}` : "/");
+      return;
+    }
 
     window.location.href = `/episode/${episodeId}`;
   }

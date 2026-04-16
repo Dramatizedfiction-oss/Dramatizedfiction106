@@ -1,8 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { isPhaseThreeActive } from "@/lib/phases";
 
 
 export async function POST(req: Request) {
+  const phaseThreeActive = await isPhaseThreeActive();
+
+  if (!phaseThreeActive) {
+    return Response.json({ error: "Phase 3 is inactive" }, { status: 403 });
+  }
+
   const session = await auth();
   const { episodeId } = await req.json();
 

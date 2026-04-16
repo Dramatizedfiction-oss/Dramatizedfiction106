@@ -6,6 +6,10 @@ export default function CEOSettingsPage() {
   const [siteName, setSiteName] = useState("");
   const [enableAds, setEnableAds] = useState(false);
   const [enablePayments, setEnablePayments] = useState(false);
+  const [phaseTwoUnlocked, setPhaseTwoUnlocked] = useState(false);
+  const [phaseThreeUnlocked, setPhaseThreeUnlocked] = useState(false);
+  const [phaseTwoCode, setPhaseTwoCode] = useState("");
+  const [phaseThreeCode, setPhaseThreeCode] = useState("");
 
   useEffect(() => {
     fetch("/api/settings")
@@ -14,6 +18,8 @@ export default function CEOSettingsPage() {
         setSiteName(data.siteName);
         setEnableAds(data.enableAds);
         setEnablePayments(data.enablePayments);
+        setPhaseTwoUnlocked(data.phaseTwoUnlocked);
+        setPhaseThreeUnlocked(data.phaseThreeUnlocked);
       });
   }, []);
 
@@ -23,10 +29,16 @@ export default function CEOSettingsPage() {
       body: JSON.stringify({
         siteName,
         enableAds,
-        enablePayments
+        enablePayments,
+        phaseTwoUnlocked,
+        phaseThreeUnlocked,
+        phaseTwoCode,
+        phaseThreeCode
       })
     });
 
+    setPhaseTwoCode("");
+    setPhaseThreeCode("");
     alert("Settings saved.");
   }
 
@@ -48,19 +60,75 @@ export default function CEOSettingsPage() {
           <input
             type="checkbox"
             checked={enableAds}
+            disabled={!phaseThreeUnlocked}
             onChange={(e) => setEnableAds(e.target.checked)}
           />
-          <span className="text-slate-300">Enable Ads</span>
+          <span className="text-slate-300">Enable Ads (Phase 3)</span>
         </label>
 
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
             checked={enablePayments}
+            disabled={!phaseTwoUnlocked}
             onChange={(e) => setEnablePayments(e.target.checked)}
           />
-          <span className="text-slate-300">Enable Payments</span>
+          <span className="text-slate-300">Enable Payments (Phase 2)</span>
         </label>
+
+        <div className="rounded-lg border border-slate-800 bg-slate-950 p-4 space-y-3">
+          <div>
+            <p className="text-slate-200 font-semibold">Phase 2 Unlock</p>
+            <p className="text-slate-400 text-sm">
+              Monetization stays inactive until unlocked with the CEO code.
+            </p>
+          </div>
+
+          <input
+            className="w-full p-2 bg-slate-900 border border-slate-700 rounded"
+            placeholder={phaseTwoUnlocked ? "Phase 2 already unlocked" : "Enter CEO code"}
+            value={phaseTwoCode}
+            onChange={(e) => setPhaseTwoCode(e.target.value)}
+            disabled={phaseTwoUnlocked}
+          />
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={phaseTwoUnlocked}
+              disabled={phaseTwoUnlocked}
+              onChange={(e) => setPhaseTwoUnlocked(e.target.checked)}
+            />
+            <span className="text-slate-300">Unlock Phase 2</span>
+          </label>
+        </div>
+
+        <div className="rounded-lg border border-slate-800 bg-slate-950 p-4 space-y-3">
+          <div>
+            <p className="text-slate-200 font-semibold">Phase 3 Unlock</p>
+            <p className="text-slate-400 text-sm">
+              Ads remain void until unlocked with the CEO code.
+            </p>
+          </div>
+
+          <input
+            className="w-full p-2 bg-slate-900 border border-slate-700 rounded"
+            placeholder={phaseThreeUnlocked ? "Phase 3 already unlocked" : "Enter CEO code"}
+            value={phaseThreeCode}
+            onChange={(e) => setPhaseThreeCode(e.target.value)}
+            disabled={phaseThreeUnlocked}
+          />
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={phaseThreeUnlocked}
+              disabled={phaseThreeUnlocked}
+              onChange={(e) => setPhaseThreeUnlocked(e.target.checked)}
+            />
+            <span className="text-slate-300">Unlock Phase 3</span>
+          </label>
+        </div>
 
         <button
           onClick={saveSettings}
