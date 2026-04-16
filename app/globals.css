@@ -1,122 +1,199 @@
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Cormorant+Garamond:wght@300;400;600&display=swap");
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  background-color: #020617;
-  color: #e2e8f0;
-}
-.bookshelf-outer {
-  width: 320px;
-  height: 220px;
-  padding: 10px;
-  border-radius: 18px;
-  background: radial-gradient(circle at top left, #3b2a1a, #1a120b);
-  box-shadow:
-    0 0 0 3px #2b1b10,
-    0 18px 35px rgba(0, 0, 0, 0.7),
-    inset 0 0 12px rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.bookshelf-inner {
-  width: 100%;
-  height: 100%;
-  border-radius: 12px;
-  background: #f8fafc;
-  box-shadow:
-    inset 0 0 0 3px #3b2a1a,
-    inset 0 10px 18px rgba(0, 0, 0, 0.35);
-  position: relative;
-  overflow: hidden;
-}
-
-/* Oak-colored liquid that fills from bottom up */
-.bookshelf-liquid {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: linear-gradient(
-    180deg,
-    #c28a4a 0%,
-    #8b5a2b 40%,
-    #5a3717 100%
-  );
-  box-shadow:
-    inset 0 8px 14px rgba(255, 255, 255, 0.25),
-    inset 0 -8px 18px rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  animation: bookshelf-slosh 4s ease-in-out infinite;
-  transform-origin: bottom center;
-}
-
-/* Sheen / fake 3D highlight */
-.bookshelf-liquid-sheen {
-  width: 40%;
-  height: 80%;
-  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.4), transparent);
-  opacity: 0.5;
-  mix-blend-mode: screen;
-  animation: bookshelf-sheen 3s ease-in-out infinite;
-}
-
-/* Subtle 3D sloshing motion */
-@keyframes bookshelf-slosh {
-  0% {
-    transform: skewX(0deg) translateX(0);
+@layer base {
+  :root {
+    --page-bg: #020202;
+    --panel-bg: rgba(10, 10, 15, 0.82);
+    --panel-border: rgba(255, 255, 255, 0.08);
+    --sidebar-bg: rgba(6, 6, 10, 0.95);
+    --foreground: 244 244 245;
+    --muted: 161 161 170;
+    --series-accent: 270 80% 65%;
+    --font-heading: "Playfair Display", serif;
+    --font-body: "Inter", sans-serif;
+    --font-mono: "Space Mono", monospace;
+    --font-reading: "Cormorant Garamond", serif;
   }
-  25% {
-    transform: skewX(-2deg) translateX(-4px);
+
+  * {
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(124, 58, 237, 0.35) transparent;
   }
-  50% {
-    transform: skewX(2deg) translateX(4px);
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
-  75% {
-    transform: skewX(-1deg) translateX(-2px);
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
   }
-  100% {
-    transform: skewX(0deg) translateX(0);
+
+  *::-webkit-scrollbar-thumb {
+    background: rgba(124, 58, 237, 0.35);
+    border-radius: 999px;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: rgb(var(--foreground));
+    font-family: var(--font-body);
+    background:
+      radial-gradient(circle at top, rgba(124, 58, 237, 0.2), transparent 28%),
+      radial-gradient(circle at left top, rgba(59, 130, 246, 0.12), transparent 18%),
+      linear-gradient(180deg, #020202 0%, #06060a 45%, #020202 100%);
+    background-color: var(--page-bg);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+
+  ::selection {
+    background: rgba(124, 58, 237, 0.28);
+    color: #ffffff;
   }
 }
 
-/* Light moving across the liquid */
-@keyframes bookshelf-sheen {
-  0% {
-    transform: translateX(-40%);
-    opacity: 0.3;
+@layer components {
+  .font-heading {
+    font-family: var(--font-heading);
   }
-  50% {
-    transform: translateX(40%);
-    opacity: 0.6;
+
+  .font-reading {
+    font-family: var(--font-reading);
   }
-  100% {
-    transform: translateX(-40%);
-    opacity: 0.3;
+
+  .font-mono-df {
+    font-family: var(--font-mono);
+  }
+
+  .page-shell {
+    @apply mx-auto w-full max-w-[1500px] px-4 pb-16 pt-6 md:px-8;
+  }
+
+  .glass-panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    box-shadow:
+      0 25px 80px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+  }
+
+  .surface-panel {
+    @apply glass-panel rounded-[28px];
+  }
+
+  .story-button {
+    @apply inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition duration-200;
+  }
+
+  .story-button-primary {
+    @apply story-button text-white;
+    background: linear-gradient(135deg, #7c3aed, #4f46e5, #3b82f6);
+    box-shadow: 0 14px 38px rgba(79, 70, 229, 0.35);
+  }
+
+  .story-button-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 48px rgba(79, 70, 229, 0.42);
+  }
+
+  .story-button-secondary {
+    @apply story-button border border-white/10 bg-white/[0.04] text-white hover:border-white/20 hover:bg-white/[0.08];
+  }
+
+  .eyebrow {
+    @apply font-mono-df text-xs uppercase tracking-[0.32em] text-white/40;
+  }
+
+  .reading-body {
+    font-family: var(--font-reading);
+    font-size: 1.2rem;
+    line-height: 1.85;
+    letter-spacing: 0.01em;
+  }
+
+  .reading-body p {
+    margin-bottom: 1.15em;
+  }
+
+  .reading-body h1,
+  .reading-body h2,
+  .reading-body h3 {
+    font-family: var(--font-heading);
+    margin-top: 1.4em;
+    margin-bottom: 0.5em;
   }
 }
-/* OUTER DARK OAK FRAME */
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@keyframes liquidShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes subtlePulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.liquid-text {
+  background: linear-gradient(135deg, #7c3aed, #4f46e5, #9333ea, #6366f1, #a855f7, #3b82f6, #7c3aed);
+  background-size: 400% 400%;
+  animation: liquidShift 6s ease infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease forwards;
+}
+
+.animate-subtle-pulse {
+  animation: subtlePulse 3s ease-in-out infinite;
+}
+
 .oak-bookshelf-frame {
   width: 340px;
   height: 240px;
@@ -132,7 +209,6 @@ body {
   justify-content: center;
 }
 
-/* WHITE SHELF INTERIOR */
 .oak-bookshelf-inner {
   width: 100%;
   height: 100%;
@@ -145,18 +221,12 @@ body {
   overflow: hidden;
 }
 
-/* OAK LIQUID FILL */
 .oak-liquid {
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-  background: linear-gradient(
-    180deg,
-    #d19a5a 0%,
-    #a06a32 40%,
-    #6a3f1a 100%
-  );
+  background: linear-gradient(180deg, #d19a5a 0%, #a06a32 40%, #6a3f1a 100%);
   box-shadow:
     inset 0 10px 18px rgba(255, 255, 255, 0.25),
     inset 0 -10px 20px rgba(0, 0, 0, 0.6);
@@ -167,7 +237,6 @@ body {
   transform-origin: bottom center;
 }
 
-/* LIGHT SHEEN FOR 3D EFFECT */
 .oak-liquid-sheen {
   width: 40%;
   height: 80%;
@@ -177,7 +246,6 @@ body {
   animation: oak-sheen-move 3s ease-in-out infinite;
 }
 
-/* SLOSHING MOTION */
 @keyframes oak-liquid-slosh {
   0% { transform: skewX(0deg) translateX(0); }
   25% { transform: skewX(-2deg) translateX(-4px); }
@@ -186,7 +254,6 @@ body {
   100% { transform: skewX(0deg) translateX(0); }
 }
 
-/* MOVING SHEEN */
 @keyframes oak-sheen-move {
   0% { transform: translateX(-40%); opacity: 0.3; }
   50% { transform: translateX(40%); opacity: 0.6; }

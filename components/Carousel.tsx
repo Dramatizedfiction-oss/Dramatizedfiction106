@@ -19,49 +19,48 @@ export default function Carousel({ title, items }: CarouselProps) {
 
   const scroll = (direction: "left" | "right") => {
     if (!scrollRef.current) return;
-    const amount = direction === "left" ? -300 : 300;
+    const amount = direction === "left" ? -320 : 320;
     scrollRef.current.scrollBy({ left: amount, behavior: "smooth" });
   };
 
   return (
-    <section className="mb-10">
-      <h2 className="text-2xl font-bold mb-4">{title}</h2>
-
-      <div className="relative">
-        {/* Left Button */}
-        <button
-          onClick={() => scroll("left")}
-          className="absolute left-0 top-1/2 -translate-y-1/2 bg-slate-900/70 px-3 py-2 rounded hover:bg-slate-800 z-10"
-        >
-          ‹
-        </button>
-
-        {/* Scroll Container */}
-        <div
-          ref={scrollRef}
-          className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
-        >
-          {items.map((item) => (
-            <Link
-              key={item.id}
-              href={`/series/${item.id}`}
-              className="min-w-[200px] bg-slate-900 border border-slate-800 rounded-lg p-4 hover:bg-slate-800 transition"
-            >
-              <h3 className="font-semibold">{item.title}</h3>
-              <p className="text-slate-400 text-sm">
-                {item.description || "No description yet."}
-              </p>
-            </Link>
-          ))}
+    <section className="mb-12">
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div>
+          <p className="eyebrow">Curated Shelf</p>
+          <h2 className="font-heading mt-2 text-3xl font-semibold text-white">{title}</h2>
         </div>
 
-        {/* Right Button */}
-        <button
-          onClick={() => scroll("right")}
-          className="absolute right-0 top-1/2 -translate-y-1/2 bg-slate-900/70 px-3 py-2 rounded hover:bg-slate-800 z-10"
-        >
-          ›
-        </button>
+        <div className="hidden gap-2 md:flex">
+          <button
+            onClick={() => scroll("left")}
+            className="story-button-secondary h-11 w-11 rounded-full px-0"
+          >
+            ‹
+          </button>
+          <button
+            onClick={() => scroll("right")}
+            className="story-button-secondary h-11 w-11 rounded-full px-0"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+
+      <div ref={scrollRef} className="scrollbar-hide flex gap-4 overflow-x-auto pb-2">
+        {items.map((item) => (
+          <Link
+            key={item.id}
+            href={`/series/${item.id}`}
+            className="glass-panel min-w-[260px] rounded-[24px] border p-5 transition hover:border-white/20 hover:bg-white/[0.06]"
+          >
+            <p className="eyebrow">Series</p>
+            <h3 className="mt-3 text-xl font-semibold text-white">{item.title}</h3>
+            <p className="mt-3 text-sm text-slate-400">
+              {item.description || "No description yet."}
+            </p>
+          </Link>
+        ))}
       </div>
     </section>
   );

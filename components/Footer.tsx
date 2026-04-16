@@ -1,7 +1,7 @@
 export default function Footer() {
   return (
-    <footer className="w-full border-t border-slate-800 p-6 text-center text-slate-500 text-sm">
-      © {new Date().getFullYear()} Dramatized Fiction. All rights reserved.
+    <footer className="border-t border-white/10 px-4 py-8 text-center text-sm text-slate-400 md:px-8">
+      <p>Copyright {new Date().getFullYear()} Dramatized Fiction. Premium serialized storytelling for readers and authors.</p>
     </footer>
   );
 }

@@ -1,44 +1,180 @@
+import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 export default async function HomePage() {
   const session = await auth();
 
-  let continueEpisode = null;
+  const [latestRead, featuredSeries, totalSeries, totalEpisodes, totalAuthors] =
+    await Promise.all([
+      session?.user?.id
+        ? prisma.readEvent.findFirst({
+            where: { userId: session.user.id },
+            orderBy: { createdAt: "desc" },
+            include: { episode: true },
+          })
+        : Promise.resolve(null),
+      prisma.series.findMany({
+        orderBy: [{ reads: "desc" }, { createdAt: "desc" }],
+        take: 3,
+        include: {
+          author: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      }),
+      prisma.series.count(),
+      prisma.episode.count(),
+      prisma.user.count({
+        where: {
+          role: {
+            in: ["AUTHOR", "ADMIN", "CEO"],
+          },
+        },
+      }),
+    ]);
 
-  if (session?.user?.id) {
-    const latestRead = await prisma.readEvent.findFirst({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "desc" },
-      include: { episode: true }
-    });
-
-    continueEpisode = latestRead?.episode ?? null;
-  }
-
+  const continueEpisode = latestRead?.episode ?? null;
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center text-center p-8 space-y-6">
-      <h1 className="text-5xl font-bold">DRAMATIZED</h1>
-      <p className="text-slate-300 max-w-xl">
-        A streaming-style fiction platform for serialized stories.
-      </p>
+    <main className="overflow-hidden">
+      <section className="relative px-6 py-12 md:px-10 md:py-16">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_30%_at_50%_0%,rgba(124,58,237,0.16),transparent_70%)]" />
 
-      {continueEpisode && (
-        <a
-          href={`/episode/${continueEpisode.id}`}
-          className="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded font-semibold"
-        >
-          Continue Reading
-        </a>
-      )}
+        <div className="relative mx-auto max-w-6xl">
+          <div className="animate-fade-in-up text-center">
+            <div className="relative flex flex-col items-center justify-center pt-10 pb-8 select-none">
+              <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_60%_40%_at_50%_50%,rgba(124,58,237,0.12)_0%,transparent_70%)]" />
 
-      <a
-        href="/explore"
-        className="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded font-semibold"
-      >
-        Explore Stories
-      </a>
+              <h1
+                className="liquid-text font-heading text-center leading-none"
+                style={{
+                  fontSize: "clamp(3rem, 10vw, 8.5rem)",
+                  fontWeight: 900,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Dramatized
+              </h1>
+
+              <h1
+                className="liquid-text font-heading text-center leading-none"
+                style={{
+                  fontSize: "clamp(3rem, 10vw, 8.5rem)",
+                  fontWeight: 900,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Fiction
+              </h1>
+
+              <p className="animate-subtle-pulse mt-5 font-mono-df text-xs uppercase tracking-[0.35em] text-white/35 md:text-sm">
+                Stories Performed in Text
+              </p>
+            </div>
+
+            <p className="mx-auto mt-4 max-w-3xl text-balance text-lg text-slate-300 md:text-xl">
+              A premium platform for serialized fiction, immersive reading, and creator-led story worlds.
+            </p>
+
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link href="/explore" className="story-button-primary min-w-[180px]">
+                Explore Stories
+              </Link>
+
+              {continueEpisode ? (
+                <Link href={`/episode/${continueEpisode.id}`} className="story-button-secondary min-w-[180px]">
+                  Continue Reading
+                </Link>
+              ) : (
+                <Link href="/series/new" className="story-button-secondary min-w-[180px]">
+                  Start Publishing
+                </Link>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-12 grid gap-4 md:grid-cols-3">
+            <StatCard label="Series Published" value={String(totalSeries)} />
+            <StatCard label="Episodes Live" value={String(totalEpisodes)} />
+            <StatCard label="Active Creators" value={String(totalAuthors)} />
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-white/10 px-6 py-12 md:px-10">
+        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+          <div>
+            <p className="eyebrow">Featured Worlds</p>
+            <h2 className="font-heading mt-3 text-4xl font-semibold text-white md:text-5xl">
+              The front page should feel alive.
+            </h2>
+            <p className="mt-4 max-w-2xl text-slate-400">
+              This launch view now uses the Base44-inspired shell you liked: cinematic background, liquid wordmark, glass panels, and stronger content presentation.
+            </p>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {featuredSeries.map((series) => (
+                <Link
+                  key={series.id}
+                  href={`/series/${series.id}`}
+                  className="glass-panel rounded-[24px] border p-4 transition hover:border-white/20 hover:bg-white/[0.06]"
+                >
+                  <div className="mb-4 flex aspect-[4/5] items-center justify-center rounded-[18px] bg-white/[0.04] text-sm text-slate-500">
+                    {series.coverImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={series.coverImage}
+                        alt={series.title}
+                        className="h-full w-full rounded-[18px] object-cover"
+                      />
+                    ) : (
+                      <span className="font-mono-df uppercase tracking-[0.24em]">Story Cover</span>
+                    )}
+                  </div>
+                  <p className="eyebrow">By {series.author.name || "Anonymous Author"}</p>
+                  <h3 className="mt-2 text-xl font-semibold text-white">{series.title}</h3>
+                  <p className="mt-2 line-clamp-3 text-sm text-slate-400">
+                    {series.description}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="glass-panel rounded-[28px] border p-6">
+              <p className="eyebrow">Platform Focus</p>
+              <h3 className="font-heading mt-3 text-3xl font-semibold text-white">
+                Phase 1 is about stability and story flow.
+              </h3>
+              <p className="mt-4 text-slate-400">
+                Reader experience, author publishing, role permissions, and database reliability come first. Monetization stays dormant until you deliberately unlock it.
+              </p>
+            </div>
+
+            <div className="glass-panel rounded-[28px] border p-6">
+              <p className="eyebrow">What Changed</p>
+              <ul className="mt-4 space-y-3 text-sm text-slate-300">
+                <li>Premium app shell with a real top nav and sidebar studio layout.</li>
+                <li>Animated liquid homepage wordmark inspired directly by your Base44 reference.</li>
+                <li>Reusable glass panels and stronger visual hierarchy across launch surfaces.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="glass-panel rounded-[24px] border p-5">
+      <p className="eyebrow">{label}</p>
+      <p className="mt-3 font-heading text-4xl font-semibold text-white">{value}</p>
+    </div>
   );
 }
