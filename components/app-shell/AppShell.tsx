@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AppShellUser, TrendingStory } from "@/lib/navigation";
 import { getUtilityItems } from "@/lib/navigation";
 import GlobalSearch, {
@@ -33,6 +33,7 @@ export default function AppShell({
   const [trendingOpen, setTrendingOpen] = useState(true);
   const [mobileTrendingOpen, setMobileTrendingOpen] = useState(false);
   const utilityItems = getUtilityItems();
+  const profileRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("df-theme");
@@ -47,6 +48,17 @@ export default function AppShell({
     setSearchOpen(false);
     setProfileOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (!profileRef.current?.contains(event.target as Node)) {
+        setProfileOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   function toggleTheme() {
     const nextTheme = theme === "dark" ? "light" : "dark";
@@ -115,10 +127,13 @@ export default function AppShell({
                 Sign In
               </Link>
             ) : (
-              <div className="relative">
+              <div ref={profileRef} className="relative ml-auto">
                 <button
                   type="button"
                   onClick={() => setProfileOpen((value) => !value)}
+                  aria-expanded={profileOpen}
+                  aria-haspopup="menu"
+                  aria-label="Open profile menu"
                   className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--text-primary)] hover:opacity-80"
                 >
                   {user.image ? (
@@ -130,7 +145,10 @@ export default function AppShell({
                 </button>
 
                 {profileOpen && (
-                  <div className="theme-panel absolute right-0 mt-3 w-64 rounded-[24px] border p-3 shadow-2xl">
+                  <div
+                    className="theme-panel absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border border-[var(--border-color)] p-3 shadow-2xl"
+                    role="menu"
+                  >
                     <div className="rounded-2xl px-3 py-3">
                       <p className="theme-heading font-semibold">
                         {user.name || "Your profile"}
