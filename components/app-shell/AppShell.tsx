@@ -66,8 +66,8 @@ export default function AppShell({
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 border-b border-[var(--border-color)] bg-[var(--header-bg)] backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-[1500px] items-center justify-between gap-4 px-4 py-4 md:px-8">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex w-full max-w-[1500px] items-center justify-between px-4 py-4 md:px-8">
+          <div className="flex items-center">
             <button
               type="button"
               className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] lg:hidden hover:opacity-80"
@@ -89,11 +89,11 @@ export default function AppShell({
             </Link>
           </div>
 
-          <div className="hidden min-w-[220px] flex-1 items-center justify-center md:flex">
+          <div className="hidden flex-1 justify-center md:flex">
             <GlobalSearch stories={searchStories} authors={searchAuthors} />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="ml-auto flex items-center justify-end gap-2 md:gap-3">
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
