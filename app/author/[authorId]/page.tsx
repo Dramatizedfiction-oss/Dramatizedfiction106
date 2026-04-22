@@ -15,19 +15,19 @@ export default async function AuthorProfilePage({
   });
 
   if (!author) {
-    return <p className="p-8 text-red-400">Author not found.</p>;
+    return <p className="theme-body p-8">Author not found.</p>;
   }
 
   return (
     <main className="p-8 space-y-6">
-      <h1 className="text-3xl font-bold">{author.name}</h1>
+      <h1 className="theme-heading text-3xl font-bold">{author.name}</h1>
 
       {/* SERIES */}
       <section>
-        <h2 className="text-xl font-semibold mb-2">Series</h2>
+        <h2 className="theme-heading text-xl font-semibold mb-2">Series</h2>
 
         {author.series.length === 0 && (
-          <p className="text-slate-400">No series yet.</p>
+          <p className="theme-meta">No series yet.</p>
         )}
 
         <ul className="space-y-2">
@@ -36,7 +36,7 @@ export default async function AuthorProfilePage({
               <li key={s.id}>
                 <Link
                   href={`/series/${s.id}`}
-                  className="text-blue-400"
+                  className="theme-body hover:opacity-80"
                 >
                   {s.title}
                 </Link>
@@ -48,10 +48,10 @@ export default async function AuthorProfilePage({
 
       {/* EPISODES */}
       <section>
-        <h2 className="text-xl font-semibold mb-2">Episodes</h2>
+        <h2 className="theme-heading text-xl font-semibold mb-2">Episodes</h2>
 
         {author.episodes.length === 0 && (
-          <p className="text-slate-400">No episodes yet.</p>
+          <p className="theme-meta">No episodes yet.</p>
         )}
 
         <ul className="space-y-2">
@@ -60,7 +60,7 @@ export default async function AuthorProfilePage({
               <li key={e.id}>
                 <Link
                   href={`/episode/${e.id}`}
-                  className="text-blue-400"
+                  className="theme-body hover:opacity-80"
                 >
                   {e.title}
                 </Link>

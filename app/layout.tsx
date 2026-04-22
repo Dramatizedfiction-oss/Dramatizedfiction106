@@ -24,7 +24,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body>
+      <body className="bg-[var(--bg-primary)] text-[var(--text-primary)]">
         <div className="min-h-screen">
           <AppShell user={user} trendingStories={trendingStories}>
             {children}

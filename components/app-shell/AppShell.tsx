@@ -28,7 +28,8 @@ export default function AppShell({
     const storedTheme = window.localStorage.getItem("df-theme");
     const nextTheme = storedTheme === "light" ? "light" : "dark";
     setTheme(nextTheme);
-    document.documentElement.classList.toggle("light", nextTheme === "light");
+    document.documentElement.classList.remove("light", "dark");
+    document.documentElement.classList.add(nextTheme);
   }, []);
 
   useEffect(() => {
@@ -39,29 +40,30 @@ export default function AppShell({
     const nextTheme = theme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
     window.localStorage.setItem("df-theme", nextTheme);
-    document.documentElement.classList.toggle("light", nextTheme === "light");
+    document.documentElement.classList.remove("light", "dark");
+    document.documentElement.classList.add(nextTheme);
   }
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-black/55 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-[var(--border-color)] bg-[var(--header-bg)] backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-[1500px] items-center justify-between gap-4 px-4 py-4 md:px-8">
           <div className="flex items-center gap-3">
             <button
               type="button"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-sm text-white lg:hidden"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] lg:hidden hover:opacity-80"
               onClick={() => setMobileOpen((value) => !value)}
             >
               Menu
             </button>
 
             <Link href="/" className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-sm font-semibold text-white">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--text-primary)]">
                 DF
               </div>
               <div>
                 <p className="eyebrow">Dramatized Fiction</p>
-                <p className="font-heading text-2xl font-bold leading-none text-white">
+                <p className="font-heading theme-heading text-2xl font-bold leading-none">
                   Stories Performed in Text
                 </p>
               </div>
@@ -71,7 +73,7 @@ export default function AppShell({
           <div className="hidden min-w-[180px] flex-1 items-center justify-center md:flex">
             <button
               type="button"
-              className="w-full max-w-md rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm text-slate-400 transition hover:border-white/20 hover:bg-white/[0.08]"
+              className="w-full max-w-md rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3 text-left text-sm text-[var(--text-secondary)] transition hover:opacity-80"
             >
               Search stories, series, and creators
             </button>
@@ -154,31 +156,32 @@ function UnifiedSidebar({
       {mobileOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-30 bg-black/60 lg:hidden"
+          className="fixed inset-0 z-30 lg:hidden"
+          style={{ background: "var(--overlay-bg)" }}
           onClick={onClose}
           aria-label="Close navigation"
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-[300px] max-w-[84vw] flex-col border-r border-white/10 bg-[var(--sidebar-bg)] p-5 shadow-2xl transition-transform duration-300 lg:sticky lg:top-28 lg:z-auto lg:h-[calc(100vh-8.5rem)] lg:max-h-[900px] lg:translate-x-0 lg:rounded-[28px] lg:border ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-[300px] max-w-[84vw] flex-col border-r border-[var(--border-color)] bg-[var(--sidebar-bg)] p-5 shadow-2xl transition-transform duration-300 lg:sticky lg:top-28 lg:z-auto lg:h-[calc(100vh-8.5rem)] lg:max-h-[900px] lg:translate-x-0 lg:rounded-[28px] lg:border ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="mb-5 flex items-start justify-between gap-3 lg:block">
           <div>
             <p className="eyebrow">Unified Sidebar</p>
-            <h2 className="font-heading mt-3 text-3xl font-semibold text-white">
+            <h2 className="font-heading theme-heading mt-3 text-3xl font-semibold">
               Discover Stories
             </h2>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="theme-meta mt-2 text-sm">
               One cinematic sidebar for readers, writers, and future expansion.
             </p>
           </div>
 
           <button
             type="button"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white lg:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] lg:hidden hover:opacity-80"
             onClick={onClose}
           >
             ×
@@ -198,25 +201,25 @@ function UnifiedSidebar({
             <Link
               href="/explore"
               className={`story-button-primary flex w-full items-center justify-between ${
-                pathname === "/explore" ? "ring-2 ring-white/20" : ""
+                pathname === "/explore" ? "ring-2 ring-black/10 dark:ring-white/20" : ""
               }`}
             >
               <span>Discover</span>
               <span className="font-mono-df text-xs uppercase tracking-[0.2em]">Explore</span>
             </Link>
 
-            <div className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.02] p-4">
+            <div className="theme-panel rounded-[24px] border border-dashed p-4">
               <p className="eyebrow">Reserved</p>
-              <h3 className="mt-3 text-lg font-semibold text-white">Future Expansion Area</h3>
-              <p className="mt-2 text-sm text-slate-400">
+              <h3 className="theme-heading mt-3 text-lg font-semibold">Future Expansion Area</h3>
+              <p className="theme-meta mt-2 text-sm">
                 Space reserved for Series, Following, Saved, and other reader collections.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="mt-6 border-t border-white/10 pt-5">
-          <p className="mb-3 text-xs uppercase tracking-[0.28em] text-white/35">
+        <div className="mt-6 border-t border-[var(--border-color)] pt-5">
+          <p className="theme-meta mb-3 text-xs uppercase tracking-[0.28em]">
             Platform
           </p>
           <nav className="space-y-2">
@@ -230,12 +233,12 @@ function UnifiedSidebar({
                   href={item.href}
                   className={`block rounded-2xl px-4 py-3 text-sm transition ${
                     active
-                      ? "border border-white/15 bg-white/[0.08] text-white"
-                      : "border border-transparent text-slate-300 hover:border-white/10 hover:bg-white/[0.04] hover:text-white"
+                      ? "border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)]"
+                      : "border border-transparent text-[var(--text-primary)] hover:border-[var(--border-color)] hover:opacity-80"
                   }`}
                 >
-                  <span className="block font-medium">{item.label}</span>
-                  <span className="mt-1 block text-xs text-slate-400">
+                  <span className="theme-heading block font-medium">{item.label}</span>
+                  <span className="theme-meta mt-1 block text-xs">
                     {item.description}
                   </span>
                 </Link>
@@ -269,17 +272,17 @@ function TrendingCard({
 }) {
   return (
     <>
-      <div className="hidden rounded-[24px] border border-white/10 bg-white/[0.03] p-4 lg:block">
+      <div className="theme-panel rounded-[24px] border p-4 lg:block">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="eyebrow">Trending</p>
-            <h3 className="mt-2 text-xl font-semibold text-white">Top stories right now</h3>
+            <h3 className="theme-heading mt-2 text-xl font-semibold">Top stories right now</h3>
           </div>
 
           <button
             type="button"
             onClick={onToggle}
-            className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs uppercase tracking-[0.2em] text-white/75"
+            className="rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)] hover:opacity-80"
           >
             {open ? "Hide" : "Show"}
           </button>
@@ -291,13 +294,13 @@ function TrendingCard({
               <Link
                 key={story.id}
                 href={`/series/${story.id}`}
-                className="block rounded-2xl border border-transparent bg-white/[0.03] px-4 py-3 transition hover:border-white/10 hover:bg-white/[0.06]"
+                className="theme-panel theme-panel-hover block rounded-2xl border border-transparent px-4 py-3 transition hover:border-[var(--border-color)]"
               >
-                <p className="font-mono-df text-[10px] uppercase tracking-[0.28em] text-white/35">
+                <p className="theme-meta font-mono-df text-[10px] uppercase tracking-[0.28em]">
                   {String(index + 1).padStart(2, "0")} | {story.reads ?? 0} reads
                 </p>
-                <p className="mt-2 font-medium text-white">{story.title}</p>
-                <p className="mt-1 line-clamp-2 text-xs text-slate-400">
+                <p className="theme-heading mt-2 font-medium">{story.title}</p>
+                <p className="theme-meta mt-1 line-clamp-2 text-xs">
                   {story.description || "Open this story from the trending shelf."}
                 </p>
               </Link>
@@ -310,7 +313,7 @@ function TrendingCard({
         )}
       </div>
 
-      <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4 lg:hidden">
+      <div className="theme-panel rounded-[24px] border p-4 lg:hidden">
         <button
           type="button"
           onClick={onToggleMobile}
@@ -318,9 +321,9 @@ function TrendingCard({
         >
           <div className="text-left">
             <p className="eyebrow">Trending</p>
-            <h3 className="mt-2 text-lg font-semibold text-white">Top 3 stories</h3>
+            <h3 className="theme-heading mt-2 text-lg font-semibold">Top 3 stories</h3>
           </div>
-          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs uppercase tracking-[0.2em] text-white/75">
+          <span className="rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">
             {mobileOpen ? "Hide" : "Show"}
           </span>
         </button>
@@ -331,12 +334,12 @@ function TrendingCard({
               <Link
                 key={story.id}
                 href={`/series/${story.id}`}
-                className="block rounded-2xl border border-transparent bg-white/[0.03] px-4 py-3 transition hover:border-white/10 hover:bg-white/[0.06]"
+                className="theme-panel theme-panel-hover block rounded-2xl border border-transparent px-4 py-3 transition hover:border-[var(--border-color)]"
               >
-                <p className="font-mono-df text-[10px] uppercase tracking-[0.28em] text-white/35">
+                <p className="theme-meta font-mono-df text-[10px] uppercase tracking-[0.28em]">
                   {String(index + 1).padStart(2, "0")} | {story.reads ?? 0} reads
                 </p>
-                <p className="mt-2 font-medium text-white">{story.title}</p>
+                <p className="theme-heading mt-2 font-medium">{story.title}</p>
               </Link>
             ))}
 

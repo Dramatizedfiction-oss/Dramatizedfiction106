@@ -28,7 +28,7 @@ export default function Carousel({ title, items }: CarouselProps) {
       <div className="mb-4 flex items-center justify-between gap-4">
         <div>
           <p className="eyebrow">Curated Shelf</p>
-          <h2 className="font-heading mt-2 text-3xl font-semibold text-white">{title}</h2>
+          <h2 className="font-heading theme-heading mt-2 text-3xl font-semibold">{title}</h2>
         </div>
 
         <div className="hidden gap-2 md:flex">
@@ -52,11 +52,11 @@ export default function Carousel({ title, items }: CarouselProps) {
           <Link
             key={item.id}
             href={`/series/${item.id}`}
-            className="glass-panel min-w-[260px] rounded-[24px] border p-5 transition hover:border-white/20 hover:bg-white/[0.06]"
+            className="glass-panel theme-panel-hover min-w-[260px] rounded-[24px] border border-[var(--border-color)] p-5 transition hover:opacity-80"
           >
             <p className="eyebrow">Series</p>
-            <h3 className="mt-3 text-xl font-semibold text-white">{item.title}</h3>
-            <p className="mt-3 text-sm text-slate-400">
+            <h3 className="theme-heading mt-3 text-xl font-semibold">{item.title}</h3>
+            <p className="theme-meta mt-3 text-sm">
               {item.description || "No description yet."}
             </p>
           </Link>

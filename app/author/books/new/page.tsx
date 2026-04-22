@@ -1,24 +1,24 @@
 export default function NewBookPage() {
   return (
     <div className="max-w-2xl mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-6">Create a New Book</h1>
+      <h1 className="theme-heading text-3xl font-bold mb-6">Create a New Book</h1>
 
       <form action="/author/books/new" method="post" className="space-y-4">
         <div>
-          <label className="block font-medium mb-1">Title</label>
+          <label className="theme-heading block font-medium mb-1">Title</label>
           <input
             type="text"
             name="title"
-            className="w-full border rounded px-3 py-2"
+            className="w-full rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-[var(--text-primary)]"
             required
           />
         </div>
 
         <div>
-          <label className="block font-medium mb-1">Description</label>
+          <label className="theme-heading block font-medium mb-1">Description</label>
           <textarea
             name="description"
-            className="w-full border rounded px-3 py-2"
+            className="w-full rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-[var(--text-primary)]"
             rows={4}
             required
           />
@@ -26,7 +26,7 @@ export default function NewBookPage() {
 
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded"
+          className="story-button-primary"
         >
           Create Book
         </button>
