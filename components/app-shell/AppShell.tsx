@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -28,12 +29,16 @@ export default function AppShell({
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [trendingOpen, setTrendingOpen] = useState(true);
   const [mobileTrendingOpen, setMobileTrendingOpen] = useState(false);
+  const [exploreGenre, setExploreGenre] = useState("All Genres");
+  const [exploreSort, setExploreSort] = useState("Sort: Latest");
   const utilityItems = getUtilityItems();
   const profileRef = useRef<HTMLDivElement | null>(null);
+  const isExploreRoute = pathname === "/explore";
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("df-theme");
@@ -46,6 +51,7 @@ export default function AppShell({
   useEffect(() => {
     setMobileOpen(false);
     setSearchOpen(false);
+    setMobileFiltersOpen(false);
     setProfileOpen(false);
   }, [pathname]);
 
@@ -60,6 +66,7 @@ export default function AppShell({
       if (event.key === "Escape") {
         setMobileOpen(false);
         setSearchOpen(false);
+        setMobileFiltersOpen(false);
         setProfileOpen(false);
       }
     }
@@ -94,21 +101,62 @@ export default function AppShell({
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center px-4 md:px-8">
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--text-primary)]">
-                DF
+              <div className="relative h-11 w-11 overflow-hidden rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)]">
+                <Image
+                  src="/logo-934.png"
+                  alt="Dramatized Fiction logo"
+                  fill
+                  sizes="44px"
+                  className="object-cover"
+                  priority
+                />
               </div>
-              <div>
-                <p className="eyebrow">Dramatized Fiction</p>
-                <p className="font-heading theme-heading text-2xl font-bold leading-none">
-                  Stories Performed in Text
-                </p>
-              </div>
+              {!isExploreRoute && (
+                <div>
+                  <p className="eyebrow">Dramatized Fiction</p>
+                  <p className="font-heading theme-heading text-2xl font-bold leading-none">
+                    Stories Performed in Text
+                  </p>
+                </div>
+              )}
             </Link>
           </div>
 
           <div className="hidden flex-1 justify-center px-6 md:flex">
-            <div className="w-full max-w-xl">
-              <GlobalSearch stories={searchStories} authors={searchAuthors} />
+            <div className="flex w-full max-w-[820px] items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <GlobalSearch stories={searchStories} authors={searchAuthors} />
+              </div>
+
+              {isExploreRoute && (
+                <>
+                  <select
+                    value={exploreGenre}
+                    onChange={(event) => setExploreGenre(event.target.value)}
+                    className="h-[52px] rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 text-sm text-[var(--text-primary)] outline-none"
+                    aria-label="Filter by genre"
+                  >
+                    <option>All Genres</option>
+                    <option>Fantasy</option>
+                    <option>Romance</option>
+                    <option>Thriller</option>
+                    <option>Drama</option>
+                    <option>Sci-Fi</option>
+                  </select>
+
+                  <select
+                    value={exploreSort}
+                    onChange={(event) => setExploreSort(event.target.value)}
+                    className="h-[52px] rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 text-sm text-[var(--text-primary)] outline-none"
+                    aria-label="Sort stories"
+                  >
+                    <option>Sort: Latest</option>
+                    <option>Most Read</option>
+                    <option>Recently Updated</option>
+                    <option>Featured</option>
+                  </select>
+                </>
+              )}
             </div>
           </div>
 
@@ -121,6 +169,17 @@ export default function AppShell({
             >
               Search
             </button>
+
+            {isExploreRoute && (
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen(true)}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:opacity-80 md:hidden"
+                aria-label="Open explore filters"
+              >
+                Filter
+              </button>
+            )}
 
             <button
               type="button"
@@ -204,6 +263,62 @@ export default function AppShell({
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
       />
+
+      {isExploreRoute && mobileFiltersOpen && (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-50 bg-black/50 md:hidden"
+            onClick={() => setMobileFiltersOpen(false)}
+            aria-label="Close filters"
+          />
+
+          <div className="fixed inset-x-4 top-20 z-[60] rounded-[28px] border border-[var(--border-color)] bg-[var(--bg-primary)] p-5 shadow-2xl md:hidden">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="eyebrow">Explore Filters</p>
+                <h2 className="theme-heading mt-2 text-xl font-semibold">Refine discovery</h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen(false)}
+                className="story-button-secondary"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-3">
+              <select
+                value={exploreGenre}
+                onChange={(event) => setExploreGenre(event.target.value)}
+                className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none"
+                aria-label="Filter by genre"
+              >
+                <option>All Genres</option>
+                <option>Fantasy</option>
+                <option>Romance</option>
+                <option>Thriller</option>
+                <option>Drama</option>
+                <option>Sci-Fi</option>
+              </select>
+
+              <select
+                value={exploreSort}
+                onChange={(event) => setExploreSort(event.target.value)}
+                className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none"
+                aria-label="Sort stories"
+              >
+                <option>Sort: Latest</option>
+                <option>Most Read</option>
+                <option>Recently Updated</option>
+                <option>Featured</option>
+              </select>
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="page-shell">
         <div className="flex w-full gap-6">

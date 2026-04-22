@@ -1,32 +1,6 @@
 export default function ExplorePage() {
   return (
     <div className="px-4 py-6 md:px-6 lg:px-8">
-      <div className="sticky top-20 z-20 mb-6 rounded-[24px] border border-[var(--border-color)] bg-[var(--header-bg)] px-4 py-4 shadow-sm backdrop-blur-xl md:px-5">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="flex-1">
-            <label className="sr-only" htmlFor="explore-search">
-              Search stories and authors
-            </label>
-            <input
-              id="explore-search"
-              type="search"
-              placeholder="Search stories, authors, or genres"
-              className="w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-secondary)]"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:w-[340px]">
-            <select className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none">
-              <option>All Genres</option>
-            </select>
-
-            <select className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none">
-              <option>Sort: Latest</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
         <div className="space-y-6">
           <section className="theme-panel rounded-[28px] border border-[var(--border-color)] p-6">
