@@ -22,11 +22,40 @@ export default async function RootLayout({
     },
   });
 
+  const [searchStories, searchAuthors] = await Promise.all([
+    prisma.series.findMany({
+      orderBy: [{ reads: "desc" }, { createdAt: "desc" }],
+      take: 20,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+      },
+    }),
+    prisma.user.findMany({
+      where: {
+        role: {
+          in: ["AUTHOR", "ADMIN", "CEO"],
+        },
+      },
+      take: 16,
+      select: {
+        id: true,
+        name: true,
+      },
+    }),
+  ]);
+
   return (
     <html lang="en">
       <body className="bg-[var(--bg-primary)] text-[var(--text-primary)]">
         <div className="min-h-screen">
-          <AppShell user={user} trendingStories={trendingStories}>
+          <AppShell
+            user={user}
+            trendingStories={trendingStories}
+            searchStories={searchStories}
+            searchAuthors={searchAuthors}
+          >
             {children}
           </AppShell>
           <Footer />

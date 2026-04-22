@@ -5,20 +5,30 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { AppShellUser, TrendingStory } from "@/lib/navigation";
 import { getUtilityItems } from "@/lib/navigation";
+import GlobalSearch, {
+  type SearchAuthor,
+  type SearchStory,
+} from "@/components/app-shell/GlobalSearch";
 
 type AppShellProps = {
-  user: AppShellUser;
+  user: (AppShellUser & { name?: string | null; image?: string | null }) | null;
   trendingStories: TrendingStory[];
+  searchStories: SearchStory[];
+  searchAuthors: SearchAuthor[];
   children: React.ReactNode;
 };
 
 export default function AppShell({
   user,
   trendingStories,
+  searchStories,
+  searchAuthors,
   children,
 }: AppShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [trendingOpen, setTrendingOpen] = useState(true);
   const [mobileTrendingOpen, setMobileTrendingOpen] = useState(false);
@@ -34,6 +44,8 @@ export default function AppShell({
 
   useEffect(() => {
     setMobileOpen(false);
+    setSearchOpen(false);
+    setProfileOpen(false);
   }, [pathname]);
 
   function toggleTheme() {
@@ -43,6 +55,13 @@ export default function AppShell({
     document.documentElement.classList.remove("light", "dark");
     document.documentElement.classList.add(nextTheme);
   }
+
+  const initials = (user?.name || user?.role || "DF")
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div className="min-h-screen">
@@ -70,16 +89,19 @@ export default function AppShell({
             </Link>
           </div>
 
-          <div className="hidden min-w-[180px] flex-1 items-center justify-center md:flex">
-            <button
-              type="button"
-              className="w-full max-w-md rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3 text-left text-sm text-[var(--text-secondary)] transition hover:opacity-80"
-            >
-              Search stories, series, and creators
-            </button>
+          <div className="hidden min-w-[220px] flex-1 items-center justify-center md:flex">
+            <GlobalSearch stories={searchStories} authors={searchAuthors} />
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:opacity-80 md:hidden"
+            >
+              ⌕
+            </button>
+
             <button
               type="button"
               onClick={toggleTheme}
@@ -93,13 +115,60 @@ export default function AppShell({
                 Sign In
               </Link>
             ) : (
-              <Link href="/api/auth/signout" className="story-button-secondary">
-                Sign Out
-              </Link>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setProfileOpen((value) => !value)}
+                  className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--text-primary)] hover:opacity-80"
+                >
+                  {user.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={user.image} alt={user.name || "Profile"} className="h-full w-full object-cover" />
+                  ) : (
+                    initials
+                  )}
+                </button>
+
+                {profileOpen && (
+                  <div className="theme-panel absolute right-0 mt-3 w-64 rounded-[24px] border p-3 shadow-2xl">
+                    <div className="rounded-2xl px-3 py-3">
+                      <p className="theme-heading font-semibold">
+                        {user.name || "Your profile"}
+                      </p>
+                      <p className="theme-meta mt-1 text-sm">
+                        {user.role ? `${user.role} access` : "Authenticated reader"}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Link
+                        href="/settings"
+                        className="theme-panel-hover block rounded-2xl px-3 py-3 text-sm text-[var(--text-primary)] hover:opacity-80"
+                      >
+                        Settings
+                      </Link>
+                      <Link
+                        href="/api/auth/signout"
+                        className="theme-panel-hover block rounded-2xl px-3 py-3 text-sm text-[var(--text-primary)] hover:opacity-80"
+                      >
+                        Sign Out
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
       </header>
+
+      <GlobalSearch
+        stories={searchStories}
+        authors={searchAuthors}
+        mode="overlay"
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+      />
 
       <div className="page-shell">
         <div className="flex flex-col gap-6 lg:flex-row">
@@ -272,7 +341,7 @@ function TrendingCard({
 }) {
   return (
     <>
-      <div className="theme-panel rounded-[24px] border p-4 lg:block">
+      <div className="theme-panel hidden rounded-[24px] border p-4 lg:block">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="eyebrow">Trending</p>
@@ -294,7 +363,7 @@ function TrendingCard({
               <Link
                 key={story.id}
                 href={`/series/${story.id}`}
-                className="theme-panel theme-panel-hover block rounded-2xl border border-transparent px-4 py-3 transition hover:border-[var(--border-color)]"
+                className="theme-panel theme-panel-hover block rounded-2xl border border-transparent px-4 py-3 transition hover:border-[var(--border-color)] hover:opacity-80"
               >
                 <p className="theme-meta font-mono-df text-[10px] uppercase tracking-[0.28em]">
                   {String(index + 1).padStart(2, "0")} | {story.reads ?? 0} reads
@@ -334,7 +403,7 @@ function TrendingCard({
               <Link
                 key={story.id}
                 href={`/series/${story.id}`}
-                className="theme-panel theme-panel-hover block rounded-2xl border border-transparent px-4 py-3 transition hover:border-[var(--border-color)]"
+                className="theme-panel theme-panel-hover block rounded-2xl border border-transparent px-4 py-3 transition hover:border-[var(--border-color)] hover:opacity-80"
               >
                 <p className="theme-meta font-mono-df text-[10px] uppercase tracking-[0.28em]">
                   {String(index + 1).padStart(2, "0")} | {story.reads ?? 0} reads
