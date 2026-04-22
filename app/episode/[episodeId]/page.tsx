@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { getNextEpisode } from "@/lib/nextEpisode";
 import { auth } from "@/auth";
 import { canAccessEpisode } from "@/lib/ads";
+import ReaderChrome from "@/components/ReaderChrome";
 import { prisma } from "@/lib/prisma";
 
 export default async function EpisodeReaderPage({
@@ -8,35 +10,31 @@ export default async function EpisodeReaderPage({
 }: {
   params: { episodeId: string };
 }) {
-  // Fetch the episode + series
   const episode = await prisma.episode.findUnique({
     where: { id: params.episodeId },
-    include: { series: true }
+    include: { series: true },
   });
 
   if (!episode) {
-    return <div className="p-8">Episode not found.</div>;
+    return <div className="px-6 py-10">Episode not found.</div>;
   }
 
-  // Check if user is allowed to read this episode
   const session = await auth();
-  const allowed = await canAccessEpisode(
-    session?.user?.id || null,
-    params.episodeId
-  );
+  const allowed = await canAccessEpisode(session?.user?.id || null, params.episodeId);
 
-  // If NOT allowed → show the locked screen
   if (!allowed) {
     return (
-      <main className="p-8 max-w-xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold">Watch Ad to Continue</h1>
-        <p className="text-slate-400">
+      <main className="mx-auto max-w-xl space-y-6 px-6 py-12">
+        <h1 className="font-heading theme-heading text-3xl font-semibold">
+          Watch Ad to Continue
+        </h1>
+        <p className="theme-meta">
           This episode is locked. Watch an ad to unlock it.
         </p>
 
         <a
           href={`/watch-ad?episode=${params.episodeId}`}
-          className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded font-semibold inline-block"
+          className="story-button-primary inline-flex"
         >
           Watch Ad
         </a>
@@ -44,15 +42,14 @@ export default async function EpisodeReaderPage({
     );
   }
 
-  // If allowed → increment reader count
   await prisma.episode.update({
     where: { id: params.episodeId },
-    data: { readerCount: { increment: 1 } }
+    data: { readerCount: { increment: 1 } },
   });
 
   await prisma.series.update({
     where: { id: episode.seriesId },
-    data: { reads: { increment: 1 } }
+    data: { reads: { increment: 1 } },
   });
 
   await prisma.revenueEvent.create({
@@ -61,60 +58,73 @@ export default async function EpisodeReaderPage({
       amount: 1,
       userId: session?.user?.id ?? null,
       seriesId: episode.seriesId,
-      episodeId: episode.id
-    }
+      episodeId: episode.id,
+    },
   });
 
   await prisma.readEvent.create({
     data: {
       userId: session?.user?.id ?? null,
-      episodeId: episode.id
-    }
+      episodeId: episode.id,
+    },
   });
 
-  // Fetch next episode BEFORE returning JSX
   const next = await getNextEpisode(episode.seriesId, episode.episodeNumber);
 
-  // Render the episode normally
-  return (
-    <main className="p-8 max-w-3xl mx-auto space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">{episode.title}</h1>
-        <p className="text-slate-400">
-          Episode {episode.episodeNumber} • {episode.readTime} min read
-        </p>
-        <p className="text-slate-500 text-sm">
-          From: {episode.series.title}
-        </p>
-      </div>
-
-      <article className="prose prose-invert max-w-none">
-        {episode.body}
-      </article>
+  const sidebar = (
+    <aside className="theme-panel rounded-[28px] border border-[var(--border-color)] p-5">
+      <p className="eyebrow">Series Info</p>
+      <h2 className="theme-heading mt-3 text-2xl font-semibold">{episode.series.title}</h2>
+      <p className="theme-meta mt-3 text-sm leading-6">
+        {episode.series.description}
+      </p>
 
       {next && (
-        <div className="mt-12 p-6 bg-slate-900 border border-slate-800 rounded-lg">
-          <h2 className="text-xl font-bold mb-2">Up Next</h2>
-          <p className="text-slate-400 mb-4">{next.title}</p>
-
-          <a
-            href={`/episode/${next.id}`}
-            className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded font-semibold inline-block"
-          >
+        <div className="mt-6">
+          <p className="eyebrow">Next Episode</p>
+          <p className="theme-heading mt-2 font-medium">{next.title}</p>
+          <Link href={`/episode/${next.id}`} className="story-button-primary mt-4 inline-flex">
             Continue to Episode {next.episodeNumber}
-          </a>
+          </Link>
         </div>
       )}
+    </aside>
+  );
 
-      <div className="pt-10">
-        <a
-          href={`/series/${episode.seriesId}`}
-          className="text-blue-400 hover:underline"
-        >
-          Back to series
-        </a>
-      </div>
-    </main>
+  return (
+    <ReaderChrome
+      backHref={`/series/${episode.seriesId}`}
+      episodeTitle={episode.title}
+    >
+      <main className="px-4 py-6 md:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-[1400px] gap-8 lg:grid-cols-[minmax(0,700px)_320px] lg:items-start lg:justify-center">
+          <div className="min-w-0">
+            <header className="mb-8">
+              <p className="eyebrow">
+                Episode {episode.episodeNumber} | {episode.readTime} min read
+              </p>
+              <h1 className="font-heading theme-heading mt-3 text-4xl font-semibold md:text-5xl">
+                {episode.title}
+              </h1>
+            </header>
+
+            <article className="mx-auto max-w-[700px]">
+              <div className="theme-body space-y-6 text-base leading-8 md:text-lg">
+                {episode.body
+                  .split(/\n\s*\n/)
+                  .filter(Boolean)
+                  .map((paragraph, index) => (
+                    <p key={`${episode.id}-${index}`}>{paragraph.trim()}</p>
+                  ))}
+              </div>
+            </article>
+          </div>
+
+          <div className="hidden lg:block">{sidebar}</div>
+        </div>
+
+        <div className="mx-auto mt-8 max-w-[700px] lg:hidden">{sidebar}</div>
+      </main>
+    </ReaderChrome>
   );
 }
-
