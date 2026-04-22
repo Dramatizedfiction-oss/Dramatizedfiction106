@@ -2,35 +2,35 @@ export type AppShellUser = {
   role?: string | null;
 } | null;
 
-export type NavigationItem = {
-  href: string;
-  label: string;
-  section: "discover" | "writer" | "ceo";
+export type TrendingStory = {
+  id: string;
+  title: string;
+  description?: string | null;
+  reads?: number;
 };
 
-export function getNavigationItems(user: AppShellUser): NavigationItem[] {
-  const items: NavigationItem[] = [
-    { href: "/", label: "Home", section: "discover" },
-    { href: "/explore", label: "Explore", section: "discover" },
+export type UtilityItem = {
+  href: string;
+  label: string;
+  description: string;
+};
+
+export function getUtilityItems(): UtilityItem[] {
+  return [
+    {
+      href: "/settings",
+      label: "Settings",
+      description: "Theme, reading preferences, and account controls.",
+    },
+    {
+      href: "/about",
+      label: "About Platform",
+      description: "What Dramatized Fiction is building and why it exists.",
+    },
+    {
+      href: "/ai-usage",
+      label: "AI Usage",
+      description: "How AI is used across the platform and creator workflows.",
+    },
   ];
-
-  if (user && ["AUTHOR", "ADMIN", "CEO"].includes(user.role ?? "")) {
-    items.push(
-      { href: "/writer", label: "Dashboard", section: "writer" },
-      { href: "/writer/series", label: "Your Series", section: "writer" },
-      { href: "/writer/episodes", label: "Episodes", section: "writer" },
-      { href: "/writer/stats", label: "Stats", section: "writer" },
-    );
-  }
-
-  if (user?.role === "CEO") {
-    items.push(
-      { href: "/ceo", label: "CEO Dashboard", section: "ceo" },
-      { href: "/ceo/settings", label: "Settings", section: "ceo" },
-      { href: "/ceo/users", label: "Users", section: "ceo" },
-      { href: "/ceo/analytics", label: "Analytics", section: "ceo" },
-    );
-  }
-
-  return items;
 }
