@@ -1,8 +1,7 @@
 import "./globals.css";
 import { auth } from "@/auth";
 import Footer from "@/components/Footer";
-import Navbar from "@/components/Navbar";
-import Sidebar from "@/components/Sidebar";
+import AppShell from "@/components/app-shell/AppShell";
 
 export default async function RootLayout({
   children,
@@ -16,15 +15,7 @@ export default async function RootLayout({
     <html lang="en">
       <body>
         <div className="min-h-screen">
-          <Navbar user={user} />
-          <div className="page-shell">
-            <div className="flex flex-col gap-6 lg:flex-row">
-              <Sidebar user={user} />
-              <div className="min-w-0 flex-1">
-                <div className="surface-panel overflow-hidden">{children}</div>
-              </div>
-            </div>
-          </div>
+          <AppShell user={user}>{children}</AppShell>
           <Footer />
         </div>
       </body>

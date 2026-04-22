@@ -19,6 +19,15 @@
     --font-reading: "Cormorant Garamond", serif;
   }
 
+  html.light {
+    --page-bg: #f4f1ea;
+    --panel-bg: rgba(255, 255, 255, 0.82);
+    --panel-border: rgba(15, 23, 42, 0.08);
+    --sidebar-bg: rgba(250, 249, 245, 0.96);
+    --foreground: 15 23 42;
+    --muted: 71 85 105;
+  }
+
   * {
     box-sizing: border-box;
     scrollbar-width: thin;
@@ -53,6 +62,13 @@
       radial-gradient(circle at left top, rgba(59, 130, 246, 0.12), transparent 18%),
       linear-gradient(180deg, #020202 0%, #06060a 45%, #020202 100%);
     background-color: var(--page-bg);
+  }
+
+  html.light body {
+    background:
+      radial-gradient(circle at top, rgba(124, 58, 237, 0.12), transparent 28%),
+      radial-gradient(circle at left top, rgba(59, 130, 246, 0.08), transparent 18%),
+      linear-gradient(180deg, #faf7f1 0%, #f4f1ea 45%, #efe9de 100%);
   }
 
   a {
