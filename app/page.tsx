@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/auth";
+import StoryCard from "@/components/StoryCard";
 import { prisma } from "@/lib/prisma";
 
 export default async function HomePage() {
@@ -117,29 +118,19 @@ export default async function HomePage() {
 
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               {featuredSeries.map((series) => (
-                <Link
+                <StoryCard
                   key={series.id}
-                  href={`/series/${series.id}`}
-                  className="glass-panel theme-panel-hover rounded-[24px] border border-[var(--border-color)] p-4 transition hover:opacity-80"
-                >
-                  <div className="theme-panel mb-4 flex aspect-[4/5] items-center justify-center rounded-[18px] border text-sm theme-meta">
-                    {series.coverImage ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={series.coverImage}
-                        alt={series.title}
-                        className="h-full w-full rounded-[18px] object-cover"
-                      />
-                    ) : (
-                      <span className="font-mono-df uppercase tracking-[0.24em]">Story Cover</span>
-                    )}
-                  </div>
-                  <p className="eyebrow">By {series.author.name || "Anonymous Author"}</p>
-                  <h3 className="theme-heading mt-2 text-xl font-semibold">{series.title}</h3>
-                  <p className="theme-meta mt-2 line-clamp-3 text-sm">
-                    {series.description}
-                  </p>
-                </Link>
+                  story={{
+                    id: series.id,
+                    title: series.title,
+                    description: series.description,
+                    coverImage: series.coverImage,
+                    author: {
+                      name: series.author.name,
+                    },
+                    tags: series.genre ? [series.genre] : [],
+                  }}
+                />
               ))}
             </div>
           </div>
