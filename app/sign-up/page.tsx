@@ -1,4 +1,4 @@
-import { AuthView } from "@neondatabase/neon-js/auth/react/ui";
+import NeonSignUpView from "@/components/auth/NeonSignUpView";
 
 export default function SignUpPage() {
   return (
@@ -13,7 +13,7 @@ export default function SignUpPage() {
         </p>
 
         <div className="mt-8">
-          <AuthView path="sign-up" />
+          <NeonSignUpView />
         </div>
       </div>
     </main>
