@@ -13,6 +13,13 @@ model User {
   email           String?        @unique
   emailVerified   DateTime?
   image           String?
+  bannerImage     String?
+  bio             String?
+  websiteUrl      String?
+  twitterUrl      String?
+  instagramUrl    String?
+  youtubeUrl      String?
+  discordUrl      String?
   role            Role           @default(READER)
   stripeAccountId String?        @unique
   createdAt       DateTime       @default(now())
@@ -192,6 +199,16 @@ model Book {
 
   author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId String
+}
+
+model CmsArticle {
+  id                 String   @id @default(cuid())
+  slug               String   @unique
+  title              String
+  quickSectionContent String
+  deepSectionContent  String
+  lastUpdated        DateTime @updatedAt
+  createdAt          DateTime @default(now())
 }
 
 enum Role {

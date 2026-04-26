@@ -26,8 +26,10 @@ export default function AppShell({
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const profileRef = useRef<HTMLDivElement | null>(null);
+  const mobileNavRef = useRef<HTMLDivElement | null>(null);
   const isExploreRoute = pathname === "/explore";
   const canWrite =
     user?.role === "AUTHOR" || user?.role === "ADMIN" || user?.role === "CEO";
@@ -44,12 +46,19 @@ export default function AppShell({
   useEffect(() => {
     setSearchOpen(false);
     setProfileOpen(false);
+    setMobileNavOpen(false);
   }, [pathname]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (!profileRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+
+      if (!profileRef.current?.contains(target)) {
         setProfileOpen(false);
+      }
+
+      if (!mobileNavRef.current?.contains(target)) {
+        setMobileNavOpen(false);
       }
     }
 
@@ -57,6 +66,7 @@ export default function AppShell({
       if (event.key === "Escape") {
         setSearchOpen(false);
         setProfileOpen(false);
+        setMobileNavOpen(false);
       }
     }
 
@@ -86,6 +96,20 @@ export default function AppShell({
       .slice(0, 2)
       .toUpperCase();
   }, [user?.name, user?.role]);
+
+  const discoveryLinks = [
+    { href: "/explore", label: "Explore", description: "Main story feed." },
+    {
+      href: "/explore?view=for-you",
+      label: "For You",
+      description: "Future recommendation shelf.",
+    },
+    {
+      href: "/write-with-us",
+      label: "Start Writing With Us",
+      description: "Writer onboarding and application flow.",
+    },
+  ];
 
   return (
     <div className="min-h-screen">
@@ -237,6 +261,15 @@ export default function AppShell({
                 </div>
               )}
             </div>
+
+            <button
+              type="button"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] hover:opacity-80 md:hidden"
+              onClick={() => setMobileNavOpen(true)}
+              aria-label="Open navigation"
+            >
+              Menu
+            </button>
           </div>
         </div>
       </header>
@@ -248,6 +281,94 @@ export default function AppShell({
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
       />
+
+      {mobileNavOpen && (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-40 bg-black/60 md:hidden"
+            onClick={() => setMobileNavOpen(false)}
+            aria-label="Close navigation"
+          />
+
+          <div
+            ref={mobileNavRef}
+            className="fixed inset-y-0 right-0 z-50 w-[320px] max-w-[88vw] border-l border-[var(--border-color)] bg-[var(--sidebar-bg)] p-5 shadow-2xl md:hidden"
+          >
+            <div className="mb-6 flex items-start justify-between gap-3">
+              <div>
+                <p className="eyebrow">Foldout Sidebar</p>
+                <h2 className="font-heading theme-heading mt-3 text-3xl font-semibold">
+                  Discovery
+                </h2>
+                <p className="theme-meta mt-2 text-sm">
+                  Browse, switch themes, and move into writer onboarding.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="story-button-secondary"
+                onClick={() => setMobileNavOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+
+            <nav className="space-y-2">
+              {discoveryLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileNavOpen(false)}
+                  className="theme-panel-hover block rounded-[20px] border border-[var(--border-color)] px-4 py-3"
+                >
+                  <span className="theme-heading block text-sm font-medium">
+                    {item.label}
+                  </span>
+                  <span className="theme-meta mt-1 block text-xs">
+                    {item.description}
+                  </span>
+                </Link>
+              ))}
+            </nav>
+
+            <div className="mt-6 border-t border-[var(--border-color)] pt-5">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="story-button-secondary w-full justify-center"
+              >
+                {theme === "dark" ? "Switch to Light" : "Switch to Dark"}
+              </button>
+            </div>
+
+            {!user && (
+              <div className="mt-4">
+                <Link
+                  href="/api/auth/signin"
+                  onClick={() => setMobileNavOpen(false)}
+                  className="story-button-primary w-full justify-center"
+                >
+                  Sign In
+                </Link>
+              </div>
+            )}
+
+            {user && canWrite && (
+              <div className="mt-4">
+                <Link
+                  href="/writer"
+                  onClick={() => setMobileNavOpen(false)}
+                  className="story-button-secondary w-full justify-center"
+                >
+                  Writer Studio
+                </Link>
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       <div className="page-shell">
         <main className="min-w-0">

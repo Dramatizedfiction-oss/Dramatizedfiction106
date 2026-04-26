@@ -1,6 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { WRITER_ONBOARDING_SLUG } from "@/lib/cms";
+
+type OnboardingArticle = {
+  title: string;
+  quickSectionContent: string;
+  deepSectionContent: string;
+  lastUpdated: string;
+};
 
 export default function CEOSettingsPage() {
   const [siteName, setSiteName] = useState("");
@@ -10,6 +18,12 @@ export default function CEOSettingsPage() {
   const [phaseThreeUnlocked, setPhaseThreeUnlocked] = useState(false);
   const [phaseTwoCode, setPhaseTwoCode] = useState("");
   const [phaseThreeCode, setPhaseThreeCode] = useState("");
+  const [article, setArticle] = useState<OnboardingArticle>({
+    title: "",
+    quickSectionContent: "",
+    deepSectionContent: "",
+    lastUpdated: "",
+  });
 
   useEffect(() => {
     fetch("/api/settings")
@@ -21,6 +35,10 @@ export default function CEOSettingsPage() {
         setPhaseTwoUnlocked(data.phaseTwoUnlocked);
         setPhaseThreeUnlocked(data.phaseThreeUnlocked);
       });
+
+    fetch(`/api/cms/articles/${WRITER_ONBOARDING_SLUG}`)
+      .then((res) => res.json())
+      .then((data) => setArticle(data));
   }, []);
 
   async function saveSettings() {
@@ -33,110 +51,202 @@ export default function CEOSettingsPage() {
         phaseTwoUnlocked,
         phaseThreeUnlocked,
         phaseTwoCode,
-        phaseThreeCode
-      })
+        phaseThreeCode,
+      }),
     });
 
     setPhaseTwoCode("");
     setPhaseThreeCode("");
-    alert("Settings saved.");
+    alert("Platform settings saved.");
+  }
+
+  async function saveOnboardingArticle() {
+    const response = await fetch(`/api/cms/articles/${WRITER_ONBOARDING_SLUG}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: article.title,
+        quickSectionContent: article.quickSectionContent,
+        deepSectionContent: article.deepSectionContent,
+      }),
+    });
+
+    const updated = await response.json();
+    setArticle(updated);
+    alert("Writer onboarding updated.");
   }
 
   return (
-    <main className="p-8 max-w-xl mx-auto space-y-6">
-      <h1 className="text-3xl font-bold">Platform Settings</h1>
+    <main className="px-4 py-6 md:px-6 lg:px-8">
+      <div className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <section className="theme-panel rounded-[28px] border border-[var(--border-color)] p-6">
+          <p className="eyebrow">Platform Settings</p>
+          <h1 className="font-heading theme-heading mt-3 text-4xl font-semibold">
+            Command Center controls
+          </h1>
 
-      <div className="space-y-4">
-        <label className="block">
-          <span className="text-slate-300">Site Name</span>
-          <input
-            className="w-full p-2 bg-slate-900 border border-slate-700 rounded mt-1"
-            value={siteName}
-            onChange={(e) => setSiteName(e.target.value)}
-          />
-        </label>
+          <div className="mt-6 space-y-4">
+            <label className="block">
+              <span className="theme-meta text-sm">Site Name</span>
+              <input
+                className="mt-2 w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] px-4 py-3 text-[var(--text-primary)]"
+                value={siteName}
+                onChange={(e) => setSiteName(e.target.value)}
+              />
+            </label>
 
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={enableAds}
-            disabled={!phaseThreeUnlocked}
-            onChange={(e) => setEnableAds(e.target.checked)}
-          />
-          <span className="text-slate-300">Enable Ads (Phase 3)</span>
-        </label>
+            <label className="flex items-center gap-3 rounded-2xl border border-[var(--border-color)] px-4 py-3">
+              <input
+                type="checkbox"
+                checked={enableAds}
+                disabled={!phaseThreeUnlocked}
+                onChange={(e) => setEnableAds(e.target.checked)}
+              />
+              <span className="theme-body text-sm">Enable Ads (Phase 3)</span>
+            </label>
 
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={enablePayments}
-            disabled={!phaseTwoUnlocked}
-            onChange={(e) => setEnablePayments(e.target.checked)}
-          />
-          <span className="text-slate-300">Enable Payments (Phase 2)</span>
-        </label>
+            <label className="flex items-center gap-3 rounded-2xl border border-[var(--border-color)] px-4 py-3">
+              <input
+                type="checkbox"
+                checked={enablePayments}
+                disabled={!phaseTwoUnlocked}
+                onChange={(e) => setEnablePayments(e.target.checked)}
+              />
+              <span className="theme-body text-sm">Enable Payments (Phase 2)</span>
+            </label>
 
-        <div className="rounded-lg border border-slate-800 bg-slate-950 p-4 space-y-3">
-          <div>
-            <p className="text-slate-200 font-semibold">Phase 2 Unlock</p>
-            <p className="text-slate-400 text-sm">
-              Monetization stays inactive until unlocked with the CEO code.
-            </p>
-          </div>
-
-          <input
-            className="w-full p-2 bg-slate-900 border border-slate-700 rounded"
-            placeholder={phaseTwoUnlocked ? "Phase 2 already unlocked" : "Enter CEO code"}
-            value={phaseTwoCode}
-            onChange={(e) => setPhaseTwoCode(e.target.value)}
-            disabled={phaseTwoUnlocked}
-          />
-
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
+            <UnlockCard
+              title="Phase 2 Unlock"
+              description="Monetization stays inactive until unlocked with the CEO code."
+              code={phaseTwoCode}
+              setCode={setPhaseTwoCode}
               checked={phaseTwoUnlocked}
-              disabled={phaseTwoUnlocked}
-              onChange={(e) => setPhaseTwoUnlocked(e.target.checked)}
+              setChecked={setPhaseTwoUnlocked}
+              placeholder={phaseTwoUnlocked ? "Phase 2 already unlocked" : "Enter CEO code"}
             />
-            <span className="text-slate-300">Unlock Phase 2</span>
-          </label>
-        </div>
 
-        <div className="rounded-lg border border-slate-800 bg-slate-950 p-4 space-y-3">
-          <div>
-            <p className="text-slate-200 font-semibold">Phase 3 Unlock</p>
-            <p className="text-slate-400 text-sm">
-              Ads remain void until unlocked with the CEO code.
-            </p>
-          </div>
-
-          <input
-            className="w-full p-2 bg-slate-900 border border-slate-700 rounded"
-            placeholder={phaseThreeUnlocked ? "Phase 3 already unlocked" : "Enter CEO code"}
-            value={phaseThreeCode}
-            onChange={(e) => setPhaseThreeCode(e.target.value)}
-            disabled={phaseThreeUnlocked}
-          />
-
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
+            <UnlockCard
+              title="Phase 3 Unlock"
+              description="Ads remain void until unlocked with the CEO code."
+              code={phaseThreeCode}
+              setCode={setPhaseThreeCode}
               checked={phaseThreeUnlocked}
-              disabled={phaseThreeUnlocked}
-              onChange={(e) => setPhaseThreeUnlocked(e.target.checked)}
+              setChecked={setPhaseThreeUnlocked}
+              placeholder={phaseThreeUnlocked ? "Phase 3 already unlocked" : "Enter CEO code"}
             />
-            <span className="text-slate-300">Unlock Phase 3</span>
-          </label>
-        </div>
 
-        <button
-          onClick={saveSettings}
-          className="w-full bg-blue-600 hover:bg-blue-500 p-3 rounded font-semibold"
-        >
-          Save Settings
-        </button>
+            <button onClick={saveSettings} className="story-button-primary">
+              Save Platform Settings
+            </button>
+          </div>
+        </section>
+
+        <section className="theme-panel rounded-[28px] border border-[var(--border-color)] p-6">
+          <p className="eyebrow">Writer Onboarding CMS</p>
+          <h2 className="font-heading theme-heading mt-3 text-4xl font-semibold">
+            Shared onboarding article
+          </h2>
+          <p className="theme-meta mt-3 text-sm">
+            This powers the writer onboarding flow. The UI reads from this article instead of hardcoded page copy.
+          </p>
+
+          <div className="mt-6 space-y-4">
+            <label className="block">
+              <span className="theme-meta text-sm">Title</span>
+              <input
+                className="mt-2 w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] px-4 py-3 text-[var(--text-primary)]"
+                value={article.title}
+                onChange={(e) =>
+                  setArticle((current) => ({ ...current, title: e.target.value }))
+                }
+              />
+            </label>
+
+            <label className="block">
+              <span className="theme-meta text-sm">Quick section content</span>
+              <textarea
+                className="mt-2 min-h-[160px] w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] px-4 py-3 text-[var(--text-primary)]"
+                value={article.quickSectionContent}
+                onChange={(e) =>
+                  setArticle((current) => ({
+                    ...current,
+                    quickSectionContent: e.target.value,
+                  }))
+                }
+              />
+            </label>
+
+            <label className="block">
+              <span className="theme-meta text-sm">Deep section content</span>
+              <textarea
+                className="mt-2 min-h-[220px] w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] px-4 py-3 text-[var(--text-primary)]"
+                value={article.deepSectionContent}
+                onChange={(e) =>
+                  setArticle((current) => ({
+                    ...current,
+                    deepSectionContent: e.target.value,
+                  }))
+                }
+              />
+            </label>
+
+            <p className="theme-meta text-xs uppercase tracking-[0.24em]">
+              Last updated {article.lastUpdated ? new Date(article.lastUpdated).toLocaleString() : "Not saved yet"}
+            </p>
+
+            <button onClick={saveOnboardingArticle} className="story-button-primary">
+              Save Onboarding Article
+            </button>
+          </div>
+        </section>
       </div>
     </main>
+  );
+}
+
+function UnlockCard({
+  title,
+  description,
+  code,
+  setCode,
+  checked,
+  setChecked,
+  placeholder,
+}: {
+  title: string;
+  description: string;
+  code: string;
+  setCode: (value: string) => void;
+  checked: boolean;
+  setChecked: (value: boolean) => void;
+  placeholder: string;
+}) {
+  return (
+    <div className="rounded-[24px] border border-[var(--border-color)] bg-[var(--bg-primary)] p-4">
+      <div>
+        <p className="theme-heading font-semibold">{title}</p>
+        <p className="theme-meta mt-2 text-sm">{description}</p>
+      </div>
+
+      <input
+        className="mt-4 w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3 text-[var(--text-primary)]"
+        placeholder={placeholder}
+        value={code}
+        onChange={(e) => setCode(e.target.value)}
+        disabled={checked}
+      />
+
+      <label className="mt-4 flex items-center gap-3">
+        <input
+          type="checkbox"
+          checked={checked}
+          disabled={checked}
+          onChange={(e) => setChecked(e.target.checked)}
+        />
+        <span className="theme-body text-sm">Unlock</span>
+      </label>
+    </div>
   );
 }

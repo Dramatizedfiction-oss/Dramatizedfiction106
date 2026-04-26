@@ -85,6 +85,10 @@ export default async function HomePage() {
                 Explore Stories
               </Link>
 
+              <Link href="/write-with-us" className="story-button-secondary min-w-[220px]">
+                Start Writing With Us
+              </Link>
+
               {continueEpisode ? (
                 <Link href={`/episode/${continueEpisode.id}`} className="story-button-secondary min-w-[180px]">
                   Continue Reading
@@ -153,6 +157,19 @@ export default async function HomePage() {
                 <li>Animated liquid homepage wordmark inspired directly by your Base44 reference.</li>
                 <li>Reusable glass panels and stronger visual hierarchy across launch surfaces.</li>
               </ul>
+            </div>
+
+            <div className="glass-panel rounded-[28px] border p-6">
+              <p className="eyebrow">For Writers</p>
+              <h3 className="font-heading theme-heading mt-3 text-3xl font-semibold">
+                Onboarding now has a real home.
+              </h3>
+              <p className="theme-meta mt-4">
+                Start with the shared onboarding article, read the deeper context if you want it, and move into the application step from a cleaner flow.
+              </p>
+              <Link href="/write-with-us" className="story-button-primary mt-5">
+                Open Writer Onboarding
+              </Link>
             </div>
           </div>
         </div>
