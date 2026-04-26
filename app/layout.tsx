@@ -11,16 +11,6 @@ export default async function RootLayout({
 }) {
   const session = await auth();
   const user = session?.user || null;
-  const trendingStories = await prisma.series.findMany({
-    orderBy: [{ reads: "desc" }, { createdAt: "desc" }],
-    take: 3,
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      reads: true,
-    },
-  });
 
   const [searchStories, searchAuthors] = await Promise.all([
     prisma.series.findMany({
@@ -52,7 +42,6 @@ export default async function RootLayout({
         <div className="min-h-screen">
           <AppShell
             user={user}
-            trendingStories={trendingStories}
             searchStories={searchStories}
             searchAuthors={searchAuthors}
           >
