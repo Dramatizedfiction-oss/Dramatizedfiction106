@@ -188,7 +188,7 @@ export default function AppShell({
                   {!user && (
                     <div className="space-y-1">
                       <DropdownLink
-                        href="/api/auth/signin"
+                        href="/sign-in"
                         label="Sign In"
                         onNavigate={() => setProfileOpen(false)}
                       />
@@ -346,7 +346,7 @@ export default function AppShell({
             {!user && (
               <div className="mt-4">
                 <Link
-                  href="/api/auth/signin"
+                  href="/sign-in"
                   onClick={() => setMobileNavOpen(false)}
                   className="story-button-primary w-full justify-center"
                 >
