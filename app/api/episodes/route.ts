@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { serializeAiUsageTag } from "@/lib/ai-usage";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
@@ -9,7 +10,7 @@ export async function POST(req: Request) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  const { title, body, bodyText, teaser, readTime, episodeNumber, seriesId } =
+  const { title, body, bodyText, teaser, readTime, episodeNumber, seriesId, aiUsageTag } =
     await req.json();
 
   const latestEpisode = await prisma.episode.findFirst({
@@ -23,6 +24,7 @@ export async function POST(req: Request) {
       title,
       body: body ?? bodyText ?? "",
       teaser: teaser || null,
+      aiUsageTag: serializeAiUsageTag(aiUsageTag),
       readTime,
       episodeNumber: episodeNumber ?? (latestEpisode?.episodeNumber ?? 0) + 1,
       seriesId,

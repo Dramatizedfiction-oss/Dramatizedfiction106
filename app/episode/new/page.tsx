@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import AiUsageSelector from "@/components/AiUsageSelector";
+import { type AiUsageTag } from "@/lib/ai-usage";
 
 export default function NewEpisodePage() {
   const [seriesId, setSeriesId] = useState("");
@@ -9,6 +11,7 @@ export default function NewEpisodePage() {
   const [bodyText, setBodyText] = useState("");
   const [teaser, setTeaser] = useState("");
   const [readTime, setReadTime] = useState(5);
+  const [aiUsageTag, setAiUsageTag] = useState<AiUsageTag>("AI FREE");
 
   async function createEpisode() {
     await fetch("/api/episodes", {
@@ -19,7 +22,8 @@ export default function NewEpisodePage() {
         episodeNumber,
         bodyText,
         teaser,
-        readTime
+        readTime,
+        aiUsageTag,
       })
     });
 
@@ -75,6 +79,8 @@ export default function NewEpisodePage() {
         value={readTime}
         onChange={(e) => setReadTime(Number(e.target.value))}
       />
+
+      <AiUsageSelector value={aiUsageTag} onChange={setAiUsageTag} />
 
       <button
         onClick={createEpisode}

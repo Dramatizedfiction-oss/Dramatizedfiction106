@@ -1,45 +1,73 @@
+import Link from "next/link";
 import { auth } from "@/auth";
-import { requireRole } from "@/lib/utils";
+import { prisma } from "@/lib/prisma";
 
 export default async function WriterHome() {
   const session = await auth();
-  requireRole(session, ["AUTHOR", "ADMIN", "CEO"]);
+
+  if (!session?.user?.id) {
+    return <p className="theme-meta">Sign in to view your studio.</p>;
+  }
+
+  const [seriesCount, episodeCount, stats] = await Promise.all([
+    prisma.series.count({
+      where: { authorId: session.user.id },
+    }),
+    prisma.episode.count({
+      where: { authorId: session.user.id },
+    }),
+    prisma.userStats.findUnique({
+      where: { userId: session.user.id },
+    }),
+  ]);
 
   return (
-    <main className="p-8 space-y-6">
-      <h1 className="text-3xl font-bold">Writer Studio</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <a
-          href="/writer/series"
-          className="bg-slate-900 p-6 rounded-lg border border-slate-800 hover:border-slate-600 transition"
-        >
-          <h2 className="text-xl font-semibold">Your Series</h2>
-          <p className="text-slate-400 text-sm mt-2">
-            Manage and create new series.
-          </p>
-        </a>
-
-        <a
-          href="/writer/episodes"
-          className="bg-slate-900 p-6 rounded-lg border border-slate-800 hover:border-slate-600 transition"
-        >
-          <h2 className="text-xl font-semibold">Your Episodes</h2>
-          <p className="text-slate-400 text-sm mt-2">
-            View and edit your episodes.
-          </p>
-        </a>
-
-        <a
-          href="/writer/stats"
-          className="bg-slate-900 p-6 rounded-lg border border-slate-800 hover:border-slate-600 transition"
-        >
-          <h2 className="text-xl font-semibold">Stats</h2>
-          <p className="text-slate-400 text-sm mt-2">
-            Track your reads and performance.
-          </p>
-        </a>
+    <div className="space-y-8">
+      <div>
+        <p className="eyebrow">Dashboard</p>
+        <h2 className="font-heading theme-heading mt-3 text-4xl font-semibold">
+          Your studio at a glance
+        </h2>
+        <p className="theme-meta mt-3 max-w-3xl text-sm leading-6">
+          Move between one panel at a time and keep the workspace focused on writing, shaping series, and monitoring how stories travel.
+        </p>
       </div>
-    </main>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <StatCard label="Series" value={String(seriesCount)} />
+        <StatCard label="Episodes" value={String(episodeCount)} />
+        <StatCard label="Reads" value={String(stats?.totalReads ?? 0)} />
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        <div className="theme-panel rounded-[24px] border border-[var(--border-color)] p-5">
+          <p className="eyebrow">Quick Actions</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link href="/series/new" className="story-button-primary">
+              New Series
+            </Link>
+            <Link href="/episode/new" className="story-button-secondary">
+              New Episode
+            </Link>
+          </div>
+        </div>
+
+        <div className="theme-panel rounded-[24px] border border-[var(--border-color)] p-5">
+          <p className="eyebrow">Trust Layer</p>
+          <p className="theme-body mt-4 text-sm leading-6">
+            Every series and episode now carries a required AI usage label, and readers can report incorrect tagging without interrupting the reading flow.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="theme-panel rounded-[24px] border border-[var(--border-color)] p-5">
+      <p className="eyebrow">{label}</p>
+      <p className="font-heading theme-heading mt-3 text-4xl font-semibold">{value}</p>
+    </div>
   );
 }

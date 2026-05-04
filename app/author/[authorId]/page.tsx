@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AiUsageBadge from "@/components/AiUsageBadge";
 import AuthorWorksCarousel from "@/components/AuthorWorksCarousel";
 import { prisma } from "@/lib/prisma";
 
@@ -72,8 +73,9 @@ export default async function AuthorProfilePage({
       description: series.description,
       coverImage: series.coverImage,
       href: `/series/${series.id}`,
-      meta: `${series.genre || "Series"} · ${series.episodes.length} episode${series.episodes.length === 1 ? "" : "s"}`,
+      meta: `${series.genre || "Series"} | ${series.episodes.length} episode${series.episodes.length === 1 ? "" : "s"}`,
       badge: "Series",
+      aiUsageTag: series.aiUsageTag,
     })),
     ...wipBooks.map((book) => ({
       id: `book-${book.id}`,
@@ -83,6 +85,7 @@ export default async function AuthorProfilePage({
       href: `/author/${author.id}`,
       meta: book.status || "WIP",
       badge: "Book",
+      aiUsageTag: null,
     })),
   ];
 
@@ -94,6 +97,7 @@ export default async function AuthorProfilePage({
     href: `/author/${author.id}`,
     meta: "Rating placeholder: 4.8/5",
     badge: "Completed",
+    aiUsageTag: null,
   }));
 
   return (
@@ -193,7 +197,10 @@ export default async function AuthorProfilePage({
                     className="theme-panel-hover flex items-center justify-between rounded-[20px] border border-[var(--border-color)] px-4 py-3"
                   >
                     <div>
-                      <p className="theme-heading font-medium">{series.title}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="theme-heading font-medium">{series.title}</p>
+                        <AiUsageBadge tag={series.aiUsageTag} compact />
+                      </div>
                       <p className="theme-meta mt-1 text-sm">{series.genre}</p>
                     </div>
                     <span className="theme-meta text-xs">
@@ -211,9 +218,12 @@ export default async function AuthorProfilePage({
                     href={`/episode/${episode.id}`}
                     className="theme-panel-hover block rounded-[20px] border border-[var(--border-color)] px-4 py-3"
                   >
-                    <p className="theme-heading font-medium">{episode.title}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="theme-heading font-medium">{episode.title}</p>
+                      <AiUsageBadge tag={episode.aiUsageTag} compact />
+                    </div>
                     <p className="theme-meta mt-1 text-sm">
-                      {episode.series.title} · Episode {episode.episodeNumber}
+                      {episode.series.title} | Episode {episode.episodeNumber}
                     </p>
                   </Link>
                 ))}

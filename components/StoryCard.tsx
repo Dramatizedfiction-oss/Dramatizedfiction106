@@ -1,4 +1,6 @@
 import Link from "next/link";
+import AiUsageBadge from "@/components/AiUsageBadge";
+import ReportAiTagButton from "@/components/ReportAiTagButton";
 
 type StoryCardProps = {
   story: {
@@ -11,6 +13,7 @@ type StoryCardProps = {
       name?: string | null;
     } | null;
     tags?: string[] | null;
+    aiUsageTag?: string | null;
   };
   href?: string;
   className?: string;
@@ -61,7 +64,10 @@ export default function StoryCard({
       </div>
 
       <div className="px-1 pb-1 pt-4">
-        <p className="eyebrow">By {authorName}</p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="eyebrow">By {authorName}</p>
+          <AiUsageBadge tag={story.aiUsageTag} compact />
+        </div>
         <h2 className="font-heading theme-heading mt-2 text-xl font-semibold md:text-2xl">
           {title}
         </h2>
@@ -81,6 +87,10 @@ export default function StoryCard({
             ))}
           </div>
         )}
+
+        <div className="mt-4 flex justify-end">
+          <ReportAiTagButton subject={title} compact />
+        </div>
       </div>
     </Link>
   );

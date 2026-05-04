@@ -1,55 +1,54 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { requireRole } from "@/lib/utils";
 import SeriesCard from "@/components/SeriesCard";
-
-// Local type to satisfy strict TypeScript
-type Series = {
-  id: string;
-  title: string;
-  description: string;
-  coverImage?: string | null;
-  authorId: string;
-  createdAt: Date;
-};
 
 export default async function WriterSeriesPage() {
   const session = await auth();
-  requireRole(session, ["AUTHOR", "ADMIN", "CEO"]);
 
-  // Strict-mode fix: TS requires a null check even after requireRole()
   if (!session?.user?.id) {
-    return <div className="p-8">Not authorized.</div>;
+    return <div className="theme-meta">Not authorized.</div>;
   }
 
-  // Explicitly type the Prisma result
-  const series: Series[] = await prisma.series.findMany({
+  const series = await prisma.series.findMany({
     where: { authorId: session.user.id },
-    orderBy: { createdAt: "desc" }
+    orderBy: { createdAt: "desc" },
+    include: {
+      author: {
+        select: {
+          name: true,
+        },
+      },
+    },
   });
 
   return (
-    <main className="p-8 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Your Series</h1>
-        <a
-          href="/series/new"
-          className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded font-semibold"
-        >
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="eyebrow">Series</p>
+          <h2 className="font-heading theme-heading mt-3 text-4xl font-semibold">
+            Shape your story worlds
+          </h2>
+        </div>
+        <Link href="/series/new" className="story-button-primary">
           New Series
-        </a>
+        </Link>
       </div>
 
-      {series.length === 0 && (
-        <p className="text-slate-400">You haven't created any series yet.</p>
+      {series.length === 0 ? (
+        <div className="theme-panel rounded-[24px] border border-dashed border-[var(--border-color)] p-6">
+          <p className="theme-meta text-sm">
+            You have not created any series yet. Start with a title, core premise, and AI usage label.
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {series.map((item) => (
+            <SeriesCard key={item.id} series={item} />
+          ))}
+        </div>
       )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {series.map((s: Series) => (
-          <SeriesCard key={s.id} series={s} />
-        ))}
-      </div>
-    </main>
+    </div>
   );
 }
-

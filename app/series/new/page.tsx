@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import AiUsageSelector from "@/components/AiUsageSelector";
+import { type AiUsageTag } from "@/lib/ai-usage";
 
 export default function NewSeriesPage() {
   const [title, setTitle] = useState("");
@@ -8,6 +10,7 @@ export default function NewSeriesPage() {
   const [genre, setGenre] = useState("");
   const [tags, setTags] = useState("");
   const [coverImage, setCoverImage] = useState("");
+  const [aiUsageTag, setAiUsageTag] = useState<AiUsageTag>("AI FREE");
 
   async function createSeries() {
     await fetch("/api/series", {
@@ -17,7 +20,8 @@ export default function NewSeriesPage() {
         description,
         genre,
         tags: tags.split(",").map((t) => t.trim()),
-        coverImage
+        coverImage,
+        aiUsageTag,
       })
     });
 
@@ -63,6 +67,8 @@ export default function NewSeriesPage() {
         value={coverImage}
         onChange={(e) => setCoverImage(e.target.value)}
       />
+
+      <AiUsageSelector value={aiUsageTag} onChange={setAiUsageTag} />
 
       <button
         onClick={createSeries}

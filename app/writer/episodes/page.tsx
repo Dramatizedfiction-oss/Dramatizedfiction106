@@ -1,56 +1,59 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { requireRole } from "@/lib/utils";
 import EpisodeCard from "@/components/EpisodeCard";
-
-// TEMP FIX: avoid implicit any while Prisma client updates
-type EpisodeLite = {
-  id: string;
-  title: string;
-  episodeNumber: number;
-  teaser?: string | null;
-  readTime: number;
-  readerCount: number;
-  locked: boolean;
-  coverImage?: string | null;
-};
-
 
 export default async function WriterEpisodesPage() {
   const session = await auth();
-  requireRole(session, ["AUTHOR", "ADMIN", "CEO"]);
 
-  // NextAuth v5 safety check
   if (!session?.user?.id) {
-    return <p className="p-8 text-red-400">You must be logged in.</p>;
+    return <p className="theme-meta">You must be logged in.</p>;
   }
 
   const episodes = await prisma.episode.findMany({
     where: { authorId: session.user.id },
-    orderBy: { createdAt: "desc" }
+    orderBy: { createdAt: "desc" },
   });
 
   return (
-    <main className="p-8 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Your Episodes</h1>
-        <a
-          href="/episode/new"
-          className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded font-semibold"
-        >
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="eyebrow">Episodes</p>
+          <h2 className="font-heading theme-heading mt-3 text-4xl font-semibold">
+            Keep every release intentional
+          </h2>
+        </div>
+        <Link href="/episode/new" className="story-button-primary">
           New Episode
-        </a>
+        </Link>
       </div>
 
-      {episodes.length === 0 && (
-        <p className="text-slate-400">You haven't written any episodes yet.</p>
+      {episodes.length === 0 ? (
+        <div className="theme-panel rounded-[24px] border border-dashed border-[var(--border-color)] p-6">
+          <p className="theme-meta text-sm">
+            You have not published any episodes yet. Teasers and AI usage labels will appear automatically here once you do.
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4 xl:grid-cols-2">
+          {episodes.map((episode) => (
+            <EpisodeCard
+              key={episode.id}
+              episode={{
+                id: episode.id,
+                title: episode.title,
+                episodeNumber: episode.episodeNumber,
+                teaser: episode.teaser,
+                body: episode.body,
+                readTime: episode.readTime,
+                readerCount: episode.readerCount,
+                aiUsageTag: episode.aiUsageTag,
+              }}
+            />
+          ))}
+        </div>
       )}
-
-      <div className="space-y-4">
-        {episodes.map((ep: EpisodeLite) => (
-  <EpisodeCard key={ep.id} episode={ep} />
-))}
-      </div>
-    </main>
+    </div>
   );
 }

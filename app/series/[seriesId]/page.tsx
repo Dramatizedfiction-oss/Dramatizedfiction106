@@ -1,5 +1,7 @@
 import Link from "next/link";
+import AiUsageBadge from "@/components/AiUsageBadge";
 import EpisodeCarousel from "@/components/EpisodeCarousel";
+import ReportAiTagButton from "@/components/ReportAiTagButton";
 import { prisma } from "@/lib/prisma";
 
 export default async function SeriesPage({
@@ -52,6 +54,10 @@ export default async function SeriesPage({
             <p className="theme-meta mt-3 text-sm md:text-base">
               By {series.author.name || "Anonymous Author"} | Rating placeholder: 4.8/5
             </p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <AiUsageBadge tag={series.aiUsageTag} />
+              <ReportAiTagButton subject={series.title} />
+            </div>
             <p className="theme-body mt-6 max-w-3xl text-base leading-7 md:text-lg">
               {series.description}
             </p>
@@ -86,6 +92,7 @@ export default async function SeriesPage({
             episodeNumber: episode.episodeNumber,
             teaser: episode.teaser,
             body: episode.body,
+            aiUsageTag: episode.aiUsageTag,
             readTime: episode.readTime,
             readerCount: episode.readerCount,
           }))}

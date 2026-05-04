@@ -1,4 +1,4 @@
-import Link from "next/link";
+import WriterPolicyAcknowledgment from "@/components/WriterPolicyAcknowledgment";
 import { WRITER_ONBOARDING_SLUG, getCmsArticle } from "@/lib/cms";
 
 function renderParagraphs(content: string) {
@@ -58,26 +58,7 @@ export default async function WriterOnboardingPage() {
               </div>
             </details>
 
-            <section className="theme-panel rounded-[28px] border border-[var(--border-color)] p-6">
-              <p className="eyebrow">Step 3</p>
-              <h2 className="font-heading theme-heading mt-3 text-3xl font-semibold">
-                Apply to write
-              </h2>
-              <p className="theme-meta mt-4 max-w-2xl text-sm leading-6">
-                When you are ready, move into the writer flow. This entry can be redirected later to a fuller application review system without changing the onboarding article itself.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link
-                  href="/api/auth/signin?callbackUrl=/series/new"
-                  className="story-button-primary"
-                >
-                  Apply Now
-                </Link>
-                <Link href="/explore" className="story-button-secondary">
-                  Keep Exploring
-                </Link>
-              </div>
-            </section>
+            <WriterPolicyAcknowledgment />
           </div>
 
           <aside className="hidden xl:block">

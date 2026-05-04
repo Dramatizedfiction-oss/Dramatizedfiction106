@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRef } from "react";
 
+import AiUsageBadge from "@/components/AiUsageBadge";
+
 type WorkItem = {
   id: string;
   title: string;
@@ -11,6 +13,7 @@ type WorkItem = {
   href: string;
   meta: string;
   badge: string;
+  aiUsageTag?: string | null;
 };
 
 export default function AuthorWorksCarousel({
@@ -94,6 +97,9 @@ export default function AuthorWorksCarousel({
                 <div className="flex items-center justify-between gap-3">
                   <p className="eyebrow">{item.badge}</p>
                   <span className="theme-meta text-xs">{item.meta}</span>
+                </div>
+                <div className="mt-3">
+                  <AiUsageBadge tag={item.aiUsageTag} compact />
                 </div>
                 <h3 className="font-heading theme-heading mt-3 text-2xl font-semibold">
                   {item.title}

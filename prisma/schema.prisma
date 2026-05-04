@@ -21,6 +21,8 @@ model User {
   youtubeUrl      String?
   discordUrl      String?
   role            Role           @default(READER)
+  writerStatus    WriterStatus   @default(BEGINNER)
+  writerPolicyAcknowledged Boolean @default(false)
   stripeAccountId String?        @unique
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -80,6 +82,7 @@ model Series {
   genre       String
   tags        String[]
   coverImage  String?
+  aiUsageTag  AiUsageTag
   reads       Int       @default(0)
   followers   Int       @default(0)
   createdAt   DateTime  @default(now())
@@ -96,6 +99,7 @@ model Episode {
   episodeNumber Int
   body          String
   teaser        String?
+  aiUsageTag     AiUsageTag
   readTime      Int
   readerCount   Int            @default(0)
   locked        Boolean        @default(false)
@@ -216,6 +220,20 @@ enum Role {
   AUTHOR
   ADMIN
   CEO
+}
+
+enum WriterStatus {
+  BEGINNER
+  FULL
+  FEATURED
+  ELITE
+}
+
+enum AiUsageTag {
+  AI_FREE
+  AI_CORRECTED
+  AI_HEAVY
+  AI_WRITTEN
 }
 
 enum PayoutStatus {

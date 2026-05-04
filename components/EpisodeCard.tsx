@@ -1,4 +1,6 @@
 import Link from "next/link";
+import AiUsageBadge from "@/components/AiUsageBadge";
+import ReportAiTagButton from "@/components/ReportAiTagButton";
 
 type EpisodeCardProps = {
   episode: {
@@ -12,6 +14,7 @@ type EpisodeCardProps = {
     readTime?: number | null;
     readerCount?: number | null;
     isRead?: boolean | null;
+    aiUsageTag?: string | null;
   };
 };
 
@@ -50,6 +53,9 @@ export default function EpisodeCard({ episode }: EpisodeCardProps) {
             Season {seasonNumber} | Episode {episodeNumber}
           </p>
           <h3 className="theme-heading mt-3 text-xl font-semibold">{title}</h3>
+          <div className="mt-3">
+            <AiUsageBadge tag={episode.aiUsageTag} compact />
+          </div>
         </div>
 
         <span
@@ -70,6 +76,10 @@ export default function EpisodeCard({ episode }: EpisodeCardProps) {
       <p className="theme-meta mt-5 font-mono-df text-xs uppercase tracking-[0.24em]">
         {readTime} min read | {readerCount} readers
       </p>
+
+      <div className="mt-4 flex justify-end">
+        <ReportAiTagButton subject={title} compact />
+      </div>
     </Link>
   );
 }

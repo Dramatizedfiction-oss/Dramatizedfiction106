@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getNextEpisode } from "@/lib/nextEpisode";
 import { auth } from "@/auth";
 import { canAccessEpisode } from "@/lib/ads";
+import AiUsageBadge from "@/components/AiUsageBadge";
+import ReportAiTagButton from "@/components/ReportAiTagButton";
 import ReaderChrome from "@/components/ReaderChrome";
 import { prisma } from "@/lib/prisma";
 
@@ -78,6 +80,9 @@ export default async function EpisodeReaderPage({
       <p className="theme-meta mt-3 text-sm leading-6">
         {episode.series.description}
       </p>
+      <div className="mt-4">
+        <AiUsageBadge tag={episode.aiUsageTag} />
+      </div>
 
       {next && (
         <div className="mt-6">
@@ -106,6 +111,10 @@ export default async function EpisodeReaderPage({
               <h1 className="font-heading theme-heading mt-3 text-4xl font-semibold md:text-5xl">
                 {episode.title}
               </h1>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <AiUsageBadge tag={episode.aiUsageTag} />
+                <ReportAiTagButton subject={episode.title} />
+              </div>
             </header>
 
             <article className="mx-auto max-w-[700px]">
