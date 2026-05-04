@@ -1,0 +1,31 @@
+
+> dramatized-fiction@1.0.0 start
+> next start
+
+   ▲ Next.js 14.1.0
+   - Local:        http://localhost:3000
+
+ ✓ Ready in 32.1s
+prisma:error 
+Invalid `prisma.series.findMany()` invocation:
+
+
+The column `Series.aiUsageTag` does not exist in the current database.
+PrismaClientKnownRequestError: 
+Invalid `prisma.series.findMany()` invocation:
+
+
+The column `Series.aiUsageTag` does not exist in the current database.
+    at $n.handleRequestError (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\@prisma\client\runtime\library.js:121:7315)
+    at $n.handleAndLogRequestError (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Promise.all (index 1)
+    at async l (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\.next\server\app\page.js:1:4824) {
+  code: 'P2022',
+  clientVersion: '5.22.0',
+  meta: { modelName: 'Series', column: 'Series.aiUsageTag' }
+}
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+  digest: '1079024213'
+}
