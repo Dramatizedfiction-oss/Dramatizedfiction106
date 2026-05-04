@@ -1,6 +1,12 @@
 import Link from "next/link";
 import AiUsageBadge from "@/components/AiUsageBadge";
+import ContentAccessBadge from "@/components/monetization/ContentAccessBadge";
 import ReportAiTagButton from "@/components/ReportAiTagButton";
+import {
+  canUserAccessContent,
+  type MonetizedSeries,
+  type MonetizedUser,
+} from "@/lib/monetization";
 
 type StoryCardProps = {
   story: {
@@ -14,9 +20,11 @@ type StoryCardProps = {
     } | null;
     tags?: string[] | null;
     aiUsageTag?: string | null;
+    monetization?: Partial<MonetizedSeries>;
   };
   href?: string;
   className?: string;
+  viewer?: MonetizedUser | null;
 };
 
 function getPreviewText(story: StoryCardProps["story"]) {
@@ -37,28 +45,47 @@ export default function StoryCard({
   story,
   href,
   className = "",
+  viewer = null,
 }: StoryCardProps) {
   const title = story.title?.trim() || "Untitled Story";
   const authorName = story.author?.name?.trim() || "Anonymous Author";
   const preview = getPreviewText(story);
   const tags = (story.tags || []).filter(Boolean).slice(0, 3);
+  const monetizedContent: MonetizedSeries = {
+    contentType: "series",
+    id: story.id,
+    isFree: story.monetization?.isFree ?? true,
+    isLocked: story.monetization?.isLocked ?? false,
+    price: story.monetization?.price ?? null,
+    creatorId: story.monetization?.creatorId ?? "",
+  };
+  const accessStatus = canUserAccessContent(viewer, monetizedContent).accessStatus;
+  const locked = accessStatus === "locked";
 
   return (
     <Link
       href={href || `/series/${story.id}`}
       className={`glass-panel block h-full overflow-hidden rounded-[24px] border border-[var(--border-color)] p-4 transition-transform duration-200 hover:-translate-y-0.5 hover:opacity-95 ${className}`.trim()}
     >
-      <div className="theme-panel aspect-[4/5] rounded-[18px] border border-[var(--border-color)]">
+      <div className="theme-panel relative aspect-[4/5] rounded-[18px] border border-[var(--border-color)]">
         {story.coverImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={story.coverImage}
             alt={title}
-            className="h-full w-full rounded-[18px] object-cover"
+            className={`h-full w-full rounded-[18px] object-cover ${locked ? "blur-[2px] opacity-70" : ""}`}
           />
         ) : (
           <div className="theme-meta flex h-full items-center justify-center rounded-[18px] px-4 text-center text-xs uppercase tracking-[0.32em]">
             Story Cover
+          </div>
+        )}
+
+        {locked && (
+          <div className="absolute inset-0 flex items-center justify-center rounded-[18px] bg-black/20">
+            <span className="rounded-full border border-white/20 bg-black/40 px-4 py-2 text-xs uppercase tracking-[0.24em] text-white">
+              Locked Preview
+            </span>
           </div>
         )}
       </div>
@@ -66,7 +93,10 @@ export default function StoryCard({
       <div className="px-1 pb-1 pt-4">
         <div className="flex items-center justify-between gap-3">
           <p className="eyebrow">By {authorName}</p>
-          <AiUsageBadge tag={story.aiUsageTag} compact />
+          <div className="flex items-center gap-2">
+            <ContentAccessBadge accessStatus={accessStatus} />
+            <AiUsageBadge tag={story.aiUsageTag} compact />
+          </div>
         </div>
         <h2 className="font-heading theme-heading mt-2 text-xl font-semibold md:text-2xl">
           {title}
@@ -86,6 +116,12 @@ export default function StoryCard({
               </span>
             ))}
           </div>
+        )}
+
+        {locked && (
+          <p className="theme-meta mt-4 text-xs uppercase tracking-[0.2em]">
+            Teaser only | {monetizedContent.price !== null ? `$${monetizedContent.price.toFixed(2)}` : "Premium"}
+          </p>
         )}
 
         <div className="mt-4 flex justify-end">

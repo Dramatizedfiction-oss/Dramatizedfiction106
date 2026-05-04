@@ -3,8 +3,15 @@ import { getNextEpisode } from "@/lib/nextEpisode";
 import { auth } from "@/auth";
 import { canAccessEpisode } from "@/lib/ads";
 import AiUsageBadge from "@/components/AiUsageBadge";
+import PurchasePreviewCard from "@/components/monetization/PurchasePreviewCard";
+import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
 import ReportAiTagButton from "@/components/ReportAiTagButton";
 import ReaderChrome from "@/components/ReaderChrome";
+import {
+  canUserAccessContent,
+  createViewerMonetizationState,
+  type MonetizedEpisode,
+} from "@/lib/monetization";
 import { prisma } from "@/lib/prisma";
 
 export default async function EpisodeReaderPage({
@@ -22,24 +29,46 @@ export default async function EpisodeReaderPage({
   }
 
   const session = await auth();
+  const viewer = createViewerMonetizationState(session?.user?.id);
   const allowed = await canAccessEpisode(session?.user?.id || null, params.episodeId);
+  const episodeMonetization: MonetizedEpisode = {
+    contentType: "episode",
+    seriesId: episode.seriesId,
+    id: episode.id,
+    isFree: !episode.locked,
+    isLocked: episode.locked,
+    price: episode.locked ? 2.99 : null,
+    creatorId: episode.authorId,
+  };
+  const accessStatus = canUserAccessContent(viewer, episodeMonetization).accessStatus;
 
   if (!allowed) {
     return (
-      <main className="mx-auto max-w-xl space-y-6 px-6 py-12">
-        <h1 className="font-heading theme-heading text-3xl font-semibold">
-          Watch Ad to Continue
-        </h1>
-        <p className="theme-meta">
-          This episode is locked. Watch an ad to unlock it.
-        </p>
+      <main className="mx-auto max-w-4xl space-y-6 px-6 py-12">
+        <div className="theme-panel rounded-[28px] border border-[var(--border-color)] p-6">
+          <h1 className="font-heading theme-heading text-3xl font-semibold">
+            Watch Ad to Continue
+          </h1>
+          <p className="theme-meta mt-3">
+            This episode is locked. Watch an ad to unlock it today, or preview the future monetization paths below.
+          </p>
 
-        <a
-          href={`/watch-ad?episode=${params.episodeId}`}
-          className="story-button-primary inline-flex"
-        >
-          Watch Ad
-        </a>
+          <a
+            href={`/watch-ad?episode=${params.episodeId}`}
+            className="story-button-primary mt-5 inline-flex"
+          >
+            Watch Ad
+          </a>
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-2">
+          <SubscriptionPreviewCard user={viewer} />
+          <PurchasePreviewCard
+            contentType="episode"
+            accessStatus={accessStatus}
+            price={episode.locked ? 2.99 : null}
+          />
+        </div>
       </main>
     );
   }
@@ -74,7 +103,8 @@ export default async function EpisodeReaderPage({
   const next = await getNextEpisode(episode.seriesId, episode.episodeNumber);
 
   const sidebar = (
-    <aside className="theme-panel rounded-[28px] border border-[var(--border-color)] p-5">
+    <aside className="space-y-4">
+      <div className="theme-panel rounded-[28px] border border-[var(--border-color)] p-5">
       <p className="eyebrow">Series Info</p>
       <h2 className="theme-heading mt-3 text-2xl font-semibold">{episode.series.title}</h2>
       <p className="theme-meta mt-3 text-sm leading-6">
@@ -93,6 +123,14 @@ export default async function EpisodeReaderPage({
           </Link>
         </div>
       )}
+      </div>
+
+      <SubscriptionPreviewCard user={viewer} />
+      <PurchasePreviewCard
+        contentType="episode"
+        accessStatus={accessStatus}
+        price={episode.locked ? 2.99 : null}
+      />
     </aside>
   );
 

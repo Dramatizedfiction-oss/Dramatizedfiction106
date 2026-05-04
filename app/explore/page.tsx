@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import DiscoveryRail from "@/components/DiscoveryRail";
 import SeriesCard from "@/components/SeriesCard";
+import { createViewerMonetizationState } from "@/lib/monetization";
 import { prisma } from "@/lib/prisma";
 
 export default async function ExplorePage({
@@ -8,8 +10,10 @@ export default async function ExplorePage({
 }: {
   searchParams?: { q?: string; view?: string };
 }) {
+  const session = await auth();
   const query = searchParams?.q?.trim() || "";
   const view = searchParams?.view || "explore";
+  const viewer = createViewerMonetizationState(session?.user?.id);
 
   const stories = await prisma.series.findMany({
     where: query
@@ -92,7 +96,21 @@ export default async function ExplorePage({
           {stories.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {stories.map((series) => (
-                <SeriesCard key={series.id} series={series} />
+                <SeriesCard
+                  key={series.id}
+                  series={{
+                    ...series,
+                    monetization: {
+                      contentType: "series",
+                      id: series.id,
+                      isFree: true,
+                      isLocked: false,
+                      price: null,
+                      creatorId: series.authorId,
+                    },
+                  }}
+                  viewer={viewer}
+                />
               ))}
             </div>
           ) : (

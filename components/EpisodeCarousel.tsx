@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import EpisodeCard from "@/components/EpisodeCard";
+import type { MonetizedEpisode, MonetizedUser } from "@/lib/monetization";
 
 type EpisodeCarouselEpisode = {
   id: string;
@@ -14,13 +15,15 @@ type EpisodeCarouselEpisode = {
   readTime?: number | null;
   readerCount?: number | null;
   isRead?: boolean | null;
+  monetization?: Partial<MonetizedEpisode>;
 };
 
 type EpisodeCarouselProps = {
   episodes: EpisodeCarouselEpisode[];
+  viewer?: MonetizedUser | null;
 };
 
-export default function EpisodeCarousel({ episodes }: EpisodeCarouselProps) {
+export default function EpisodeCarousel({ episodes, viewer = null }: EpisodeCarouselProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [activeSeason, setActiveSeason] = useState("Season 1");
 
@@ -86,7 +89,7 @@ export default function EpisodeCarousel({ episodes }: EpisodeCarouselProps) {
             key={episode.id}
             className="min-w-[82vw] snap-start sm:min-w-[420px] lg:min-w-[calc((100%-2rem)/3)] lg:flex-1"
           >
-            <EpisodeCard episode={episode} />
+            <EpisodeCard episode={episode} viewer={viewer} />
           </div>
         ))}
       </div>

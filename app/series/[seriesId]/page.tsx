@@ -1,7 +1,11 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import AiUsageBadge from "@/components/AiUsageBadge";
 import EpisodeCarousel from "@/components/EpisodeCarousel";
+import PurchasePreviewCard from "@/components/monetization/PurchasePreviewCard";
+import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
 import ReportAiTagButton from "@/components/ReportAiTagButton";
+import { canUserAccessContent, createViewerMonetizationState } from "@/lib/monetization";
 import { prisma } from "@/lib/prisma";
 
 export default async function SeriesPage({
@@ -9,6 +13,7 @@ export default async function SeriesPage({
 }: {
   params: { seriesId: string };
 }) {
+  const session = await auth();
   const series = await prisma.series.findUnique({
     where: { id: params.seriesId },
     include: {
@@ -26,6 +31,16 @@ export default async function SeriesPage({
   if (!series) {
     return <div className="px-6 py-10">Series not found.</div>;
   }
+
+  const viewer = createViewerMonetizationState(session?.user?.id);
+  const seriesAccessStatus = canUserAccessContent(viewer, {
+    contentType: "series",
+    id: series.id,
+    isFree: true,
+    isLocked: false,
+    price: 9.99,
+    creatorId: series.authorId,
+  }).accessStatus;
 
   return (
     <main className="overflow-hidden px-4 py-6 md:px-6 lg:px-8">
@@ -86,6 +101,7 @@ export default async function SeriesPage({
 
       <section className="mt-8">
         <EpisodeCarousel
+          viewer={viewer}
           episodes={series.episodes.map((episode) => ({
             id: episode.id,
             title: episode.title,
@@ -95,7 +111,25 @@ export default async function SeriesPage({
             aiUsageTag: episode.aiUsageTag,
             readTime: episode.readTime,
             readerCount: episode.readerCount,
+            monetization: {
+              contentType: "episode",
+              seriesId: series.id,
+              id: episode.id,
+              isFree: !episode.locked,
+              isLocked: episode.locked,
+              price: episode.locked ? 2.99 : null,
+              creatorId: series.authorId,
+            },
           }))}
+        />
+      </section>
+
+      <section className="mt-8 grid gap-4 xl:grid-cols-2">
+        <SubscriptionPreviewCard user={viewer} />
+        <PurchasePreviewCard
+          contentType="series"
+          accessStatus={seriesAccessStatus}
+          price={9.99}
         />
       </section>
     </main>

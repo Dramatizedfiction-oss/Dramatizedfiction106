@@ -1,6 +1,12 @@
 import Link from "next/link";
 import AiUsageBadge from "@/components/AiUsageBadge";
+import ContentAccessBadge from "@/components/monetization/ContentAccessBadge";
 import ReportAiTagButton from "@/components/ReportAiTagButton";
+import {
+  canUserAccessContent,
+  type MonetizedEpisode,
+  type MonetizedUser,
+} from "@/lib/monetization";
 
 type EpisodeCardProps = {
   episode: {
@@ -15,7 +21,9 @@ type EpisodeCardProps = {
     readerCount?: number | null;
     isRead?: boolean | null;
     aiUsageTag?: string | null;
+    monetization?: Partial<MonetizedEpisode>;
   };
+  viewer?: MonetizedUser | null;
 };
 
 function buildFallbackTeaser(source?: string | null) {
@@ -33,7 +41,7 @@ function buildFallbackTeaser(source?: string | null) {
   return words.length > 24 ? `${excerpt}...` : excerpt;
 }
 
-export default function EpisodeCard({ episode }: EpisodeCardProps) {
+export default function EpisodeCard({ episode, viewer = null }: EpisodeCardProps) {
   const title = episode.title?.trim() || "Untitled Episode";
   const seasonNumber = episode.seasonNumber ?? 1;
   const episodeNumber = episode.episodeNumber ?? 0;
@@ -41,6 +49,17 @@ export default function EpisodeCard({ episode }: EpisodeCardProps) {
   const readTime = episode.readTime ?? 0;
   const readerCount = episode.readerCount ?? 0;
   const isRead = Boolean(episode.isRead);
+  const monetizedContent: MonetizedEpisode = {
+    contentType: "episode",
+    seriesId: episode.monetization?.seriesId ?? "",
+    id: episode.id,
+    isFree: episode.monetization?.isFree ?? true,
+    isLocked: episode.monetization?.isLocked ?? false,
+    price: episode.monetization?.price ?? null,
+    creatorId: episode.monetization?.creatorId ?? "",
+  };
+  const accessStatus = canUserAccessContent(viewer, monetizedContent).accessStatus;
+  const locked = accessStatus === "locked";
 
   return (
     <Link
@@ -53,7 +72,8 @@ export default function EpisodeCard({ episode }: EpisodeCardProps) {
             Season {seasonNumber} | Episode {episodeNumber}
           </p>
           <h3 className="theme-heading mt-3 text-xl font-semibold">{title}</h3>
-          <div className="mt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <ContentAccessBadge accessStatus={accessStatus} />
             <AiUsageBadge tag={episode.aiUsageTag} compact />
           </div>
         </div>
@@ -72,6 +92,12 @@ export default function EpisodeCard({ episode }: EpisodeCardProps) {
       <p className="theme-body mt-4 line-clamp-3 text-sm leading-6">
         {teaser}
       </p>
+
+      {locked && (
+        <p className="theme-meta mt-3 text-xs uppercase tracking-[0.2em]">
+          Lock icon | teaser only {monetizedContent.price !== null ? `| $${monetizedContent.price.toFixed(2)}` : ""}
+        </p>
+      )}
 
       <p className="theme-meta mt-5 font-mono-df text-xs uppercase tracking-[0.24em]">
         {readTime} min read | {readerCount} readers

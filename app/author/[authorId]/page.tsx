@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import AiUsageBadge from "@/components/AiUsageBadge";
 import AuthorWorksCarousel from "@/components/AuthorWorksCarousel";
+import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
+import { createViewerMonetizationState } from "@/lib/monetization";
 import { prisma } from "@/lib/prisma";
 
 const completedBookStatuses = ["PUBLISHED", "PUBLISHED ", "COMPLETED", "FINISHED"];
@@ -10,6 +13,7 @@ export default async function AuthorProfilePage({
 }: {
   params: { authorId: string };
 }) {
+  const session = await auth();
   const author = await prisma.user.findUnique({
     where: { id: params.authorId },
     include: {
@@ -46,6 +50,8 @@ export default async function AuthorProfilePage({
     return <p className="theme-body p-8">Author not found.</p>;
   }
 
+  const viewer = createViewerMonetizationState(session?.user?.id);
+
   const displayName = author.name?.trim() || "Dramatized Fiction Author";
   const bio =
     author.bio?.trim() ||
@@ -76,6 +82,14 @@ export default async function AuthorProfilePage({
       meta: `${series.genre || "Series"} | ${series.episodes.length} episode${series.episodes.length === 1 ? "" : "s"}`,
       badge: "Series",
       aiUsageTag: series.aiUsageTag,
+      monetization: {
+        contentType: "series" as const,
+        id: series.id,
+        isFree: true,
+        isLocked: false,
+        price: null,
+        creatorId: series.authorId,
+      },
     })),
     ...wipBooks.map((book) => ({
       id: `book-${book.id}`,
@@ -170,6 +184,7 @@ export default async function AuthorProfilePage({
           items={wipWorks}
           emptyTitle="Work in progress shelf is quiet for now"
           emptyDescription="This author has not added active series or WIP books yet, but the shelf is already ready for future work."
+          viewer={viewer}
         />
 
         <AuthorWorksCarousel
@@ -178,7 +193,10 @@ export default async function AuthorProfilePage({
           items={completedWorks}
           emptyTitle="No completed works yet"
           emptyDescription="Finished books and completed releases will appear here when this author publishes them."
+          viewer={viewer}
         />
+
+        <SubscriptionPreviewCard user={viewer} />
 
         <section className="glass-panel rounded-[28px] border border-[var(--border-color)] p-6">
           <p className="eyebrow">Platform Content</p>

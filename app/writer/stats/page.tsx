@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import EarningsDashboardPreview from "@/components/monetization/EarningsDashboardPreview";
+import StripePayoutPreview from "@/components/monetization/StripePayoutPreview";
+import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
+import { createViewerMonetizationState } from "@/lib/monetization";
 
 export default async function WriterStatsPage() {
   const session = await auth();
@@ -11,6 +15,7 @@ export default async function WriterStatsPage() {
   const stats = await prisma.userStats.findUnique({
     where: { userId: session.user.id },
   });
+  const viewer = createViewerMonetizationState(session.user.id);
 
   return (
     <div className="space-y-6">
@@ -32,6 +37,13 @@ export default async function WriterStatsPage() {
           <StatCard label="Series" value={String(stats.totalSeries)} />
         </div>
       )}
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        <EarningsDashboardPreview />
+        <StripePayoutPreview />
+      </div>
+
+      <SubscriptionPreviewCard user={viewer} />
     </div>
   );
 }
