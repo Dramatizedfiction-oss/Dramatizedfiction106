@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import AiUsageBadge from "@/components/AiUsageBadge";
+import AuthorTierBadge from "@/components/AuthorTierBadge";
 import AuthorWorksCarousel from "@/components/AuthorWorksCarousel";
+import FollowAuthorButton from "@/components/follow/FollowAuthorButton";
 import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
+import { deriveAuthorTier, derivePostingConsistency } from "@/lib/author-tier";
 import { createViewerMonetizationState } from "@/lib/monetization";
 import { prisma } from "@/lib/prisma";
 
@@ -51,6 +54,16 @@ export default async function AuthorProfilePage({
   }
 
   const viewer = createViewerMonetizationState(session?.user?.id);
+  const totalReads = author.series.reduce((sum, series) => sum + series.reads, 0);
+  const totalFollowers = author.series.reduce((sum, series) => sum + series.followers, 0);
+  const totalEpisodes = author.series.reduce((sum, series) => sum + series.episodes.length, 0);
+  const engagementRate = Math.min(0.95, (totalFollowers / Math.max(totalReads, 1)) * 4);
+  const authorTier = deriveAuthorTier({
+    totalReads,
+    engagementRate,
+    postingConsistency: derivePostingConsistency(totalReads, totalEpisodes, totalFollowers),
+    completionRate: Math.min(0.96, 0.42 + Math.min(totalEpisodes, 16) * 0.025),
+  });
 
   const displayName = author.name?.trim() || "Dramatized Fiction Author";
   const bio =
@@ -151,6 +164,10 @@ export default async function AuthorProfilePage({
                 <h1 className="font-heading theme-heading mt-2 text-4xl font-semibold md:text-5xl">
                   {displayName}
                 </h1>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <AuthorTierBadge tier={authorTier} />
+                  <FollowAuthorButton authorId={author.id} authorName={displayName} />
+                </div>
               </div>
             </div>
 

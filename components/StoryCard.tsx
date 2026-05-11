@@ -1,7 +1,9 @@
 import Link from "next/link";
 import AiUsageBadge from "@/components/AiUsageBadge";
+import AuthorTierBadge from "@/components/AuthorTierBadge";
 import ContentAccessBadge from "@/components/monetization/ContentAccessBadge";
 import ReportAiTagButton from "@/components/ReportAiTagButton";
+import type { AuthorVisibilityTier } from "@/lib/author-tier";
 import {
   canUserAccessContent,
   type MonetizedSeries,
@@ -17,6 +19,7 @@ type StoryCardProps = {
     coverImage?: string | null;
     author?: {
       name?: string | null;
+      tier?: AuthorVisibilityTier | null;
     } | null;
     tags?: string[] | null;
     aiUsageTag?: string | null;
@@ -93,7 +96,10 @@ export default function StoryCard({
 
       <div className="px-1 pb-1 pt-4">
         <div className="flex items-center justify-between gap-3">
-          <p className="eyebrow">By {authorName}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="eyebrow">By {authorName}</p>
+            {story.author?.tier ? <AuthorTierBadge tier={story.author.tier} compact /> : null}
+          </div>
           <div className="flex items-center gap-2">
             <ContentAccessBadge accessStatus={accessStatus} />
             <AiUsageBadge tag={story.aiUsageTag} compact />

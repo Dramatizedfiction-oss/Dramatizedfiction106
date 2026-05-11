@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import StoryCard from "@/components/StoryCard";
+import FeaturedContentModule from "@/components/FeaturedContentModule";
+import { buildDiscoveryFeedSections } from "@/lib/discovery-ranking";
 import { prisma } from "@/lib/prisma";
 
 export default async function HomePage() {
@@ -19,9 +20,16 @@ export default async function HomePage() {
         orderBy: [{ reads: "desc" }, { createdAt: "desc" }],
         take: 3,
         include: {
+          _count: {
+            select: {
+              episodes: true,
+            },
+          },
           author: {
             select: {
+              id: true,
               name: true,
+              writerStatus: true,
             },
           },
         },
@@ -38,6 +46,28 @@ export default async function HomePage() {
     ]);
 
   const continueEpisode = latestRead?.episode ?? null;
+  const homepageDiscovery = buildDiscoveryFeedSections(
+    featuredSeries.map((series) => ({
+      id: series.id,
+      title: series.title,
+      description: series.description,
+      coverImage: series.coverImage,
+      genre: series.genre,
+      tags: series.tags,
+      reads: series.reads,
+      followers: series.followers,
+      createdAt: series.createdAt,
+      updatedAt: series.updatedAt,
+      aiUsageTag: series.aiUsageTag,
+      episodeCount: series._count.episodes,
+      author: {
+        id: series.author.id,
+        name: series.author.name,
+        writerStatus: series.author.writerStatus,
+      },
+    })),
+  );
+  const featuredStories = homepageDiscovery[0]?.items.slice(0, 3) ?? [];
 
   return (
     <main className="overflow-hidden">
@@ -120,23 +150,36 @@ export default async function HomePage() {
               This launch view now uses the Base44-inspired shell you liked: cinematic background, liquid wordmark, glass panels, and stronger content presentation.
             </p>
 
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
-              {featuredSeries.map((series) => (
-                <StoryCard
-                  key={series.id}
-                  story={{
-                    id: series.id,
-                    title: series.title,
-                    description: series.description,
-                    coverImage: series.coverImage,
-                    author: {
-                      name: series.author.name,
-                    },
-                    tags: series.genre ? [series.genre] : [],
-                  }}
-                />
-              ))}
-            </div>
+            <FeaturedContentModule
+              featuredStories={featuredStories.map((series) => ({
+                ...series,
+                author: {
+                  id: series.author.id,
+                  name: series.author.name,
+                  tier: series.authorTier,
+                },
+              }))}
+              trendingBanner={
+                featuredStories[0]
+                  ? {
+                      ...featuredStories[0],
+                      author: {
+                        id: featuredStories[0].author.id,
+                        name: featuredStories[0].author.name,
+                        tier: featuredStories[0].authorTier,
+                      },
+                    }
+                  : null
+              }
+              editorsPicks={featuredStories.map((series) => ({
+                ...series,
+                author: {
+                  id: series.author.id,
+                  name: series.author.name,
+                  tier: series.authorTier,
+                },
+              }))}
+            />
           </div>
 
           <div className="space-y-4">

@@ -1,4 +1,9 @@
-type WriterTier = "BEGINNER" | "FULL" | "FEATURED" | "ELITE";
+import {
+  deriveAuthorTier,
+  derivePostingConsistency,
+  getAuthorTierMultiplier,
+  type AuthorVisibilityTier,
+} from "@/lib/author-tier";
 
 export type DiscoveryFeedInput = {
   id: string;
@@ -13,7 +18,8 @@ export type DiscoveryFeedInput = {
   updatedAt: Date;
   author: {
     name?: string | null;
-    writerStatus?: WriterTier | null;
+    writerStatus?: "BEGINNER" | "FULL" | "FEATURED" | "ELITE" | null;
+    id?: string;
   };
   episodeCount?: number;
   aiUsageTag?: string | null;
@@ -23,7 +29,10 @@ export type RankedContent = DiscoveryFeedInput & {
   completionRate: number;
   engagementRate: number;
   recencyScore: number;
-  authorTierScore: number;
+  postingConsistency: number;
+  authorTier: AuthorVisibilityTier;
+  authorTierMultiplier: number;
+  visibilityScore: number;
   rankingScore: number;
   engagementLabel: string;
 };
@@ -33,13 +42,6 @@ export type DiscoveryFeedSection = {
   title: string;
   description: string;
   items: RankedContent[];
-};
-
-const authorTierWeights: Record<WriterTier, number> = {
-  BEGINNER: 0.25,
-  FULL: 0.5,
-  FEATURED: 0.75,
-  ELITE: 1,
 };
 
 function clamp(value: number, min = 0, max = 1) {
@@ -67,14 +69,10 @@ function deriveRecencyScore(item: DiscoveryFeedInput) {
   return clamp(1 - ageDays / 45, 0.08, 1);
 }
 
-function getAuthorTierScore(item: DiscoveryFeedInput) {
-  return authorTierWeights[item.author.writerStatus ?? "BEGINNER"];
-}
-
 function getEngagementLabel(item: {
   engagementRate: number;
   recencyScore: number;
-  rankingScore: number;
+  visibilityScore: number;
 }) {
   if (item.recencyScore > 0.82 && item.engagementRate > 0.55) {
     return "Rising fast";
@@ -84,7 +82,7 @@ function getEngagementLabel(item: {
     return "Highly engaged";
   }
 
-  if (item.rankingScore > 0.72) {
+  if (item.visibilityScore > 0.72) {
     return "Reader favorite";
   }
 
@@ -97,31 +95,45 @@ export function rankDiscoveryContent(items: DiscoveryFeedInput[]): RankedContent
       const completionRate = deriveCompletionRate(item);
       const engagementRate = deriveEngagementRate(item);
       const recencyScore = deriveRecencyScore(item);
-      const authorTierScore = getAuthorTierScore(item);
+      const postingConsistency = derivePostingConsistency(
+        item.reads,
+        item.episodeCount ?? 1,
+        item.followers,
+      );
+      const authorTier = deriveAuthorTier({
+        totalReads: item.reads,
+        engagementRate,
+        postingConsistency,
+        completionRate,
+      });
+      const authorTierMultiplier = getAuthorTierMultiplier(authorTier);
       const readsScore = clamp(item.reads / 150000);
-      const rankingScore = clamp(
+      const visibilityScore = clamp(
         readsScore * 0.32 +
           completionRate * 0.22 +
           engagementRate * 0.21 +
-          recencyScore * 0.15 +
-          authorTierScore * 0.1,
+          recencyScore * 0.15,
       );
+      const rankingScore = clamp(visibilityScore * authorTierMultiplier);
 
       return {
         ...item,
         completionRate,
         engagementRate,
         recencyScore,
-        authorTierScore,
+        postingConsistency,
+        authorTier,
+        authorTierMultiplier,
+        visibilityScore,
         rankingScore,
         engagementLabel: getEngagementLabel({
           engagementRate,
           recencyScore,
-          rankingScore,
+          visibilityScore,
         }),
       };
     })
-    .sort((a, b) => b.rankingScore - a.rankingScore || b.reads - a.reads);
+    .sort((a, b) => b.visibilityScore - a.visibilityScore || b.reads - a.reads);
 }
 
 function uniqueById(items: RankedContent[]) {
@@ -147,7 +159,7 @@ export function buildDiscoveryFeedSections(items: DiscoveryFeedInput[]): Discove
   const rankedContentList = rankDiscoveryContent(items);
   const trendingFallback = rankedContentList
     .slice()
-    .sort((a, b) => b.reads - a.reads || b.rankingScore - a.rankingScore);
+    .sort((a, b) => b.reads - a.reads || b.visibilityScore - a.visibilityScore);
 
   const rising = rankedContentList
     .slice()

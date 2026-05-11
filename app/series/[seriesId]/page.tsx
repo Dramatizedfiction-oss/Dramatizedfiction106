@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import AiUsageBadge from "@/components/AiUsageBadge";
+import AuthorTierBadge from "@/components/AuthorTierBadge";
 import EpisodeCarousel from "@/components/EpisodeCarousel";
+import FollowAuthorButton from "@/components/follow/FollowAuthorButton";
 import PurchasePreviewCard from "@/components/monetization/PurchasePreviewCard";
 import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
 import ReportAiTagButton from "@/components/ReportAiTagButton";
+import { deriveAuthorTier, derivePostingConsistency } from "@/lib/author-tier";
 import {
   canUserAccessContent,
   createViewerMonetizationState,
@@ -37,6 +40,16 @@ export default async function SeriesPage({
   }
 
   const viewer = createViewerMonetizationState(session?.user?.id);
+  const authorTier = deriveAuthorTier({
+    totalReads: series.reads,
+    engagementRate: Math.min(0.95, (series.followers / Math.max(series.reads, 1)) * 4),
+    postingConsistency: derivePostingConsistency(
+      series.reads,
+      series.episodes.length,
+      series.followers,
+    ),
+    completionRate: Math.min(0.96, 0.45 + Math.min(series.episodes.length, 12) * 0.03),
+  });
   const seriesMonetization: MonetizedSeries = {
     contentType: "series",
     id: series.id,
@@ -71,9 +84,16 @@ export default async function SeriesPage({
             <h1 className="font-heading theme-heading mt-3 text-4xl font-semibold md:text-6xl">
               {series.title}
             </h1>
-            <p className="theme-meta mt-3 text-sm md:text-base">
-              By {series.author.name || "Anonymous Author"} | Rating placeholder: 4.8/5
-            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <p className="theme-meta text-sm md:text-base">
+                By {series.author.name || "Anonymous Author"} | Rating placeholder: 4.8/5
+              </p>
+              <AuthorTierBadge tier={authorTier} />
+              <FollowAuthorButton
+                authorId={series.authorId}
+                authorName={series.author.name || "Anonymous Author"}
+              />
+            </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <AiUsageBadge tag={series.aiUsageTag} />
               <ReportAiTagButton subject={series.title} />

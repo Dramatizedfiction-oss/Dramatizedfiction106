@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
+import FeaturedContentModule from "@/components/FeaturedContentModule";
+import FollowingFeedHint from "@/components/follow/FollowingFeedHint";
 import DiscoveryRail from "@/components/DiscoveryRail";
 import SeriesCard from "@/components/SeriesCard";
 import { buildDiscoveryFeedSections } from "@/lib/discovery-ranking";
@@ -34,6 +36,7 @@ export default async function ExplorePage({
       include: {
         author: {
           select: {
+            id: true,
             name: true,
             writerStatus: true,
           },
@@ -51,6 +54,7 @@ export default async function ExplorePage({
       include: {
         author: {
           select: {
+            id: true,
             name: true,
             writerStatus: true,
           },
@@ -95,6 +99,9 @@ export default async function ExplorePage({
       },
     })),
   );
+  const featuredStories = discoverySections[0]?.items.slice(0, 3) ?? [];
+  const trendingBanner = discoverySections[0]?.items[0] ?? null;
+  const editorsPicks = discoverySections[2]?.items.slice(0, 3) ?? featuredStories;
 
   return (
     <div className="px-4 py-6 md:px-6 lg:px-8">
@@ -133,6 +140,9 @@ export default async function ExplorePage({
             >
               For You
             </Link>
+            <span className="rounded-full border border-[var(--border-color)] px-4 py-2 text-sm text-[var(--text-secondary)] opacity-80">
+              Following
+            </span>
           </div>
 
           {query ? (
@@ -142,6 +152,40 @@ export default async function ExplorePage({
           ) : null}
 
           <div className="space-y-10">
+            {view === "for-you" ? <FollowingFeedHint /> : null}
+
+            <FeaturedContentModule
+              viewer={viewer}
+              featuredStories={featuredStories.map((series) => ({
+                ...series,
+                author: {
+                  id: series.author.id,
+                  name: series.author.name,
+                  tier: series.authorTier,
+                },
+              }))}
+              trendingBanner={
+                trendingBanner
+                  ? {
+                      ...trendingBanner,
+                      author: {
+                        id: trendingBanner.author.id,
+                        name: trendingBanner.author.name,
+                        tier: trendingBanner.authorTier,
+                      },
+                    }
+                  : null
+              }
+              editorsPicks={editorsPicks.map((series) => ({
+                ...series,
+                author: {
+                  id: series.author.id,
+                  name: series.author.name,
+                  tier: series.authorTier,
+                },
+              }))}
+            />
+
             {discoverySections.map((section) => (
               <section key={section.key}>
                 <div className="mb-5 flex items-end justify-between gap-4">
@@ -166,6 +210,7 @@ export default async function ExplorePage({
                         description: series.description,
                         coverImage: series.coverImage,
                         author: {
+                          tier: series.authorTier,
                           name: series.author.name,
                         },
                         tags: [
