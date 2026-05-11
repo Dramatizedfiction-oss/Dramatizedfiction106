@@ -20,6 +20,7 @@ type StoryCardProps = {
     } | null;
     tags?: string[] | null;
     aiUsageTag?: string | null;
+    engagementLabel?: string | null;
     monetization?: Partial<MonetizedSeries>;
   };
   href?: string;
@@ -101,6 +102,11 @@ export default function StoryCard({
         <h2 className="font-heading theme-heading mt-2 text-xl font-semibold md:text-2xl">
           {title}
         </h2>
+        {story.engagementLabel ? (
+          <p className="theme-meta mt-2 text-xs uppercase tracking-[0.24em]">
+            {story.engagementLabel}
+          </p>
+        ) : null}
         <p className="theme-body mt-3 line-clamp-3 text-sm leading-6">
           {preview}
         </p>

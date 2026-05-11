@@ -5,7 +5,11 @@ import EpisodeCarousel from "@/components/EpisodeCarousel";
 import PurchasePreviewCard from "@/components/monetization/PurchasePreviewCard";
 import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
 import ReportAiTagButton from "@/components/ReportAiTagButton";
-import { canUserAccessContent, createViewerMonetizationState } from "@/lib/monetization";
+import {
+  canUserAccessContent,
+  createViewerMonetizationState,
+  type MonetizedSeries,
+} from "@/lib/monetization";
 import { prisma } from "@/lib/prisma";
 
 export default async function SeriesPage({
@@ -33,14 +37,15 @@ export default async function SeriesPage({
   }
 
   const viewer = createViewerMonetizationState(session?.user?.id);
-  const seriesAccessStatus = canUserAccessContent(viewer, {
+  const seriesMonetization: MonetizedSeries = {
     contentType: "series",
     id: series.id,
     isFree: true,
     isLocked: false,
     price: 9.99,
     creatorId: series.authorId,
-  }).accessStatus;
+  };
+  const seriesAccessStatus = canUserAccessContent(viewer, seriesMonetization).accessStatus;
 
   return (
     <main className="overflow-hidden px-4 py-6 md:px-6 lg:px-8">

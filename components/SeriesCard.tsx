@@ -11,6 +11,8 @@ type SeriesCardProps = {
     author?: {
       name?: string | null;
     } | null;
+    tags?: string[] | null;
+    engagementLabel?: string | null;
     monetization?: Partial<MonetizedSeries>;
   };
   viewer?: MonetizedUser | null;
@@ -25,7 +27,9 @@ export default function SeriesCard({ series, viewer = null }: SeriesCardProps) {
         description: series.description,
         coverImage: series.coverImage,
         author: series.author ?? null,
+        tags: series.tags ?? null,
         aiUsageTag: series.aiUsageTag ?? null,
+        engagementLabel: series.engagementLabel ?? null,
         monetization: series.monetization,
       }}
       viewer={viewer}

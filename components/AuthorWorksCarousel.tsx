@@ -82,14 +82,15 @@ export default function AuthorWorksCarousel({
           className="scrollbar-hide mt-6 flex gap-4 overflow-x-auto pb-2"
         >
           {items.map((item) => {
-            const accessStatus = canUserAccessContent(viewer, {
+            const monetization: MonetizedSeries = {
               contentType: "series",
               id: item.monetization?.id ?? item.id,
               isFree: item.monetization?.isFree ?? true,
               isLocked: item.monetization?.isLocked ?? false,
               price: item.monetization?.price ?? null,
               creatorId: item.monetization?.creatorId ?? "",
-            }).accessStatus;
+            };
+            const accessStatus = canUserAccessContent(viewer, monetization).accessStatus;
 
             return (
               <Link
