@@ -15,7 +15,10 @@ export function isDevModeEnabled(): boolean {
     );
   } else {
     // Client-side check (limited, but for UI purposes)
-    return process.env.NODE_ENV === "development";
+    return (
+      process.env.NODE_ENV === "development" ||
+      process.env.NEXT_PUBLIC_ENABLE_DEV_CEO_LOGIN === "true"
+    );
   }
 }
 
