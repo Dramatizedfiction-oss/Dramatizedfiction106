@@ -2,7 +2,7 @@ import "./globals.css";
 import { auth } from "@/auth";
 import Footer from "@/components/Footer";
 import AppShell from "@/components/app-shell/AppShell";
-import NeonAuthProvider from "@/components/providers/NeonAuthProvider";
+import AuthSessionProvider from "@/components/providers/AuthSessionProvider";
 import { prisma } from "@/lib/prisma";
 
 export default async function RootLayout({
@@ -40,7 +40,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className="bg-[var(--bg-primary)] text-[var(--text-primary)]">
-        <NeonAuthProvider>
+        <AuthSessionProvider session={session}>
           <div className="min-h-screen">
             <AppShell
               user={user}
@@ -51,7 +51,7 @@ export default async function RootLayout({
             </AppShell>
             <Footer />
           </div>
-        </NeonAuthProvider>
+        </AuthSessionProvider>
       </body>
     </html>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { hasRoleAccess } from "@/lib/auth-utils";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -11,7 +12,7 @@ type NavbarUser = {
 export default function Navbar({ user }: { user: NavbarUser }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const isWriter = user && ["AUTHOR", "ADMIN", "CEO"].includes(user.role);
+  const isWriter = Boolean(user && hasRoleAccess(user.role, "WRITER"));
   const isCEO = user?.role === "CEO";
 
   const links = [

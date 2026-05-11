@@ -20,23 +20,23 @@ export default function AuthPageShell({
   links?: AuthLink[];
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4 py-10">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-md">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)] px-4 py-10">
+      <div className="theme-panel w-full max-w-md rounded-[28px] border border-[var(--border-color)] p-6 shadow-xl">
+        <p className="theme-meta text-xs font-semibold uppercase tracking-[0.28em]">
           {eyebrow}
         </p>
-        <h1 className="mt-3 text-3xl font-semibold text-slate-950">{title}</h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600">{description}</p>
+        <h1 className="theme-heading mt-3 text-3xl font-semibold">{title}</h1>
+        <p className="theme-body mt-3 text-sm leading-6">{description}</p>
 
         <div className="mt-6">{children}</div>
 
         {links.length > 0 && (
-          <div className="mt-6 space-y-3 border-t border-slate-200 pt-5">
+          <div className="mt-6 space-y-3 border-t border-[var(--border-color)] pt-5">
             {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="block text-sm font-medium text-sky-700 transition hover:text-sky-600"
+                className="theme-body block text-sm font-medium transition hover:opacity-80"
               >
                 {link.label}
               </Link>

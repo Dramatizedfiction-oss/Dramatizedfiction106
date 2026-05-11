@@ -5,7 +5,7 @@ import { requireRole } from "@/lib/utils";
 
 export async function POST(req: Request) {
   const session = await auth();
-  requireRole(session, ["AUTHOR", "ADMIN", "CEO"]);
+  requireRole(session, ["WRITER"]);
 
   if (!session?.user?.id) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });

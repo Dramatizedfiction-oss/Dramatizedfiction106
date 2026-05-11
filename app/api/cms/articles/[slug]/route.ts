@@ -23,7 +23,7 @@ export async function PATCH(
   { params }: { params: { slug: string } },
 ) {
   const session = await auth();
-  requireRole(session, ["CEO", "ADMIN"]);
+  requireRole(session, ["CEO", "BOARD"]);
 
   const payload = articleSchema.parse(await req.json());
   await getCmsArticle(params.slug);

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { hasRoleAccess } from "@/lib/auth-utils";
 import { usePathname } from "next/navigation";
 
 type SidebarUser = {
@@ -12,7 +13,7 @@ export default function Sidebar({ user }: { user: SidebarUser }) {
 
   if (!user) return null;
 
-  const isWriter = ["AUTHOR", "ADMIN", "CEO"].includes(user.role);
+  const isWriter = hasRoleAccess(user.role, "WRITER");
   const isCEO = user.role === "CEO";
 
   return (

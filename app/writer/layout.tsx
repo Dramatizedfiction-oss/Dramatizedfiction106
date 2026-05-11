@@ -8,7 +8,7 @@ export default async function WriterLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-  requireRole(session, ["AUTHOR", "ADMIN", "CEO"]);
+  requireRole(session, ["WRITER"]);
 
   return <WriterStudioShell>{children}</WriterStudioShell>;
 }

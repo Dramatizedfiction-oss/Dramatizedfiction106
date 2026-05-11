@@ -1,7 +1,15 @@
 import type { Session } from "next-auth";
+import { redirect } from "next/navigation";
+import { hasRoleAccess, type AppRole } from "@/lib/auth-utils";
 
-export function requireRole(session: Session | null, roles: string[]) {
-  if (!session || !roles.includes(session.user?.role ?? "")) {
-    throw new Error("Unauthorized");
+export function requireRole(session: Session | null, roles: AppRole[]) {
+  if (!session?.user?.role) {
+    redirect("/sign-in");
+  }
+
+  const allowed = roles.some((role) => hasRoleAccess(session.user.role, role));
+
+  if (!allowed) {
+    redirect("/explore");
   }
 }

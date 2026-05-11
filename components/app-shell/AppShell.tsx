@@ -4,11 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { signOut, useSession } from "next-auth/react";
 import type { AppShellUser } from "@/lib/navigation";
 import GlobalSearch, {
   type SearchAuthor,
   type SearchStory,
 } from "@/components/app-shell/GlobalSearch";
+import { hasRoleAccess } from "@/lib/auth-utils";
 
 type AppShellProps = {
   user: (AppShellUser & { name?: string | null; image?: string | null }) | null;
@@ -23,6 +25,7 @@ export default function AppShell({
   searchAuthors,
   children,
 }: AppShellProps) {
+  const { data: session, status } = useSession();
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -31,9 +34,10 @@ export default function AppShell({
   const profileRef = useRef<HTMLDivElement | null>(null);
   const mobileNavRef = useRef<HTMLDivElement | null>(null);
   const isExploreRoute = pathname === "/explore";
-  const canWrite =
-    user?.role === "AUTHOR" || user?.role === "ADMIN" || user?.role === "CEO";
-  const canManage = user?.role === "ADMIN" || user?.role === "CEO";
+  const sessionUser = session?.user ?? user ?? null;
+  const canWrite = hasRoleAccess(sessionUser?.role, "WRITER");
+  const canManage = hasRoleAccess(sessionUser?.role, "BOARD");
+  const canAccessCEO = hasRoleAccess(sessionUser?.role, "CEO");
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("df-theme");
@@ -88,14 +92,14 @@ export default function AppShell({
   }
 
   const initials = useMemo(() => {
-    const seed = user?.name || user?.role || "DF";
+    const seed = sessionUser?.name || sessionUser?.role || "DF";
     return seed
       .split(" ")
       .map((part) => part[0])
       .join("")
       .slice(0, 2)
       .toUpperCase();
-  }, [user?.name, user?.role]);
+  }, [sessionUser?.name, sessionUser?.role]);
 
   const discoveryLinks = [
     { href: "/explore", label: "Explore", description: "Main story feed." },
@@ -150,66 +154,57 @@ export default function AppShell({
               Search
             </button>
 
-            <div ref={profileRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setProfileOpen((value) => !value)}
-                aria-expanded={profileOpen}
-                aria-haspopup="menu"
-                aria-label="Open profile menu"
-                className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--text-primary)] hover:opacity-80"
+            {status === "loading" ? (
+              <div className="inline-flex h-11 min-w-[96px] items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 text-sm text-[var(--text-secondary)]">
+                Loading
+              </div>
+            ) : !sessionUser ? (
+              <Link
+                href="/sign-in"
+                className="story-button-primary min-w-[96px] justify-center"
               >
-                {user?.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={user.image}
-                    alt={user.name || "Profile"}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  initials
-                )}
-              </button>
-
-              {profileOpen && (
-                <div
-                  className="glass-panel absolute right-0 top-full z-50 mt-2 w-64 rounded-[24px] border border-[var(--border-color)] p-2 shadow-2xl"
-                  role="menu"
+                Sign In
+              </Link>
+            ) : (
+              <div ref={profileRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setProfileOpen((value) => !value)}
+                  aria-expanded={profileOpen}
+                  aria-haspopup="menu"
+                  aria-label="Open profile menu"
+                  className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--text-primary)] hover:opacity-80"
                 >
-                  <div className="rounded-[18px] px-3 py-3">
-                    <p className="theme-heading font-semibold">
-                      {user?.name || "Guest"}
-                    </p>
-                    <p className="theme-meta mt-1 text-xs uppercase tracking-[0.24em]">
-                      {user?.role || "Visitor"}
-                    </p>
-                  </div>
-
-                  {!user && (
-                    <div className="space-y-1">
-                      <DropdownLink
-                        href="/sign-in"
-                        label="Sign In"
-                        onNavigate={() => setProfileOpen(false)}
-                      />
-                      <DropdownLink
-                        href="/about"
-                        label="About Platform"
-                        onNavigate={() => setProfileOpen(false)}
-                      />
-                      <DropdownLink
-                        href="/ai-usage"
-                        label="AI Usage"
-                        onNavigate={() => setProfileOpen(false)}
-                      />
-                    </div>
+                  {sessionUser.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={sessionUser.image}
+                      alt={sessionUser.name || "Profile"}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    initials
                   )}
+                </button>
 
-                  {user && (
+                {profileOpen && (
+                  <div
+                    className="glass-panel absolute right-0 top-full z-50 mt-2 w-64 rounded-[24px] border border-[var(--border-color)] p-2 shadow-2xl"
+                    role="menu"
+                  >
+                    <div className="rounded-[18px] px-3 py-3">
+                      <p className="theme-heading font-semibold">
+                        {sessionUser.name || "Member"}
+                      </p>
+                      <p className="theme-meta mt-1 text-xs uppercase tracking-[0.24em]">
+                        {sessionUser.role}
+                      </p>
+                    </div>
+
                     <div className="space-y-1">
                       {canWrite && (
                         <DropdownLink
-                          href="/writer"
+                          href="/writer-studio"
                           label="Writer Studio"
                           onNavigate={() => setProfileOpen(false)}
                         />
@@ -217,8 +212,16 @@ export default function AppShell({
 
                       {canManage && (
                         <DropdownLink
-                          href="/ceo"
+                          href="/command-center"
                           label="Command Center"
+                          onNavigate={() => setProfileOpen(false)}
+                        />
+                      )}
+
+                      {canAccessCEO && (
+                        <DropdownLink
+                          href="/ceo-studio"
+                          label="CEO Studio"
                           onNavigate={() => setProfileOpen(false)}
                         />
                       )}
@@ -251,16 +254,22 @@ export default function AppShell({
                         </span>
                       </button>
 
-                      <DropdownLink
-                        href="/api/auth/signout"
-                        label="Sign Out"
-                        onNavigate={() => setProfileOpen(false)}
-                      />
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setProfileOpen(false);
+                          void signOut({ callbackUrl: "/" });
+                        }}
+                        className="theme-panel-hover block w-full rounded-[18px] px-3 py-3 text-left text-sm text-[var(--text-primary)]"
+                      >
+                        Sign Out
+                      </button>
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <button
               type="button"
@@ -343,7 +352,7 @@ export default function AppShell({
               </button>
             </div>
 
-            {!user && (
+            {!sessionUser && (
               <div className="mt-4">
                 <Link
                   href="/sign-in"
@@ -355,14 +364,26 @@ export default function AppShell({
               </div>
             )}
 
-            {user && canWrite && (
+            {sessionUser && canWrite && (
               <div className="mt-4">
                 <Link
-                  href="/writer"
+                  href="/writer-studio"
                   onClick={() => setMobileNavOpen(false)}
                   className="story-button-secondary w-full justify-center"
                 >
                   Writer Studio
+                </Link>
+              </div>
+            )}
+
+            {sessionUser && canManage && (
+              <div className="mt-3">
+                <Link
+                  href="/command-center"
+                  onClick={() => setMobileNavOpen(false)}
+                  className="story-button-secondary w-full justify-center"
+                >
+                  Command Center
                 </Link>
               </div>
             )}

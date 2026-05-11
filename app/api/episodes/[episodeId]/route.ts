@@ -18,7 +18,7 @@ export async function PATCH(
   { params }: { params: { episodeId: string } }
 ) {
   const session = await auth();
-  requireRole(session, ["AUTHOR", "ADMIN", "CEO"]);
+  requireRole(session, ["WRITER"]);
 
   const body = await req.json();
 
@@ -35,7 +35,7 @@ export async function DELETE(
   { params }: { params: { episodeId: string } }
 ) {
   const session = await auth();
-  requireRole(session, ["ADMIN", "CEO"]);
+  requireRole(session, ["BOARD"]);
 
   await prisma.episode.delete({
     where: { id: params.episodeId }

@@ -1,15 +1,15 @@
 import AuthPageShell from "@/components/auth/AuthPageShell";
-import NeonSignUpView from "@/components/auth/NeonSignUpView";
+import SignUpForm from "@/components/auth/SignUpForm";
 
 export default function SignUpPage() {
   return (
     <AuthPageShell
       eyebrow="Create Account"
       title="Sign up"
-      description="Create your Dramatized Fiction account with Neon authentication."
+      description="Create a persistent reader account that can later unlock writer or leadership access."
       links={[{ href: "/sign-in", label: "Already have an account? Sign in" }]}
     >
-      <NeonSignUpView />
+      <SignUpForm />
     </AuthPageShell>
   );
 }

@@ -14,7 +14,7 @@ export async function POST() {
   }
 
   const session = await auth();
-  requireRole(session, ["AUTHOR", "ADMIN", "CEO"]);
+  requireRole(session, ["WRITER"]);
 
   if (!session?.user?.id) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
