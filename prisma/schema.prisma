@@ -8,36 +8,35 @@ datasource db {
 }
 
 model User {
-  id              String         @id @default(cuid())
-  name            String?
-  email           String?        @unique
-  passwordHash    String?
-  emailVerified   DateTime?
-  image           String?
-  bannerImage     String?
-  bio             String?
-  websiteUrl      String?
-  twitterUrl      String?
-  instagramUrl    String?
-  youtubeUrl      String?
-  discordUrl      String?
-  role            Role           @default(READER)
-  writerStatus    WriterStatus   @default(BEGINNER)
-  writerPolicyAcknowledged Boolean @default(false)
-  stripeAccountId String?        @unique
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-
-  accounts        Account[]
-  sessions        Session[]
-  series          Series[]
-  episodes        Episode[]
-  books           Book[]
-  stats           UserStats?
-  payouts         AuthorPayout[]
-  subscriptions   Subscription[]
-  adImpressions   AdImpression[]
-  readEvents      ReadEvent[]
+  id                       String         @id @default(cuid())
+  name                     String?
+  email                    String?        @unique
+  image                    String?
+  role                     Role           @default(READER)
+  createdAt                DateTime       @default(now())
+  updatedAt                DateTime       @updatedAt
+  bannerImage              String?
+  bio                      String?
+  discordUrl               String?
+  emailVerified            DateTime?
+  instagramUrl             String?
+  stripeAccountId          String?        @unique
+  twitterUrl               String?
+  websiteUrl               String?
+  youtubeUrl               String?
+  writerPolicyAcknowledged Boolean        @default(false)
+  writerStatus             WriterStatus   @default(BEGINNER)
+  passwordHash             String?
+  accounts                 Account[]
+  adImpressions            AdImpression[]
+  payouts                  AuthorPayout[]
+  books                    Book[]
+  episodes                 Episode[]
+  readEvents               ReadEvent[]
+  series                   Series[]
+  sessions                 Session[]
+  subscriptions            Subscription[]
+  stats                    UserStats?
 }
 
 model Account {
@@ -45,27 +44,23 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?  @db.Text
-  access_token      String?  @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?  @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
 }
 
 model Session {
-  sessionToken String   @unique
+  sessionToken String   @id @unique
   userId       String
   expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([sessionToken])
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -77,21 +72,20 @@ model VerificationToken {
 }
 
 model Series {
-  id          String    @id @default(cuid())
+  id          String     @id @default(cuid())
   title       String
   description String
   genre       String
   tags        String[]
   coverImage  String?
+  reads       Int        @default(0)
+  followers   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  authorId    String
   aiUsageTag  AiUsageTag
-  reads       Int       @default(0)
-  followers   Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId String
-  episodes Episode[]
+  episodes    Episode[]
+  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
 model Episode {
@@ -100,31 +94,29 @@ model Episode {
   episodeNumber Int
   body          String
   teaser        String?
-  aiUsageTag     AiUsageTag
   readTime      Int
   readerCount   Int            @default(0)
   locked        Boolean        @default(false)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-
-  series        Series         @relation(fields: [seriesId], references: [id], onDelete: Cascade)
   seriesId      String
-  author        User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId      String
+  aiUsageTag    AiUsageTag
   adImpressions AdImpression[]
+  author        User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  series        Series         @relation(fields: [seriesId], references: [id], onDelete: Cascade)
   readEvents    ReadEvent[]
 
   @@unique([seriesId, episodeNumber])
 }
 
 model UserStats {
-  id            String   @id @default(cuid())
-  totalReads    Int      @default(0)
-  totalEpisodes Int      @default(0)
-  totalSeries   Int      @default(0)
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String @unique
+  id            String @id @default(cuid())
+  totalReads    Int    @default(0)
+  totalEpisodes Int    @default(0)
+  totalSeries   Int    @default(0)
+  userId        String @unique
+  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Settings {
@@ -132,9 +124,9 @@ model Settings {
   siteName           String   @default("Dramatized Fiction")
   enableAds          Boolean  @default(false)
   enablePayments     Boolean  @default(false)
-  phaseTwoUnlocked   Boolean  @default(false)
-  phaseThreeUnlocked Boolean  @default(false)
   updatedAt          DateTime @updatedAt
+  phaseThreeUnlocked Boolean  @default(false)
+  phaseTwoUnlocked   Boolean  @default(false)
 }
 
 model AuthorPayout {
@@ -143,9 +135,8 @@ model AuthorPayout {
   status      PayoutStatus @default(PENDING)
   createdAt   DateTime     @default(now())
   processedAt DateTime?
-
-  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId String
+  authorId    String
+  author      User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
 model Subscription {
@@ -154,9 +145,8 @@ model Subscription {
   active      Boolean   @default(true)
   createdAt   DateTime  @default(now())
   canceledAt  DateTime?
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model RevenueEvent {
@@ -174,9 +164,8 @@ model AdImpression {
   userId    String?
   episodeId String
   createdAt DateTime @default(now())
-
-  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-  episode Episode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  episode   Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id])
 
   @@index([userId, episodeId])
 }
@@ -186,9 +175,8 @@ model ReadEvent {
   userId    String?
   episodeId String
   createdAt DateTime @default(now())
-
-  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-  episode Episode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  episode   Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id])
 
   @@index([userId, createdAt])
   @@index([episodeId, createdAt])
@@ -201,19 +189,18 @@ model Book {
   coverUrl    String?
   status      String
   createdAt   DateTime @default(now())
-
-  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId String
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
 model CmsArticle {
-  id                 String   @id @default(cuid())
-  slug               String   @unique
-  title              String
+  id                  String   @id @default(cuid())
+  slug                String   @unique
+  title               String
   quickSectionContent String
   deepSectionContent  String
-  lastUpdated        DateTime @updatedAt
-  createdAt          DateTime @default(now())
+  lastUpdated         DateTime @updatedAt
+  createdAt           DateTime @default(now())
 }
 
 enum Role {

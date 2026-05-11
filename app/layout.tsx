@@ -13,29 +13,37 @@ export default async function RootLayout({
   const session = await auth();
   const user = session?.user || null;
 
-  const [searchStories, searchAuthors] = await Promise.all([
-    prisma.series.findMany({
-      orderBy: [{ reads: "desc" }, { createdAt: "desc" }],
-      take: 20,
-      select: {
-        id: true,
-        title: true,
-        description: true,
-      },
-    }),
-    prisma.user.findMany({
-      where: {
-        role: {
-          in: ["AUTHOR", "ADMIN", "CEO"],
+  let searchStories: any[] = [];
+  let searchAuthors: any[] = [];
+
+  try {
+    [searchStories, searchAuthors] = await Promise.all([
+      prisma.series.findMany({
+        orderBy: [{ reads: "desc" }, { createdAt: "desc" }],
+        take: 20,
+        select: {
+          id: true,
+          title: true,
+          description: true,
         },
-      },
-      take: 16,
-      select: {
-        id: true,
-        name: true,
-      },
-    }),
-  ]);
+      }),
+      prisma.user.findMany({
+        where: {
+          role: {
+            in: ["AUTHOR", "ADMIN", "CEO"],
+          },
+        },
+        take: 16,
+        select: {
+          id: true,
+          name: true,
+        },
+      }),
+    ]);
+  } catch (error) {
+    console.error("Database connection error in layout:", error);
+    // Fallback to empty arrays to prevent app crash
+  }
 
   return (
     <html lang="en">

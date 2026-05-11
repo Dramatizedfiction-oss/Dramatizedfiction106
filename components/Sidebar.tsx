@@ -17,9 +17,9 @@ export default function Sidebar({ user }: { user: SidebarUser }) {
   const isCEO = user.role === "CEO";
 
   return (
-    <aside className="hidden lg:block lg:w-[285px]">
+    <aside className="hidden lg:flex lg:w-[285px] flex-shrink-0">
       <div
-        className="sticky top-28 rounded-[28px] border border-white/10 p-6"
+        className="rounded-[28px] border border-white/10 p-6"
         style={{ background: "var(--sidebar-bg)", boxShadow: "0 20px 60px rgba(0,0,0,0.28)" }}
       >
         <div className="mb-6">

@@ -26,27 +26,32 @@ const credentialsProvider = Credentials({
       return null;
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email },
+      });
 
-    if (!user?.passwordHash) {
+      if (!user?.passwordHash) {
+        return null;
+      }
+
+      const passwordMatches = comparePassword(password, user.passwordHash);
+
+      if (!passwordMatches) {
+        return null;
+      }
+
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        image: user.image,
+        role: normalizeRole(user.role),
+      };
+    } catch (error) {
+      console.error("Database error during auth:", error);
       return null;
     }
-
-    const passwordMatches = comparePassword(password, user.passwordHash);
-
-    if (!passwordMatches) {
-      return null;
-    }
-
-    return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      image: user.image,
-      role: normalizeRole(user.role),
-    };
   },
 });
 
@@ -81,13 +86,18 @@ export const {
       }
 
       if ((!token.role || !token.id) && token.sub) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.sub },
-          select: { role: true },
-        });
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.sub },
+            select: { role: true },
+          });
 
-        token.id = token.id ?? token.sub;
-        token.role = normalizeRole(dbUser?.role ?? "READER");
+          token.id = token.id ?? token.sub;
+          token.role = normalizeRole(dbUser?.role ?? "READER");
+        } catch (error) {
+          console.error("Database error in jwt callback:", error);
+          token.role = "READER"; // Fallback
+        }
       }
 
       console.log("auth.jwt token", token);

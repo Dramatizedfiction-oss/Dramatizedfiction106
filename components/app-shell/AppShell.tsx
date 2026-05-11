@@ -10,6 +10,7 @@ import GlobalSearch, {
   type SearchAuthor,
   type SearchStory,
 } from "@/components/app-shell/GlobalSearch";
+import Sidebar from "@/components/Sidebar";
 import { hasRoleAccess } from "@/lib/roles";
 
 type AppShellProps = {
@@ -391,8 +392,10 @@ export default function AppShell({
         </>
       )}
 
-      <div className="page-shell">
-        <main className="min-w-0">
+      <div className="flex min-h-[calc(100vh-64px)] flex-col lg:flex-row">
+        {!pathname.startsWith("/writer") && <Sidebar user={sessionUser} />}
+
+        <main className="page-shell flex-1 min-w-0">
           {isExploreRoute ? children : <div className="surface-panel overflow-hidden">{children}</div>}
         </main>
       </div>
