@@ -5,13 +5,13 @@ import { hasRoleAccess } from "@/lib/roles";
 import { usePathname } from "next/navigation";
 
 type SidebarUser = {
-  role: string;
+  role?: string | null;
 } | null;
 
 export default function Sidebar({ user }: { user: SidebarUser }) {
   const path = usePathname();
 
-  if (!user) return null;
+  if (!user || !user.role) return null;
 
   const isWriter = hasRoleAccess(user.role, "WRITER");
   const isCEO = user.role === "CEO";
