@@ -12,7 +12,8 @@ import GlobalSearch, {
 } from "@/components/app-shell/GlobalSearch";
 import Sidebar from "@/components/Sidebar";
 import { hasRoleAccess } from "@/lib/roles";
-import { isDevAuthenticated, clearDevSession, isDevModeEnabled } from "@/lib/dev-auth"; // DEV ONLY
+import { clearDevSession, isDevModeEnabled } from "@/lib/dev-auth"; // DEV ONLY
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth"; // DEV ONLY
 
 type AppShellProps = {
   user: (AppShellUser & { name?: string | null; image?: string | null }) | null;
@@ -27,7 +28,8 @@ export default function AppShell({
   searchAuthors,
   children,
 }: AppShellProps) {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
+  const unifiedAuth = useUnifiedAuth(); // DEV ONLY
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -36,12 +38,15 @@ export default function AppShell({
   const profileRef = useRef<HTMLDivElement | null>(null);
   const mobileNavRef = useRef<HTMLDivElement | null>(null);
   const isExploreRoute = pathname === "/explore";
-  const sessionUser = session?.user ?? user ?? null;
-  const devAuthenticated = isDevAuthenticated(); // DEV ONLY
-  const effectiveRole = devAuthenticated ? "CEO" : sessionUser?.role; // DEV ONLY
-  const canWrite = hasRoleAccess(effectiveRole, "WRITER");
-  const canManage = hasRoleAccess(effectiveRole, "BOARD");
-  const canAccessCEO = hasRoleAccess(effectiveRole, "CEO");
+  
+  // DEV ONLY: Use unified auth that includes both real session and dev session
+  const sessionUser = unifiedAuth.user ?? user ?? null;
+  const authStatus = unifiedAuth.status;
+  const isDevMode = unifiedAuth.isDevMode; // DEV ONLY
+  
+  const canWrite = hasRoleAccess(sessionUser?.role, "WRITER");
+  const canManage = hasRoleAccess(sessionUser?.role, "BOARD");
+  const canAccessCEO = hasRoleAccess(sessionUser?.role, "CEO");
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("df-theme");
@@ -142,7 +147,7 @@ export default function AppShell({
             </div>
           </Link>
 
-          {devAuthenticated && ( // DEV ONLY
+          {isDevMode && ( // DEV ONLY
             <div className="rounded-full bg-red-500 px-2 py-1 text-xs font-semibold text-white">
               DEV CEO MODE
             </div>
@@ -164,7 +169,7 @@ export default function AppShell({
               Search
             </button>
 
-            {status === "loading" ? (
+            {authStatus === "loading" ? (
               <div className="inline-flex h-11 min-w-[96px] items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 text-sm text-[var(--text-secondary)]">
                 Loading
               </div>
@@ -276,7 +281,7 @@ export default function AppShell({
                         Sign Out
                       </button>
 
-                      {devAuthenticated && ( // DEV ONLY
+                      {isDevMode && ( // DEV ONLY
                         <button
                           type="button"
                           role="menuitem"

@@ -43,8 +43,12 @@ export function setDevSession(): void {
   if (typeof window !== "undefined") {
     localStorage.setItem("devAuthenticated", "true");
     localStorage.setItem("devRole", "CEO");
-    document.cookie = "devAuthenticated=true; path=/; max-age=3600; secure; samesite=strict";
-    document.cookie = "devRole=CEO; path=/; max-age=3600; secure; samesite=strict";
+    // Use secure flag only in production, not on localhost
+    const isLocalhost = typeof window !== "undefined" && 
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+    const secureFlagStr = isLocalhost ? "" : "; secure";
+    document.cookie = `devAuthenticated=true; path=/; max-age=3600${secureFlagStr}; samesite=strict`;
+    document.cookie = `devRole=CEO; path=/; max-age=3600${secureFlagStr}; samesite=strict`;
   }
 }
 
@@ -53,8 +57,11 @@ export function clearDevSession(): void {
   if (typeof window !== "undefined") {
     localStorage.removeItem("devAuthenticated");
     localStorage.removeItem("devRole");
-    document.cookie = "devAuthenticated=; path=/; max-age=0; secure; samesite=strict";
-    document.cookie = "devRole=; path=/; max-age=0; secure; samesite=strict";
+    const isLocalhost = typeof window !== "undefined" && 
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+    const secureFlagStr = isLocalhost ? "" : "; secure";
+    document.cookie = `devAuthenticated=; path=/; max-age=0${secureFlagStr}; samesite=strict`;
+    document.cookie = `devRole=; path=/; max-age=0${secureFlagStr}; samesite=strict`;
   }
 }
 
