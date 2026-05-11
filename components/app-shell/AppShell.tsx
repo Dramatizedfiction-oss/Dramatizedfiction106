@@ -12,6 +12,7 @@ import GlobalSearch, {
 } from "@/components/app-shell/GlobalSearch";
 import Sidebar from "@/components/Sidebar";
 import { hasRoleAccess } from "@/lib/roles";
+import { isDevAuthenticated, clearDevSession, isDevModeEnabled } from "@/lib/dev-auth"; // DEV ONLY
 
 type AppShellProps = {
   user: (AppShellUser & { name?: string | null; image?: string | null }) | null;
@@ -36,9 +37,11 @@ export default function AppShell({
   const mobileNavRef = useRef<HTMLDivElement | null>(null);
   const isExploreRoute = pathname === "/explore";
   const sessionUser = session?.user ?? user ?? null;
-  const canWrite = hasRoleAccess(sessionUser?.role, "WRITER");
-  const canManage = hasRoleAccess(sessionUser?.role, "BOARD");
-  const canAccessCEO = hasRoleAccess(sessionUser?.role, "CEO");
+  const devAuthenticated = isDevAuthenticated(); // DEV ONLY
+  const effectiveRole = devAuthenticated ? "CEO" : sessionUser?.role; // DEV ONLY
+  const canWrite = hasRoleAccess(effectiveRole, "WRITER");
+  const canManage = hasRoleAccess(effectiveRole, "BOARD");
+  const canAccessCEO = hasRoleAccess(effectiveRole, "CEO");
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("df-theme");
@@ -138,6 +141,12 @@ export default function AppShell({
               </p>
             </div>
           </Link>
+
+          {devAuthenticated && ( // DEV ONLY
+            <div className="rounded-full bg-red-500 px-2 py-1 text-xs font-semibold text-white">
+              DEV CEO MODE
+            </div>
+          )}
 
           <div className="hidden flex-1 justify-center px-4 md:flex">
             <div className="w-full max-w-[820px]">
@@ -266,6 +275,21 @@ export default function AppShell({
                       >
                         Sign Out
                       </button>
+
+                      {devAuthenticated && ( // DEV ONLY
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            clearDevSession();
+                            setProfileOpen(false);
+                            window.location.reload(); // Refresh to update UI
+                          }}
+                          className="theme-panel-hover block w-full rounded-[18px] px-3 py-3 text-left text-sm text-red-500"
+                        >
+                          Exit Developer Mode
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
