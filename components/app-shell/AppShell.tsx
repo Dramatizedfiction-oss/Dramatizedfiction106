@@ -10,7 +10,7 @@ import GlobalSearch, {
   type SearchAuthor,
   type SearchStory,
 } from "@/components/app-shell/GlobalSearch";
-import { hasRoleAccess } from "@/lib/auth-utils";
+import { hasRoleAccess } from "@/lib/roles";
 
 type AppShellProps = {
   user: (AppShellUser & { name?: string | null; image?: string | null }) | null;

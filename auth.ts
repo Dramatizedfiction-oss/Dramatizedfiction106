@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import EmailProvider from "next-auth/providers/email";
-import { comparePassword, normalizeRole } from "@/lib/auth-utils";
+import { comparePassword } from "@/lib/auth-utils";
+import { normalizeRole } from "@/lib/roles";
 
 const emailProviderConfigured =
   Boolean(process.env.EMAIL_SERVER) && Boolean(process.env.EMAIL_FROM);

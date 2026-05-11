@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { hasRoleAccess } from "@/lib/auth-utils";
+import { hasRoleAccess } from "@/lib/roles";
 import { usePathname } from "next/navigation";
 
 type SidebarUser = {

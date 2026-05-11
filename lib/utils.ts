@@ -1,6 +1,6 @@
 import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
-import { hasRoleAccess, type AppRole } from "@/lib/auth-utils";
+import { hasRoleAccess, type AppRole } from "@/lib/roles";
 
 export function requireRole(session: Session | null, roles: AppRole[]) {
   if (!session?.user?.role) {
