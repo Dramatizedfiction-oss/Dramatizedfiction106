@@ -1,18 +1,49 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import PurchasePreviewCard from "@/components/monetization/PurchasePreviewCard";
+import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
+import {
+  DEFAULT_AD_TRANSITION_STATE,
+  recordTransitionAd,
+  type EpisodeTransitionAdState,
+} from "@/lib/ad-transition";
+
+const storageKey = "df-episode-transition-state";
+
+function readState(): EpisodeTransitionAdState {
+  try {
+    const raw = window.sessionStorage.getItem(storageKey);
+    if (!raw) {
+      return DEFAULT_AD_TRANSITION_STATE;
+    }
+    return {
+      ...DEFAULT_AD_TRANSITION_STATE,
+      ...JSON.parse(raw),
+    };
+  } catch {
+    return DEFAULT_AD_TRANSITION_STATE;
+  }
+}
 
 export default function WatchAdPage() {
   const params = useSearchParams();
   const router = useRouter();
   const episodeId = params.get("episode");
+  const fromEpisodeId = params.get("from");
 
   async function finishAd() {
     const response = await fetch("/api/ads/impression", {
       method: "POST",
-      body: JSON.stringify({ episodeId })
+      body: JSON.stringify({ episodeId }),
     });
+
+    if (episodeId) {
+      const state = readState();
+      const nextState = recordTransitionAd(state, episodeId);
+      window.sessionStorage.setItem(storageKey, JSON.stringify(nextState));
+    }
 
     if (!response.ok) {
       router.push(episodeId ? `/episode/${episodeId}` : "/");
@@ -23,19 +54,45 @@ export default function WatchAdPage() {
   }
 
   return (
-    <main className="p-8 max-w-xl mx-auto space-y-6">
-      <h1 className="text-3xl font-bold">Ad Break</h1>
+    <main className="mx-auto max-w-5xl space-y-6 px-6 py-12">
+      <div className="theme-panel rounded-[28px] border border-[var(--border-color)] p-6">
+        <p className="eyebrow">Episode Transition</p>
+        <h1 className="font-heading theme-heading mt-3 text-3xl font-semibold">
+          Watch sponsored content to continue
+        </h1>
+        <p className="theme-meta mt-3 text-sm leading-6">
+          Sponsored content only appears between episodes. It never interrupts the reader once an episode has begun.
+        </p>
 
-      <div className="bg-slate-900 p-6 rounded-lg border border-slate-800">
-        <p className="text-slate-400">[Ad Placeholder]</p>
+        <div className="theme-panel mt-6 rounded-[24px] border border-[var(--border-color)] p-6 text-center">
+          <p className="theme-meta text-sm uppercase tracking-[0.24em]">Ad Placeholder</p>
+          <p className="theme-heading mt-4 text-2xl font-semibold">Sponsored content would play here</p>
+        </div>
+
+        <div className="mt-6 flex flex-wrap gap-3">
+          <button
+            onClick={finishAd}
+            className="story-button-primary"
+          >
+            Watch Ad
+          </button>
+
+          {fromEpisodeId ? (
+            <Link href={`/episode/${fromEpisodeId}`} className="story-button-secondary">
+              Back to Episode
+            </Link>
+          ) : null}
+        </div>
       </div>
 
-      <button
-        onClick={finishAd}
-        className="w-full bg-blue-600 hover:bg-blue-500 p-3 rounded font-semibold"
-      >
-        Continue to Episode
-      </button>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <SubscriptionPreviewCard user={null} />
+        <PurchasePreviewCard
+          contentType="episode"
+          accessStatus="locked"
+          price={2.99}
+        />
+      </div>
     </main>
   );
 }

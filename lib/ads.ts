@@ -1,27 +1,29 @@
 import { prisma } from "@/lib/prisma";
 import { isPhaseThreeActive } from "@/lib/phases";
+import type { ContentAccessStatus } from "@/lib/monetization";
 
-export async function canAccessEpisode(userId: string | null, episodeId: string) {
-  const adsPhaseActive = await isPhaseThreeActive();
+export async function canAccessEpisode() {
+  // Reading itself should remain uninterrupted. Ad logic now lives in the
+  // episode-to-episode transition layer rather than blocking the current page.
+  return true;
+}
 
-  if (!adsPhaseActive) return true;
+export async function canShowEpisodeTransitionAds() {
+  return isPhaseThreeActive();
+}
 
-  // Subscribers skip ads
-  if (userId) {
-    const sub = await prisma.subscription.findFirst({
-      where: { userId, active: true }
-    });
-    if (sub) return true;
+export function isUserExemptFromTransitionAds(accessStatus: ContentAccessStatus) {
+  return accessStatus === "owned" || accessStatus === "subscribed";
+}
+
+export async function hasWatchedTransitionAd(userId: string | null, episodeId: string) {
+  if (!userId) {
+    return false;
   }
 
-  // Check if user watched an ad for this episode
-  if (userId) {
-    const impression = await prisma.adImpression.findFirst({
-      where: { userId, episodeId }
-    });
-    if (impression) return true;
-  }
+  const impression = await prisma.adImpression.findFirst({
+    where: { userId, episodeId },
+  });
 
-  // Not allowed yet
-  return false;
+  return Boolean(impression);
 }

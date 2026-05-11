@@ -1,12 +1,12 @@
-import Link from "next/link";
 import { getNextEpisode } from "@/lib/nextEpisode";
 import { auth } from "@/auth";
-import { canAccessEpisode } from "@/lib/ads";
 import AiUsageBadge from "@/components/AiUsageBadge";
+import EpisodeTransitionCard from "@/components/EpisodeTransitionCard";
 import PurchasePreviewCard from "@/components/monetization/PurchasePreviewCard";
 import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
 import ReportAiTagButton from "@/components/ReportAiTagButton";
 import ReaderChrome from "@/components/ReaderChrome";
+import { isPhaseThreeActive } from "@/lib/phases";
 import {
   canUserAccessContent,
   createViewerMonetizationState,
@@ -30,7 +30,7 @@ export default async function EpisodeReaderPage({
 
   const session = await auth();
   const viewer = createViewerMonetizationState(session?.user?.id);
-  const allowed = await canAccessEpisode(session?.user?.id || null, params.episodeId);
+  const phaseThreeActive = await isPhaseThreeActive();
   const episodeMonetization: MonetizedEpisode = {
     contentType: "episode",
     seriesId: episode.seriesId,
@@ -41,37 +41,6 @@ export default async function EpisodeReaderPage({
     creatorId: episode.authorId,
   };
   const accessStatus = canUserAccessContent(viewer, episodeMonetization).accessStatus;
-
-  if (!allowed) {
-    return (
-      <main className="mx-auto max-w-4xl space-y-6 px-6 py-12">
-        <div className="theme-panel rounded-[28px] border border-[var(--border-color)] p-6">
-          <h1 className="font-heading theme-heading text-3xl font-semibold">
-            Watch Ad to Continue
-          </h1>
-          <p className="theme-meta mt-3">
-            This episode is locked. Watch an ad to unlock it today, or preview the future monetization paths below.
-          </p>
-
-          <a
-            href={`/watch-ad?episode=${params.episodeId}`}
-            className="story-button-primary mt-5 inline-flex"
-          >
-            Watch Ad
-          </a>
-        </div>
-
-        <div className="grid gap-4 xl:grid-cols-2">
-          <SubscriptionPreviewCard user={viewer} />
-          <PurchasePreviewCard
-            contentType="episode"
-            accessStatus={accessStatus}
-            price={episode.locked ? 2.99 : null}
-          />
-        </div>
-      </main>
-    );
-  }
 
   await prisma.episode.update({
     where: { id: params.episodeId },
@@ -101,6 +70,21 @@ export default async function EpisodeReaderPage({
   });
 
   const next = await getNextEpisode(episode.seriesId, episode.episodeNumber);
+  const nextEpisodeAccessStatus = next
+    ? (() => {
+        const nextEpisodeMonetization: MonetizedEpisode = {
+          contentType: "episode",
+          seriesId: next.seriesId,
+          id: next.id,
+          isFree: !next.locked,
+          isLocked: next.locked,
+          price: next.locked ? 2.99 : null,
+          creatorId: next.authorId,
+        };
+
+        return canUserAccessContent(viewer, nextEpisodeMonetization).accessStatus;
+      })()
+    : "free";
 
   const sidebar = (
     <aside className="space-y-4">
@@ -116,11 +100,17 @@ export default async function EpisodeReaderPage({
 
       {next && (
         <div className="mt-6">
-          <p className="eyebrow">Next Episode</p>
-          <p className="theme-heading mt-2 font-medium">{next.title}</p>
-          <Link href={`/episode/${next.id}`} className="story-button-primary mt-4 inline-flex">
-            Continue to Episode {next.episodeNumber}
-          </Link>
+          <EpisodeTransitionCard
+            currentEpisodeId={episode.id}
+            nextEpisode={{
+              id: next.id,
+              title: next.title,
+              episodeNumber: next.episodeNumber,
+            }}
+            user={viewer}
+            accessStatus={nextEpisodeAccessStatus}
+            phaseThreeActive={phaseThreeActive}
+          />
         </div>
       )}
       </div>
@@ -165,12 +155,28 @@ export default async function EpisodeReaderPage({
                   ))}
               </div>
             </article>
+
+            <div className="mx-auto mt-10 max-w-[700px] lg:hidden">
+              <EpisodeTransitionCard
+                currentEpisodeId={episode.id}
+                nextEpisode={
+                  next
+                    ? {
+                        id: next.id,
+                        title: next.title,
+                        episodeNumber: next.episodeNumber,
+                      }
+                    : null
+                }
+                user={viewer}
+                accessStatus={nextEpisodeAccessStatus}
+                phaseThreeActive={phaseThreeActive}
+              />
+            </div>
           </div>
 
           <div className="hidden lg:block">{sidebar}</div>
         </div>
-
-        <div className="mx-auto mt-8 max-w-[700px] lg:hidden">{sidebar}</div>
       </main>
     </ReaderChrome>
   );
