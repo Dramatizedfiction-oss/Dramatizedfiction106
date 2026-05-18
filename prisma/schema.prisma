@@ -247,6 +247,7 @@ enum Role {
   READER
   AUTHOR
   ADMIN
+  BOARD
   CEO
 }
 
