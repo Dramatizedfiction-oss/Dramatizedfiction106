@@ -10,7 +10,7 @@ import GlobalSearch, {
   type SearchAuthor,
   type SearchStory,
 } from "@/components/app-shell/GlobalSearch";
-import { hasRoleAccess } from "@/lib/roles";
+import { hasRoleAccess, normalizeRole } from "@/lib/roles";
 import { getRoleLabel } from "@/lib/studios";
 
 type AppShellProps = {
@@ -41,7 +41,7 @@ export default function AppShell({
   const canWrite = hasRoleAccess(sessionUser?.role, "WRITER");
   const canManage = hasRoleAccess(sessionUser?.role, "BOARD");
   const canAccessCEO = hasRoleAccess(sessionUser?.role, "CEO");
-  const roleLabel = getRoleLabel(sessionUser?.role);
+  const roleLabel = getRoleLabel(normalizeRole(sessionUser?.role));
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("df-theme");
@@ -155,14 +155,14 @@ export default function AppShell({
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:opacity-80 md:hidden"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:opacity-80 md[...]
               aria-label="Open search"
             >
               Search
             </button>
 
             {status === "loading" ? (
-              <div className="inline-flex h-11 min-w-[96px] items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 text-sm text-[var(--text-secondary)]">
+              <div className="inline-flex h-11 min-w-[96px] items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 text-sm text-[var(--text-sec[...]">
                 Loading
               </div>
             ) : !sessionUser ? (
@@ -180,7 +180,7 @@ export default function AppShell({
                   aria-expanded={profileOpen}
                   aria-haspopup="menu"
                   aria-label="Open profile menu"
-                  className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--text-primary)] hover:opacity-80"
+                  className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm font-semibold text[...]"
                 >
                   {sessionUser.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -310,7 +310,7 @@ export default function AppShell({
 
             <button
               type="button"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] hover:opacity-80 md:hidden"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] hover:opaci[...]"
               onClick={() => setMobileNavOpen(true)}
               aria-label="Open navigation"
             >
