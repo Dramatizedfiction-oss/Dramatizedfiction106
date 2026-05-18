@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { requireRole } from "@/lib/utils";
+import { serializeAiUsageTag } from "@/lib/ai-usage";
 import { z } from "zod";
 import { NextResponse } from "next/server";
 
@@ -49,9 +50,16 @@ export async function PATCH(
     );
   }
 
+  // Convert aiUsageTag if present
+  const updateData: Record<string, any> = { ...parsedData };
+  if (parsedData.aiUsageTag) {
+    updateData.aiUsageTag = serializeAiUsageTag(parsedData.aiUsageTag);
+  }
+  delete updateData.aiUsageTag;
+
   const updated = await prisma.episode.update({
     where: { id: params.episodeId },
-    data: parsedData
+    data: updateData.aiUsageTag ? { ...updateData, aiUsageTag: updateData.aiUsageTag } : updateData
   });
 
   return Response.json(updated);
