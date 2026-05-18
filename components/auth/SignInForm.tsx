@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
-import { signIn } from "next-auth/react";
+import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 
 export default function SignInForm() {
   const router = useRouter();
+  const { refreshSession } = useAuthSession();
   const searchParams = useSearchParams();
   const callbackUrl = useMemo(
     () => searchParams.get("callbackUrl") || "/explore",
@@ -22,21 +23,30 @@ export default function SignInForm() {
     setIsSubmitting(true);
     setError(null);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-      callbackUrl,
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        email,
+        password,
+      }),
     });
 
-    if (!result || result.error) {
-      setError("We couldn't sign you in with those credentials.");
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | null;
+      setError(payload?.error || "We couldn't sign you in with those credentials.");
       setIsSubmitting(false);
       return;
     }
 
+    await refreshSession();
     router.refresh();
-    router.push(result.url || callbackUrl);
+    router.push(callbackUrl);
   }
 
   return (

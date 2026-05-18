@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createSession, persistSession } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth-utils";
 
@@ -50,8 +51,22 @@ export async function POST(request: Request) {
     },
     select: {
       id: true,
+      name: true,
+      email: true,
+      image: true,
+      role: true,
     },
   });
 
-  return NextResponse.json({ id: user.id }, { status: 201 });
+  const { sessionToken, expires } = await createSession(user.id);
+  persistSession(sessionToken, expires);
+
+  return NextResponse.json(
+    {
+      id: user.id,
+      user,
+      expires: expires.toISOString(),
+    },
+    { status: 201 },
+  );
 }

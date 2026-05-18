@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { signIn } from "next-auth/react";
+import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 
 export default function SignUpForm() {
   const router = useRouter();
+  const { refreshSession } = useAuthSession();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,6 +24,7 @@ export default function SignUpForm() {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify({
         name,
         email,
@@ -39,21 +41,9 @@ export default function SignUpForm() {
       return;
     }
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-      callbackUrl: "/explore",
-    });
-
-    if (!result || result.error) {
-      setError("Your account was created, but we couldn't sign you in automatically.");
-      setIsSubmitting(false);
-      return;
-    }
-
+    await refreshSession();
     router.refresh();
-    router.push(result.url || "/explore");
+    router.push("/explore");
   }
 
   return (

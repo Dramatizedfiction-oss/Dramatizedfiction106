@@ -1,111 +1,123 @@
-import { PrismaAdapter } from "@auth/prisma-adapter";
+import { randomBytes } from "crypto";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import EmailProvider from "next-auth/providers/email";
-import { comparePassword } from "@/lib/auth-utils";
-import { normalizeRole } from "@/lib/roles";
+import { normalizeRole, type AppRole } from "@/lib/roles";
 
-const emailProviderConfigured =
-  Boolean(process.env.EMAIL_SERVER) && Boolean(process.env.EMAIL_FROM);
-const isProduction = process.env.NODE_ENV === "production";
-const sessionCookieName = isProduction
-  ? "__Secure-authjs.session-token"
-  : "authjs.session-token";
+const SESSION_COOKIE_NAME =
+  process.env.NODE_ENV === "production"
+    ? "__Secure-df.session-token"
+    : "df.session-token";
+const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
-const credentialsProvider = Credentials({
-  name: "Credentials",
-  credentials: {
-    email: { label: "Email", type: "email" },
-    password: { label: "Password", type: "password" },
-  },
-  async authorize(credentials) {
-    const rawEmail =
-      typeof credentials?.email === "string" ? credentials.email : "";
-    const password =
-      typeof credentials?.password === "string" ? credentials.password : "";
-    const email = rawEmail.trim().toLowerCase();
+export type AuthUser = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+  role: AppRole;
+};
 
-    if (!email || !password) {
-      return null;
-    }
+export type AuthSession = {
+  user: AuthUser;
+  expires: string;
+};
 
-    try {
-      const user = await prisma.user.findUnique({
-        where: { email },
-      });
+function getCookieOptions(expires: Date) {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    expires,
+  };
+}
 
-      if (!user?.passwordHash) {
-        return null;
-      }
+export async function auth(): Promise<AuthSession | null> {
+  const cookieStore = cookies();
+  const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
-      const passwordMatches = comparePassword(password, user.passwordHash);
+  if (!sessionToken) {
+    return null;
+  }
 
-      if (!passwordMatches) {
-        return null;
-      }
-
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        image: user.image,
-        role: normalizeRole(user.role),
-      };
-    } catch (error) {
-      console.error("Database error during auth:", error);
-      return null;
-    }
-  },
-});
-
-export const {
-  handlers: { GET, POST },
-  auth,
-  signIn,
-  signOut
-} = NextAuth({
-  adapter: PrismaAdapter(prisma) as any,
-  session: {
-    strategy: "database",
-    maxAge: 60 * 60 * 24 * 30,
-    updateAge: 60 * 60 * 12,
-  },
-  trustHost: true,
-  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
-  useSecureCookies: isProduction,
-  pages: {
-    signIn: "/sign-in",
-  },
-  cookies: {
-    sessionToken: {
-      name: sessionCookieName,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: isProduction,
+  const session = await prisma.session.findFirst({
+    where: {
+      sessionToken,
+      expires: {
+        gt: new Date(),
       },
     },
-  },
-  providers: emailProviderConfigured
-    ? [credentialsProvider, EmailProvider({
-          server: process.env.EMAIL_SERVER,
-          from: process.env.EMAIL_FROM
-        })]
-    : [credentialsProvider],
-  callbacks: {
-    async session({ session, user }) {
-      if (session.user) {
-        session.user.id = String(user.id ?? "");
-        session.user.role = normalizeRole(String(user.role ?? "READER"));
-      }
-      console.log("auth.session session", {
-        userId: session.user?.id,
-        role: session.user?.role,
-        expires: session.expires,
-      });
-      return session;
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+        },
+      },
     },
-  },
-});
+  });
+
+  if (!session) {
+    cookieStore.delete(SESSION_COOKIE_NAME);
+    return null;
+  }
+
+  return {
+    user: {
+      id: session.user.id,
+      name: session.user.name,
+      email: session.user.email,
+      image: session.user.image,
+      role: normalizeRole(session.user.role),
+    },
+    expires: session.expires.toISOString(),
+  };
+}
+
+export async function createSession(userId: string) {
+  const sessionToken = randomBytes(32).toString("hex");
+  const expires = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000);
+
+  await prisma.session.create({
+    data: {
+      sessionToken,
+      userId,
+      expires,
+    },
+  });
+
+  return {
+    sessionToken,
+    expires,
+  };
+}
+
+export function persistSession(sessionToken: string, expires: Date) {
+  cookies().set(SESSION_COOKIE_NAME, sessionToken, getCookieOptions(expires));
+}
+
+export async function invalidateSession(sessionToken: string) {
+  await prisma.session.deleteMany({
+    where: {
+      sessionToken,
+    },
+  });
+}
+
+export async function clearSession() {
+  const cookieStore = cookies();
+  const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+
+  if (sessionToken) {
+    await invalidateSession(sessionToken);
+  }
+
+  cookieStore.delete(SESSION_COOKIE_NAME);
+}
+
+export function getSessionCookieName() {
+  return SESSION_COOKIE_NAME;
+}

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { signOut, useSession } from "next-auth/react";
+import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import type { AppShellUser } from "@/lib/navigation";
 import GlobalSearch, {
   type SearchAuthor,
@@ -26,7 +26,7 @@ export default function AppShell({
   searchAuthors,
   children,
 }: AppShellProps) {
-  const { data: session, status } = useSession();
+  const { session, status, refreshSession } = useAuthSession();
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -264,7 +264,8 @@ export default function AppShell({
                             method: "POST",
                             credentials: "include",
                           });
-                          void signOut({ callbackUrl: "/", redirect: true });
+                          await refreshSession();
+                          window.location.href = "/";
                         }}
                         className="theme-panel-hover block w-full rounded-[18px] px-3 py-3 text-left text-sm text-[var(--text-primary)]"
                       >

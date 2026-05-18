@@ -3,10 +3,8 @@ import type { NextRequest } from "next/server";
 import { PROTECTED_ROUTE_RULES } from "@/lib/auth-route-guards";
 
 const SESSION_COOKIE_NAMES = [
-  "authjs.session-token",
-  "__Secure-authjs.session-token",
-  "next-auth.session-token",
-  "__Secure-next-auth.session-token",
+  "df.session-token",
+  "__Secure-df.session-token",
 ];
 
 export default function middleware(request: NextRequest) {
