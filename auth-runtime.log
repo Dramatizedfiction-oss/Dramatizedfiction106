@@ -1,0 +1,54 @@
+
+> dramatized-fiction@1.0.0 dev
+> next dev
+
+   ▲ Next.js 14.1.0
+   - Local:        http://localhost:3000
+   - Environments: .env
+
+ ✓ Ready in 77.4s
+ ○ Compiling /api/auth/register ...
+ ✓ Compiled /api/auth/register in 5.9s (42 modules)
+ ○ Compiling /api/auth/[...nextauth] ...
+ ✓ Compiled /api/auth/[...nextauth] in 16.9s (236 modules)
+ ⨯ TypeError: next_dist_server_web_exports_next_request__WEBPACK_IMPORTED_MODULE_0__ is not a constructor
+    at reqWithEnvURL (webpack-internal:///(rsc)/./node_modules/next-auth/lib/env.js:16:12)
+    at httpHandler (webpack-internal:///(rsc)/./node_modules/next-auth/index.js:143:139)
+    at C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:63815
+    at C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\lib\trace\tracer.js:133:36
+    at NoopContextManager.with (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
+    at ContextAPI.with (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
+    at NoopTracer.startActiveSpan (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
+    at ProxyTracer.startActiveSpan (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854)
+    at C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\lib\trace\tracer.js:122:103
+    at NoopContextManager.with (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
+    at ContextAPI.with (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
+    at NextTracerImpl.trace (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\lib\trace\tracer.js:122:28)
+    at C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:56866
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)
+    at Object.wrap (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:37102)
+    at C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:54639
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)
+    at Object.wrap (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:36351)
+    at C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:54601
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)
+    at eU.execute (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:53994)
+    at eU.handle (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:65073)
+    at doRender (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\base-server.js:1333:60)
+    at cacheEntry.responseCache.get.routeKind (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\base-server.js:1543:46)
+    at ResponseCache.get (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\response-cache\index.js:49:26)
+    at DevServer.renderToResponseWithComponentsImpl (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\base-server.js:1463:53)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async DevServer.renderPageComponent (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\base-server.js:1856:24)
+    at async DevServer.renderToResponseImpl (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\base-server.js:1894:32)
+    at async DevServer.pipeImpl (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\base-server.js:911:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\next-server.js:271:17)
+    at async DevServer.handleRequestImpl (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\base-server.js:807:17)
+    at async C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\dev\next-dev-server.js:331:20
+    at async Span.traceAsyncFn (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\trace\trace.js:151:20)
+    at async DevServer.handleRequest (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\dev\next-dev-server.js:328:24)
+    at async invokeRender (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\lib\router-server.js:163:21)
+    at async handleRequest (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\lib\router-server.js:342:24)
+    at async requestHandlerImpl (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\lib\router-server.js:366:13)
+    at async Server.requestListener (C:\Users\benjamin lee\Documents\GitHub\Dramatizedfiction106\node_modules\next\dist\server\lib\start-server.js:140:13)
+prisma:error Error in PostgreSQL connection: Error { kind: Closed, cause: None }

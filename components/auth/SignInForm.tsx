@@ -4,8 +4,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import { signIn } from "next-auth/react";
-import DevAccessModal from "./DevAccessModal"; // DEV ONLY
-import { isDevModeEnabled } from "@/lib/dev-auth"; // DEV ONLY
 
 export default function SignInForm() {
   const router = useRouter();
@@ -18,7 +16,6 @@ export default function SignInForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showDevModal, setShowDevModal] = useState(false); // DEV ONLY
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -42,14 +39,8 @@ export default function SignInForm() {
     router.push(result.url || callbackUrl);
   }
 
-  const handleDevSuccess = () => { // DEV ONLY
-    router.refresh();
-    router.push(callbackUrl);
-  };
-
   return (
-    <>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
         <label className="block">
           <span className="theme-meta mb-2 block text-xs uppercase tracking-[0.24em]">
             Email
@@ -92,16 +83,6 @@ export default function SignInForm() {
           {isSubmitting ? "Signing in..." : "Sign In"}
         </button>
 
-        {isDevModeEnabled() && ( // DEV ONLY
-          <button
-            type="button"
-            onClick={() => setShowDevModal(true)}
-            className="story-button-secondary w-full justify-center text-sm"
-          >
-            Developer Access
-          </button>
-        )}
-
         <p className="theme-meta text-sm">
           New here?{" "}
           <Link href="/sign-up" className="theme-heading font-medium">
@@ -109,12 +90,5 @@ export default function SignInForm() {
           </Link>
         </p>
       </form>
-
-      <DevAccessModal // DEV ONLY
-        isOpen={showDevModal}
-        onClose={() => setShowDevModal(false)}
-        onSuccess={handleDevSuccess}
-      />
-    </>
   );
 }

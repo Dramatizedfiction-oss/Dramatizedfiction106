@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { hasRoleAccess } from "@/lib/roles";
 import { usePathname } from "next/navigation";
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth"; // DEV ONLY
 
 type SidebarUser = {
   role?: string | null;
@@ -11,15 +10,11 @@ type SidebarUser = {
 
 export default function Sidebar({ user }: { user: SidebarUser }) {
   const path = usePathname();
-  const unifiedAuth = useUnifiedAuth(); // DEV ONLY
-  
-  // DEV ONLY: Use unified auth that includes both real session and dev session
-  const effectiveUser = unifiedAuth.user ?? user;
 
-  if (!effectiveUser || !effectiveUser.role) return null;
+  if (!user || !user.role) return null;
 
-  const isWriter = hasRoleAccess(effectiveUser.role, "WRITER");
-  const isCEO = effectiveUser.role === "CEO";
+  const isWriter = hasRoleAccess(user.role, "WRITER");
+  const isCEO = user.role === "CEO";
 
   return (
     <aside className="hidden lg:flex lg:w-[285px] flex-shrink-0">

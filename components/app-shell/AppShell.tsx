@@ -12,8 +12,6 @@ import GlobalSearch, {
 } from "@/components/app-shell/GlobalSearch";
 import Sidebar from "@/components/Sidebar";
 import { hasRoleAccess } from "@/lib/roles";
-import { clearDevSession, isDevModeEnabled } from "@/lib/dev-auth"; // DEV ONLY
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth"; // DEV ONLY
 
 type AppShellProps = {
   user: (AppShellUser & { name?: string | null; image?: string | null }) | null;
@@ -28,8 +26,7 @@ export default function AppShell({
   searchAuthors,
   children,
 }: AppShellProps) {
-  const { data: session } = useSession();
-  const unifiedAuth = useUnifiedAuth(); // DEV ONLY
+  const { data: session, status } = useSession();
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -38,12 +35,7 @@ export default function AppShell({
   const profileRef = useRef<HTMLDivElement | null>(null);
   const mobileNavRef = useRef<HTMLDivElement | null>(null);
   const isExploreRoute = pathname === "/explore";
-  
-  // DEV ONLY: Use unified auth that includes both real session and dev session
-  const sessionUser = unifiedAuth.user ?? user ?? null;
-  const authStatus = unifiedAuth.status;
-  const isDevMode = unifiedAuth.isDevMode; // DEV ONLY
-  
+  const sessionUser = session?.user ?? user ?? null;
   const canWrite = hasRoleAccess(sessionUser?.role, "WRITER");
   const canManage = hasRoleAccess(sessionUser?.role, "BOARD");
   const canAccessCEO = hasRoleAccess(sessionUser?.role, "CEO");
@@ -147,12 +139,6 @@ export default function AppShell({
             </div>
           </Link>
 
-          {isDevMode && ( // DEV ONLY
-            <div className="rounded-full bg-red-500 px-2 py-1 text-xs font-semibold text-white">
-              DEV CEO MODE
-            </div>
-          )}
-
           <div className="hidden flex-1 justify-center px-4 md:flex">
             <div className="w-full max-w-[820px]">
               <GlobalSearch stories={searchStories} authors={searchAuthors} />
@@ -169,7 +155,7 @@ export default function AppShell({
               Search
             </button>
 
-            {authStatus === "loading" ? (
+            {status === "loading" ? (
               <div className="inline-flex h-11 min-w-[96px] items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 text-sm text-[var(--text-secondary)]">
                 Loading
               </div>
@@ -272,29 +258,18 @@ export default function AppShell({
                       <button
                         type="button"
                         role="menuitem"
-                        onClick={() => {
+                        onClick={async () => {
                           setProfileOpen(false);
-                          void signOut({ callbackUrl: "/" });
+                          await fetch("/api/auth/logout", {
+                            method: "POST",
+                            credentials: "include",
+                          });
+                          void signOut({ callbackUrl: "/", redirect: true });
                         }}
                         className="theme-panel-hover block w-full rounded-[18px] px-3 py-3 text-left text-sm text-[var(--text-primary)]"
                       >
                         Sign Out
                       </button>
-
-                      {isDevMode && ( // DEV ONLY
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={() => {
-                            clearDevSession();
-                            setProfileOpen(false);
-                            window.location.reload(); // Refresh to update UI
-                          }}
-                          className="theme-panel-hover block w-full rounded-[18px] px-3 py-3 text-left text-sm text-red-500"
-                        >
-                          Exit Developer Mode
-                        </button>
-                      )}
                     </div>
                   </div>
                 )}

@@ -8,6 +8,10 @@ import { normalizeRole } from "@/lib/roles";
 
 const emailProviderConfigured =
   Boolean(process.env.EMAIL_SERVER) && Boolean(process.env.EMAIL_FROM);
+const isProduction = process.env.NODE_ENV === "production";
+const sessionCookieName = isProduction
+  ? "__Secure-authjs.session-token"
+  : "authjs.session-token";
 
 const credentialsProvider = Credentials({
   name: "Credentials",
@@ -63,14 +67,26 @@ export const {
 } = NextAuth({
   adapter: PrismaAdapter(prisma) as any,
   session: {
-    strategy: "jwt",
+    strategy: "database",
     maxAge: 60 * 60 * 24 * 30,
     updateAge: 60 * 60 * 12,
   },
   trustHost: true,
   secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  useSecureCookies: isProduction,
   pages: {
     signIn: "/sign-in",
+  },
+  cookies: {
+    sessionToken: {
+      name: sessionCookieName,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: isProduction,
+      },
+    },
   },
   providers: emailProviderConfigured
     ? [credentialsProvider, EmailProvider({
@@ -79,37 +95,17 @@ export const {
         })]
     : [credentialsProvider],
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = normalizeRole(String(user.role ?? "READER"));
-      }
-
-      if ((!token.role || !token.id) && token.sub) {
-        try {
-          const dbUser = await prisma.user.findUnique({
-            where: { id: token.sub },
-            select: { role: true },
-          });
-
-          token.id = token.id ?? token.sub;
-          token.role = normalizeRole(dbUser?.role ?? "READER");
-        } catch (error) {
-          console.error("Database error in jwt callback:", error);
-          token.role = "READER"; // Fallback
-        }
-      }
-
-      console.log("auth.jwt token", token);
-      return token;
-    },
-    async session({ session, token }) {
+    async session({ session, user }) {
       if (session.user) {
-        session.user.id = String(token.id ?? token.sub ?? "");
-        session.user.role = normalizeRole(String(token.role ?? "READER"));
+        session.user.id = String(user.id ?? "");
+        session.user.role = normalizeRole(String(user.role ?? "READER"));
       }
-      console.log("auth.session session", session);
+      console.log("auth.session session", {
+        userId: session.user?.id,
+        role: session.user?.role,
+        expires: session.expires,
+      });
       return session;
-    }
-  }
+    },
+  },
 });
