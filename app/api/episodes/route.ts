@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     parsedData = createEpisodeSchema.parse(rawData);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof z.ZodError ? error.errors : "Invalid request data" },
+      { error: error instanceof z.ZodError ? error.flatten() : "Invalid request data" },
       { status: 400 }
     );
   }
