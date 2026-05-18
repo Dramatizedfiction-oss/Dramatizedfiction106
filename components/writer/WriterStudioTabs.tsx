@@ -4,9 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const tabs = [
-  { href: "/writer/series", label: "Series" },
-  { href: "/writer/analytics", label: "Analytics" },
-  { href: "/writer/notifications", label: "Notifications" },
+  { href: "/writer-studio/series", label: "Series" },
+  { href: "/writer-studio/analytics", label: "Analytics" },
+  { href: "/writer-studio/notifications", label: "Notifications" },
 ];
 
 export default function WriterStudioTabs() {

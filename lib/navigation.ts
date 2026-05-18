@@ -1,6 +1,19 @@
 export type AppShellUser = {
+  id?: string | null;
+  name?: string | null;
+  image?: string | null;
   role?: string | null;
+  bio?: string | null;
 } | null;
+
+export type StudioLink = {
+  id: string;
+  name: string;
+  slug: string;
+  kind: "PERSONAL" | "SHARED" | "OFFICIAL" | "EXECUTIVE";
+  description: string | null;
+  accessRole: "MEMBER" | "EDITOR" | "MANAGER" | "OWNER";
+};
 
 export type TrendingStory = {
   id: string;

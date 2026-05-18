@@ -32,11 +32,51 @@ model User {
   payouts                  AuthorPayout[]
   books                    Book[]
   episodes                 Episode[]
+  authorProfile            AuthorProfile?
+  ownedStudios             Studio[]       @relation("StudioOwner")
   readEvents               ReadEvent[]
   series                   Series[]
   sessions                 Session[]
+  studioMemberships        StudioMembership[]
   subscriptions            Subscription[]
   stats                    UserStats?
+}
+
+model AuthorProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  displayName   String
+  bio           String?
+  profileImage  String?
+  creatorTagline String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Studio {
+  id          String            @id @default(cuid())
+  name        String
+  slug        String            @unique
+  description String?
+  kind        StudioKind
+  ownerId     String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  memberships StudioMembership[]
+  owner       User?             @relation("StudioOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+}
+
+model StudioMembership {
+  id         String           @id @default(cuid())
+  userId     String
+  studioId   String
+  accessRole StudioAccessRole @default(MEMBER)
+  createdAt  DateTime         @default(now())
+  studio     Studio           @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, studioId])
 }
 
 model Account {
@@ -234,4 +274,18 @@ enum RevenueType {
   SUBSCRIPTION
   AD_WATCH
   EPISODE_READ
+}
+
+enum StudioKind {
+  PERSONAL
+  SHARED
+  OFFICIAL
+  EXECUTIVE
+}
+
+enum StudioAccessRole {
+  MEMBER
+  EDITOR
+  MANAGER
+  OWNER
 }

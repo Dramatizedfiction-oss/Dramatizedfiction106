@@ -5,16 +5,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
-import type { AppShellUser } from "@/lib/navigation";
+import type { AppShellUser, StudioLink } from "@/lib/navigation";
 import GlobalSearch, {
   type SearchAuthor,
   type SearchStory,
 } from "@/components/app-shell/GlobalSearch";
-import Sidebar from "@/components/Sidebar";
 import { hasRoleAccess } from "@/lib/roles";
+import { getRoleLabel } from "@/lib/studios";
 
 type AppShellProps = {
   user: (AppShellUser & { name?: string | null; image?: string | null }) | null;
+  studios: StudioLink[];
   searchStories: SearchStory[];
   searchAuthors: SearchAuthor[];
   children: React.ReactNode;
@@ -22,6 +23,7 @@ type AppShellProps = {
 
 export default function AppShell({
   user,
+  studios,
   searchStories,
   searchAuthors,
   children,
@@ -39,6 +41,7 @@ export default function AppShell({
   const canWrite = hasRoleAccess(sessionUser?.role, "WRITER");
   const canManage = hasRoleAccess(sessionUser?.role, "BOARD");
   const canAccessCEO = hasRoleAccess(sessionUser?.role, "CEO");
+  const roleLabel = getRoleLabel(sessionUser?.role);
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("df-theme");
@@ -109,12 +112,15 @@ export default function AppShell({
       label: "For You",
       description: "Future recommendation shelf.",
     },
-    {
-      href: "/write-with-us",
-      label: "Start Writing With Us",
-      description: "Writer onboarding and application flow.",
-    },
+    { href: "/write-with-us", label: "Start Writing With Us", description: "Writer onboarding and application flow." },
   ];
+
+  const studioLinks = studios.map((studio) => ({
+    href: `/writer-studio?studio=${studio.slug}`,
+    label: studio.name,
+    description: studio.description || `${studio.kind.toLowerCase()} studio access`,
+    detail: studio.accessRole,
+  }));
 
   return (
     <div className="min-h-screen">
@@ -198,15 +204,35 @@ export default function AppShell({
                         {sessionUser.name || "Member"}
                       </p>
                       <p className="theme-meta mt-1 text-xs uppercase tracking-[0.24em]">
-                        {sessionUser.role}
+                        {roleLabel}
                       </p>
                     </div>
 
-                    <div className="space-y-1">
+                    {studioLinks.length > 0 && (
+                      <div className="mb-2 border-b border-[var(--border-color)] px-1 pb-2">
+                        <p className="theme-meta px-2 py-2 text-[10px] uppercase tracking-[0.28em]">
+                          Studios
+                        </p>
+                        <div className="space-y-1">
+                          {studioLinks.map((studio) => (
+                            <DropdownLink
+                              key={studio.href}
+                              href={studio.href}
+                              label={studio.label}
+                              meta={studio.detail}
+                              onNavigate={() => setProfileOpen(false)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-1 px-1">
                       {canWrite && (
                         <DropdownLink
                           href="/writer-studio"
                           label="Writer Studio"
+                          meta="Creator tools"
                           onNavigate={() => setProfileOpen(false)}
                         />
                       )}
@@ -215,6 +241,7 @@ export default function AppShell({
                         <DropdownLink
                           href="/command-center"
                           label="Command Center"
+                          meta="Board tools"
                           onNavigate={() => setProfileOpen(false)}
                         />
                       )}
@@ -223,6 +250,7 @@ export default function AppShell({
                         <DropdownLink
                           href="/ceo-studio"
                           label="CEO Studio"
+                          meta="Executive tools"
                           onNavigate={() => setProfileOpen(false)}
                         />
                       )}
@@ -230,16 +258,19 @@ export default function AppShell({
                       <DropdownLink
                         href="/settings"
                         label="Settings"
+                        meta="Account"
                         onNavigate={() => setProfileOpen(false)}
                       />
                       <DropdownLink
                         href="/about"
                         label="About Platform"
+                        meta="Platform"
                         onNavigate={() => setProfileOpen(false)}
                       />
                       <DropdownLink
                         href="/ai-usage"
                         label="AI Usage"
+                        meta="Policy"
                         onNavigate={() => setProfileOpen(false)}
                       />
 
@@ -312,12 +343,12 @@ export default function AppShell({
           >
             <div className="mb-6 flex items-start justify-between gap-3">
               <div>
-                <p className="eyebrow">Foldout Sidebar</p>
+                <p className="eyebrow">Navigation</p>
                 <h2 className="font-heading theme-heading mt-3 text-3xl font-semibold">
-                  Discovery
+                  Platform Menu
                 </h2>
                 <p className="theme-meta mt-2 text-sm">
-                  Browse, switch themes, and move into writer onboarding.
+                  Move between discovery, creator spaces, and account controls.
                 </p>
               </div>
 
@@ -358,6 +389,31 @@ export default function AppShell({
               </button>
             </div>
 
+            {studioLinks.length > 0 && (
+              <div className="mt-4 border-t border-[var(--border-color)] pt-4">
+                <p className="theme-meta mb-3 text-xs uppercase tracking-[0.24em]">
+                  Accessible Studios
+                </p>
+                <div className="space-y-2">
+                  {studioLinks.map((studio) => (
+                    <Link
+                      key={studio.href}
+                      href={studio.href}
+                      onClick={() => setMobileNavOpen(false)}
+                      className="theme-panel-hover block rounded-[20px] border border-[var(--border-color)] px-4 py-3"
+                    >
+                      <span className="theme-heading block text-sm font-medium">
+                        {studio.label}
+                      </span>
+                      <span className="theme-meta mt-1 block text-xs uppercase tracking-[0.2em]">
+                        {studio.detail}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {!sessionUser && (
               <div className="mt-4">
                 <Link
@@ -370,40 +426,44 @@ export default function AppShell({
               </div>
             )}
 
-            {sessionUser && canWrite && (
-              <div className="mt-4">
-                <Link
-                  href="/writer-studio"
-                  onClick={() => setMobileNavOpen(false)}
-                  className="story-button-secondary w-full justify-center"
-                >
-                  Writer Studio
-                </Link>
-              </div>
-            )}
-
-            {sessionUser && canManage && (
-              <div className="mt-3">
-                <Link
-                  href="/command-center"
-                  onClick={() => setMobileNavOpen(false)}
-                  className="story-button-secondary w-full justify-center"
-                >
-                  Command Center
-                </Link>
+            {sessionUser && (
+              <div className="mt-4 space-y-3 border-t border-[var(--border-color)] pt-4">
+                {canWrite && (
+                  <Link
+                    href="/writer-studio"
+                    onClick={() => setMobileNavOpen(false)}
+                    className="story-button-secondary w-full justify-center"
+                  >
+                    Writer Studio
+                  </Link>
+                )}
+                {canManage && (
+                  <Link
+                    href="/command-center"
+                    onClick={() => setMobileNavOpen(false)}
+                    className="story-button-secondary w-full justify-center"
+                  >
+                    Command Center
+                  </Link>
+                )}
+                {canAccessCEO && (
+                  <Link
+                    href="/ceo-studio"
+                    onClick={() => setMobileNavOpen(false)}
+                    className="story-button-secondary w-full justify-center"
+                  >
+                    CEO Studio
+                  </Link>
+                )}
               </div>
             )}
           </div>
         </>
       )}
 
-      <div className="flex min-h-[calc(100vh-64px)] flex-col lg:flex-row">
-        {!pathname.startsWith("/writer") && <Sidebar user={sessionUser} />}
-
-        <main className="page-shell flex-1 min-w-0">
-          {isExploreRoute ? children : <div className="surface-panel overflow-hidden">{children}</div>}
-        </main>
-      </div>
+      <main className="page-shell min-w-0">
+        {isExploreRoute ? children : <div className="surface-panel overflow-hidden">{children}</div>}
+      </main>
     </div>
   );
 }
@@ -411,10 +471,12 @@ export default function AppShell({
 function DropdownLink({
   href,
   label,
+  meta,
   onNavigate,
 }: {
   href: string;
   label: string;
+  meta?: string;
   onNavigate: () => void;
 }) {
   return (
@@ -424,7 +486,12 @@ function DropdownLink({
       onClick={onNavigate}
       className="theme-panel-hover block rounded-[18px] px-3 py-3 text-sm text-[var(--text-primary)]"
     >
-      {label}
+      <span className="block">{label}</span>
+      {meta ? (
+        <span className="theme-meta mt-1 block text-[10px] uppercase tracking-[0.24em]">
+          {meta}
+        </span>
+      ) : null}
     </Link>
   );
 }

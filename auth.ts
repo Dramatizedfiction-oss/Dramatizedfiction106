@@ -14,6 +14,7 @@ export type AuthUser = {
   name: string | null;
   email: string | null;
   image: string | null;
+  bio?: string | null;
   role: AppRole;
 };
 
@@ -54,6 +55,7 @@ export async function auth(): Promise<AuthSession | null> {
           name: true,
           email: true,
           image: true,
+          bio: true,
           role: true,
         },
       },
@@ -71,6 +73,7 @@ export async function auth(): Promise<AuthSession | null> {
       name: session.user.name,
       email: session.user.email,
       image: session.user.image,
+      bio: session.user.bio,
       role: normalizeRole(session.user.role),
     },
     expires: session.expires.toISOString(),

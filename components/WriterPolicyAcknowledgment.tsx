@@ -31,7 +31,7 @@ export default function WriterPolicyAcknowledgment() {
       <div className="mt-6 flex flex-wrap gap-3">
         {acknowledged ? (
           <Link
-            href="/api/auth/signin?callbackUrl=/writer"
+            href="/sign-in?callbackUrl=/writer-studio"
             className="story-button-primary"
           >
             Apply Now

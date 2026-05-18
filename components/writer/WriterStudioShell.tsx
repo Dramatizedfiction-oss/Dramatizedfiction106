@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import WriterStudioTabs from "@/components/writer/WriterStudioTabs";
 
 const utilityLinks = [
-  { href: "/writer", label: "Studio Home" },
-  { href: "/writer/episodes", label: "Episodes" },
-  { href: "/writer/stats", label: "Stats" },
-  { href: "/writer/guidelines", label: "Guidelines" },
+  { href: "/writer-studio", label: "Studio Home" },
+  { href: "/writer-studio/drafts", label: "Drafts" },
+  { href: "/writer-studio/editor", label: "Editor" },
+  { href: "/writer-studio/characters", label: "Characters" },
 ];
 
 export default function WriterStudioShell({
@@ -30,14 +30,14 @@ export default function WriterStudioShell({
                   Creator workspace shell
                 </h1>
                 <p className="theme-meta mt-3 max-w-3xl text-sm leading-6">
-                  A minimal writing hub that can expand into drafting, character systems,
-                  and performance tooling without changing the core navigation flow.
+                  A cinematic creator workspace that keeps navigation, drafting,
+                  character systems, and future performance tooling under one shared shell.
                 </p>
               </div>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Link href="/writer/new-episode" className="story-button-primary justify-center">
+              <Link href="/writer-studio/new-episode" className="story-button-primary justify-center">
                 New Episode
               </Link>
             </div>

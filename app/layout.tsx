@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import Footer from "@/components/Footer";
 import AppShell from "@/components/app-shell/AppShell";
 import AuthSessionProvider from "@/components/providers/AuthSessionProvider";
+import { ensureUserStudioAccess } from "@/lib/studios";
 import { prisma } from "@/lib/prisma";
 
 export default async function RootLayout({
@@ -15,9 +16,10 @@ export default async function RootLayout({
 
   let searchStories: any[] = [];
   let searchAuthors: any[] = [];
+  let studios: any[] = [];
 
   try {
-    [searchStories, searchAuthors] = await Promise.all([
+    [searchStories, searchAuthors, studios] = await Promise.all([
       prisma.series.findMany({
         orderBy: [{ reads: "desc" }, { createdAt: "desc" }],
         take: 20,
@@ -39,6 +41,7 @@ export default async function RootLayout({
           name: true,
         },
       }),
+      user?.id ? ensureUserStudioAccess(user) : Promise.resolve([]),
     ]);
   } catch (error) {
     console.error("Database connection error in layout:", error);
@@ -52,6 +55,7 @@ export default async function RootLayout({
           <div className="min-h-screen">
             <AppShell
               user={user}
+              studios={studios}
               searchStories={searchStories}
               searchAuthors={searchAuthors}
             >
