@@ -155,14 +155,14 @@ export default function AppShell({
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:opacity-80 md[...]
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:opacity-80"
               aria-label="Open search"
             >
               Search
             </button>
 
             {status === "loading" ? (
-              <div className="inline-flex h-11 min-w-[96px] items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 text-sm text-[var(--text-sec[...]">
+              <div className="inline-flex h-11 min-w-[96px] items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 text-sm text-[var(--text-secondary)]">
                 Loading
               </div>
             ) : !sessionUser ? (
@@ -180,7 +180,7 @@ export default function AppShell({
                   aria-expanded={profileOpen}
                   aria-haspopup="menu"
                   aria-label="Open profile menu"
-                  className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm font-semibold text[...]"
+                  className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--text-primary)]"
                 >
                   {sessionUser.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -310,7 +310,7 @@ export default function AppShell({
 
             <button
               type="button"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] hover:opaci[...]"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] hover:opacity-80 md:hidden"
               onClick={() => setMobileNavOpen(true)}
               aria-label="Open navigation"
             >
