@@ -13,3 +13,13 @@ export function requireRole(session: AuthSession | null, roles: AppRole[]) {
     redirect("/explore");
   }
 }
+
+export function requireWriterStudioAccess(session: AuthSession | null) {
+  if (!session?.user?.id) {
+    redirect("/sign-in?callbackUrl=/writer-studio");
+  }
+
+  if (!hasRoleAccess(session.user.role, "WRITER")) {
+    redirect("/become-author");
+  }
+}

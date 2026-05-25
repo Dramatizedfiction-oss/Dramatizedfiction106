@@ -245,8 +245,7 @@ model CmsArticle {
 
 enum Role {
   READER
-  AUTHOR
-  ADMIN
+  WRITER
   BOARD
   CEO
 }

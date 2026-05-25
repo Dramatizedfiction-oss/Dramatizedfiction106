@@ -20,6 +20,8 @@ const navItems: NavItem[] = [
   { href: "/writer-studio/wip-projects", label: "WIP Projects" },
   { href: "/writer-studio/media", label: "Covers & Media" },
   { href: "/writer-studio/scheduling", label: "Scheduling" },
+  // TODO: Connect these once analytics, monetization, creator payouts, AI editing,
+  // readability optimization, and creator economy systems are ready.
   { href: "/writer-studio/analytics", label: "Analytics", disabled: true },
   { href: "/writer-studio/monetization", label: "Monetization", disabled: true, locked: true },
   { href: "/writer-studio/settings", label: "Settings" },

@@ -32,7 +32,7 @@ export default async function RootLayout({
       prisma.user.findMany({
         where: {
           role: {
-            in: ["AUTHOR", "ADMIN", "CEO"],
+            in: ["WRITER", "BOARD", "CEO"],
           },
         },
         take: 16,

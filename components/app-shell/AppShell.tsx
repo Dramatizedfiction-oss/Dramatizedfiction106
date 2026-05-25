@@ -112,7 +112,7 @@ export default function AppShell({
       label: "For You",
       description: "Future recommendation shelf.",
     },
-    { href: "/write-with-us", label: "Start Writing With Us", description: "Writer onboarding and application flow." },
+    { href: "/become-author", label: "Become an Author", description: "Unlock creator mode when you are ready." },
   ];
 
   const studioLinks = studios.map((studio) => ({
@@ -233,6 +233,15 @@ export default function AppShell({
                           href="/writer-studio"
                           label="Writer Studio"
                           meta="Creator tools"
+                          onNavigate={() => setProfileOpen(false)}
+                        />
+                      )}
+
+                      {!canWrite && (
+                        <DropdownLink
+                          href="/become-author"
+                          label="Become Author"
+                          meta="Unlock creator tools"
                           onNavigate={() => setProfileOpen(false)}
                         />
                       )}
@@ -435,6 +444,15 @@ export default function AppShell({
                     className="story-button-secondary w-full justify-center"
                   >
                     Writer Studio
+                  </Link>
+                )}
+                {!canWrite && (
+                  <Link
+                    href="/become-author"
+                    onClick={() => setMobileNavOpen(false)}
+                    className="story-button-secondary w-full justify-center"
+                  >
+                    Become Author
                   </Link>
                 )}
                 {canManage && (

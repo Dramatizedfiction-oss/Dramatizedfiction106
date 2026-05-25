@@ -4,6 +4,7 @@ import DashboardHeader from "@/components/writer-studio/DashboardHeader";
 import ProjectCard from "@/components/writer-studio/ProjectCard";
 import QuickActions from "@/components/writer-studio/QuickActions";
 import { getMockRecentProjects } from "@/lib/writer-studio";
+import { prisma } from "@/lib/prisma";
 
 export default async function WriterStudioHomePage() {
   const session = await auth();
@@ -12,19 +13,24 @@ export default async function WriterStudioHomePage() {
     return <p className="theme-meta">Sign in to view your studio.</p>;
   }
 
-  const projects = getMockRecentProjects(session.user.id);
+  const [seriesCount, episodeCount] = await Promise.all([
+    prisma.series.count({ where: { authorId: session.user.id } }),
+    prisma.episode.count({ where: { authorId: session.user.id } }),
+  ]);
+  const hasCreatorWork = seriesCount > 0 || episodeCount > 0;
+  const projects = hasCreatorWork ? getMockRecentProjects(session.user.id) : [];
 
   return (
     <div className="space-y-7">
       <DashboardHeader user={session.user} />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <CreatorCard label="Total Stories" value="12" detail="Published, drafted, and scheduled story entries." />
-        <CreatorCard label="Series" value="4" detail="Story worlds with active audience paths." />
-        <CreatorCard label="Drafts" value="7" detail="Working pieces waiting for the next pass." />
-        <CreatorCard label="Followers" value="1.8k" detail="Readers following your creator profile." />
-        <CreatorCard label="Reads" value="28.4k" detail="Placeholder momentum across recent releases." />
-        <CreatorCard label="Recent Engagement" value="+14%" detail="Mock signal for comments, saves, and returns." />
+        <CreatorCard label="Stories" value={String(episodeCount)} detail="Published and drafted story entries." />
+        <CreatorCard label="Series" value={String(seriesCount)} detail="Story worlds with active audience paths." />
+        <CreatorCard label="Drafts" value={hasCreatorWork ? "3" : "0"} detail="Working pieces waiting for the next pass." />
+        <CreatorCard label="Followers" value="Soon" detail="Audience growth tools unlock in a future phase." />
+        <CreatorCard label="Reads" value="Soon" detail="Reader momentum will surface after publishing." />
+        <CreatorCard label="Engagement" value="Soon" detail="Future saves, comments, and return-reader signals." />
       </div>
 
       <QuickActions />
@@ -42,11 +48,20 @@ export default async function WriterStudioHomePage() {
           </div>
         </div>
 
-        <div className="mt-5 grid gap-4 xl:grid-cols-2">
-          {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
+        {projects.length > 0 ? (
+          <div className="mt-5 grid gap-4 xl:grid-cols-2">
+            {projects.map((project) => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-5 rounded-[24px] border border-dashed border-[var(--border-color)] bg-[var(--bg-primary)] p-6">
+            <p className="theme-heading text-xl font-semibold">Your first story starts here.</p>
+            <p className="theme-meta mt-3 max-w-2xl text-sm leading-6">
+              Create your first series, draft an opening episode, or start a WIP journey so readers can begin following the work before everything is finished.
+            </p>
+          </div>
+        )}
       </section>
     </div>
   );

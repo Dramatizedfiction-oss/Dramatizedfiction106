@@ -39,7 +39,7 @@ export default async function HomePage() {
       prisma.user.count({
         where: {
           role: {
-            in: ["AUTHOR", "ADMIN", "CEO"],
+            in: ["WRITER", "BOARD", "CEO"],
           },
         },
       }),
@@ -115,8 +115,8 @@ export default async function HomePage() {
                 Explore Stories
               </Link>
 
-              <Link href="/write-with-us" className="story-button-secondary min-w-[220px]">
-                Start Writing With Us
+              <Link href="/become-author" className="story-button-secondary min-w-[220px]">
+                Become an Author
               </Link>
 
               {continueEpisode ? (
