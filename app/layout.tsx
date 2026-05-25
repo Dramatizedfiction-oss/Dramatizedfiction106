@@ -11,7 +11,10 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const session = await auth().catch((error) => {
+    console.error("Root layout auth lookup failed. Rendering as guest.", error);
+    return null;
+  });
   const user = session?.user || null;
 
   let searchStories: any[] = [];
