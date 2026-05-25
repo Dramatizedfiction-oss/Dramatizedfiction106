@@ -15,5 +15,5 @@ export default async function WriterStudioLayout({
     await getWriterStudioContext(session.user);
   }
 
-  return <WriterStudioShell>{children}</WriterStudioShell>;
+  return <WriterStudioShell user={session?.user ?? null}>{children}</WriterStudioShell>;
 }

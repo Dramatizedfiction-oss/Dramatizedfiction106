@@ -10,5 +10,5 @@ export default async function WriterLayout({
   const session = await auth();
   requireRole(session, ["WRITER"]);
 
-  return <WriterStudioShell>{children}</WriterStudioShell>;
+  return <WriterStudioShell user={session?.user ?? null}>{children}</WriterStudioShell>;
 }

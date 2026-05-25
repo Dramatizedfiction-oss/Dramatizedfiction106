@@ -30,6 +30,9 @@ export default async function WriterStudioSeriesPage() {
           <h2 className="font-heading theme-heading mt-3 text-4xl font-semibold">
             Shape your story worlds
           </h2>
+          <p className="theme-meta mt-3 max-w-2xl text-sm leading-6">
+            Organize connected works, reader entry points, and future release arcs from one creator-first shelf.
+          </p>
         </div>
         <Link href="/series/new" className="story-button-primary">
           New Series
@@ -37,10 +40,10 @@ export default async function WriterStudioSeriesPage() {
       </div>
 
       {series.length === 0 ? (
-        <div className="theme-panel rounded-[24px] border border-dashed border-[var(--border-color)] p-6">
-          <p className="theme-meta text-sm">
-            You have not created any series yet. Start with a title, core premise,
-            and AI usage label.
+        <div className="theme-panel rounded-[28px] border border-dashed border-[var(--border-color)] p-8">
+          <p className="theme-heading text-xl font-semibold">No series yet</p>
+          <p className="theme-meta mt-3 max-w-xl text-sm leading-6">
+            Start with a title, core premise, and AI usage label. This section is ready to become the home for seasons, arcs, and release structure.
           </p>
         </div>
       ) : (
