@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -13,6 +14,7 @@ type AuthSessionContextValue = {
   session: AuthSession | null;
   status: "loading" | "authenticated" | "unauthenticated";
   refreshSession: () => Promise<void>;
+  signOut: () => Promise<void>;
 };
 
 const AuthSessionContext = createContext<AuthSessionContextValue | null>(null);
@@ -27,9 +29,9 @@ export default function AuthSessionProvider({
   const [session, setSession] = useState<AuthSession | null>(initialSession);
   const [status, setStatus] = useState<
     "loading" | "authenticated" | "unauthenticated"
-  >(initialSession ? "authenticated" : "loading");
+  >(initialSession ? "authenticated" : "unauthenticated");
 
-  async function refreshSession() {
+  const refreshSession = useCallback(async function refreshSession() {
     try {
       const response = await fetch("/api/auth/me", {
         credentials: "include",
@@ -59,22 +61,33 @@ export default function AuthSessionProvider({
       });
       setStatus("authenticated");
     } catch {
-      setSession(initialSession ?? null);
-      setStatus(initialSession ? "authenticated" : "unauthenticated");
+      setSession(null);
+      setStatus("unauthenticated");
     }
-  }
+  }, []);
+
+  const signOut = useCallback(async function signOut() {
+    setSession(null);
+    setStatus("unauthenticated");
+
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    }).catch(() => null);
+  }, []);
 
   useEffect(() => {
     void refreshSession();
-  }, []);
+  }, [refreshSession]);
 
   const value = useMemo(
     () => ({
       session,
       status,
       refreshSession,
+      signOut,
     }),
-    [session, status],
+    [refreshSession, session, signOut, status],
   );
 
   return (

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import type { AppShellUser, StudioLink } from "@/lib/navigation";
@@ -28,16 +28,18 @@ export default function AppShell({
   searchAuthors,
   children,
 }: AppShellProps) {
-  const { session, status, refreshSession } = useAuthSession();
+  const { session, status, signOut } = useAuthSession();
+  const router = useRouter();
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const profileRef = useRef<HTMLDivElement | null>(null);
   const mobileNavRef = useRef<HTMLDivElement | null>(null);
   const isExploreRoute = pathname === "/explore";
-  const sessionUser = session?.user ?? user ?? null;
+  const sessionUser = status === "loading" ? session?.user ?? user ?? null : session?.user ?? null;
   const canWrite = hasRoleAccess(sessionUser?.role, "WRITER");
   const canManage = hasRoleAccess(sessionUser?.role, "BOARD");
   const canAccessCEO = hasRoleAccess(sessionUser?.role, "CEO");
@@ -56,6 +58,13 @@ export default function AppShell({
     setProfileOpen(false);
     setMobileNavOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!sessionUser) {
+      setProfileOpen(false);
+      setMobileNavOpen(false);
+    }
+  }, [sessionUser]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -93,6 +102,15 @@ export default function AppShell({
     window.localStorage.setItem("df-theme", nextTheme);
     document.documentElement.classList.remove("light", "dark");
     document.documentElement.classList.add(nextTheme);
+  }
+
+  async function handleSignOut() {
+    setIsSigningOut(true);
+    setProfileOpen(false);
+    setMobileNavOpen(false);
+    await signOut();
+    router.refresh();
+    router.push("/");
   }
 
   const initials = useMemo(() => {
@@ -299,17 +317,12 @@ export default function AppShell({
                         type="button"
                         role="menuitem"
                         onClick={async () => {
-                          setProfileOpen(false);
-                          await fetch("/api/auth/logout", {
-                            method: "POST",
-                            credentials: "include",
-                          });
-                          await refreshSession();
-                          window.location.href = "/";
+                          await handleSignOut();
                         }}
+                        disabled={isSigningOut}
                         className="theme-panel-hover block w-full rounded-[18px] px-3 py-3 text-left text-sm text-[var(--text-primary)]"
                       >
-                        Sign Out
+                        {isSigningOut ? "Signing Out" : "Sign Out"}
                       </button>
                     </div>
                   </div>
