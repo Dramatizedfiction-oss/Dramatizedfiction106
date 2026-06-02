@@ -1,3 +1,4 @@
+import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ensureUserStudioAccess } from "@/lib/studios";
 import type { AuthUser } from "@/auth";
@@ -37,7 +38,7 @@ export async function promoteUserToAuthor(userId: string): Promise<AuthorPromoti
   const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: {
-      role: "AUTHOR",
+      role: Role.AUTHOR,
       writerPolicyAcknowledged: true,
       writerStatus: currentUser.writerStatus ?? "BEGINNER",
     },
