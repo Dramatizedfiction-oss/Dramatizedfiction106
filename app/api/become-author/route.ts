@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { ensureSessionUser } from "@/lib/auth/user-sync";
-import { prisma } from "@/lib/prisma";
-import { hasRoleAccess, normalizeRole } from "@/lib/roles";
+import { promoteUserToWriter } from "@/lib/author-onboarding";
 
 function cleanOptionalText(value: unknown) {
   if (typeof value !== "string") {
@@ -50,56 +48,19 @@ export async function POST(request: Request) {
       );
     }
 
-    const user = await ensureSessionUser(session.user);
-    const currentRole = normalizeRole(user.role);
-
-    if (currentRole !== "READER" && !hasRoleAccess(currentRole, "WRITER")) {
-      console.warn("Blocked invalid writer role transition.", {
-        userId: user.id,
-        role: currentRole,
-      });
-
-      return NextResponse.json(
-        { error: "This account cannot be converted through the public writer flow." },
-        { status: 403 },
-      );
-    }
-
-    const updated = await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        role: currentRole === "READER" ? "WRITER" : currentRole,
-        writerPolicyAcknowledged: true,
-        name: displayName,
-        image: profileImage ?? undefined,
-        bio: bio ?? undefined,
-      },
-      select: {
-        id: true,
-        role: true,
-      },
-    });
-
-    await prisma.authorProfile.upsert({
-      where: { userId: updated.id },
-      update: {
-        displayName,
-        profileImage: profileImage ?? undefined,
-        bio: bio ?? undefined,
-      },
-      create: {
-        userId: updated.id,
-        displayName,
-        profileImage,
-        bio,
-        creatorTagline: "Creator in residence",
-      },
+    const result = await promoteUserToWriter(session.user.id, {
+      displayName,
+      profileImage,
+      bio,
     });
 
     return NextResponse.json({
       success: true,
-      role: normalizeRole(updated.role),
+      role: result.user.role,
       redirectTo: "/writer-studio",
+      user: result.user,
+      authorProfile: result.authorProfile,
+      studioCount: result.studioCount,
     });
   } catch (error) {
     console.error("Failed to unlock writer access.", error);

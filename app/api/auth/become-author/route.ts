@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { promoteUserToAuthor } from "@/lib/author-onboarding";
+import { promoteUserToWriter } from "@/lib/author-onboarding";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await promoteUserToAuthor(session.user.id);
+    const result = await promoteUserToWriter(session.user.id);
 
     return NextResponse.json({
       success: true,
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        error: "WRITER_PROMOTION_FAILED",
+      error: "WRITER_PROMOTION_FAILED",
         message,
       },
       { status: 500 },

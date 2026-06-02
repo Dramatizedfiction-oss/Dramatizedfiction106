@@ -27,8 +27,8 @@ function slugifyStudioName(value: string) {
 }
 
 function getPersonalStudioDefinition(user: SessionLikeUser) {
-  const seed = user.name?.trim() || "author";
-  const safeSeed = slugifyStudioName(seed) || "author";
+  const seed = user.name?.trim() || "writer";
+  const safeSeed = slugifyStudioName(seed) || "writer";
 
   return {
     name: `${seed}'s Studio`,
@@ -115,13 +115,13 @@ async function ensureAuthorProfile(user: SessionLikeUser) {
       userId: user.id,
     },
     update: {
-      displayName: user.name?.trim() || "Unnamed Author",
+      displayName: user.name?.trim() || "Unnamed Writer",
       profileImage: user.image ?? undefined,
       bio: user.bio ?? undefined,
     },
     create: {
       userId: user.id,
-      displayName: user.name?.trim() || "Unnamed Author",
+      displayName: user.name?.trim() || "Unnamed Writer",
       profileImage: user.image ?? undefined,
       bio: user.bio ?? undefined,
       creatorTagline: "Creator in residence",
@@ -230,7 +230,7 @@ export async function requireStudioAccess(userId: string, studioSlug: string) {
 export function getRoleLabel(role: AppRole | undefined | null) {
   switch (role) {
     case "WRITER":
-      return "Author";
+      return "Writer";
     case "BOARD":
       return "Board";
     case "CEO":

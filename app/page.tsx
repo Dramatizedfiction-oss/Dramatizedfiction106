@@ -175,7 +175,7 @@ export default async function HomePage() {
               </Link>
 
               <Link href="/become-author" className="story-button-secondary min-w-[220px]">
-                Become an Author
+                Become a Writer
               </Link>
 
               {continueEpisode ? (
@@ -248,7 +248,7 @@ export default async function HomePage() {
                 Phase 1 is about stability and story flow.
               </h3>
               <p className="theme-meta mt-4">
-                Reader experience, author publishing, role permissions, and database reliability come first. Monetization stays dormant until you deliberately unlock it.
+                Reader experience, writer publishing, role permissions, and database reliability come first. Monetization stays dormant until you deliberately unlock it.
               </p>
             </div>
 
