@@ -4,46 +4,105 @@ import FeaturedContentModule from "@/components/FeaturedContentModule";
 import { buildDiscoveryFeedSections } from "@/lib/discovery-ranking";
 import { prisma } from "@/lib/prisma";
 
-export default async function HomePage() {
-  const session = await auth();
+type HomepageSeries = {
+  id: string;
+  title: string;
+  description: string;
+  coverImage: string | null;
+  genre: string;
+  tags: string[];
+  reads: number;
+  followers: number;
+  createdAt: Date;
+  updatedAt: Date;
+  _count: {
+    episodes: number;
+  };
+  author: {
+    id: string;
+    name: string | null;
+    writerStatus: "BEGINNER" | "FULL" | "FEATURED" | "ELITE";
+  };
+};
 
-  const [latestRead, featuredSeries, totalSeries, totalEpisodes, totalAuthors] =
-    await Promise.all([
-      session?.user?.id
-        ? prisma.readEvent.findFirst({
-            where: { userId: session.user.id },
-            orderBy: { createdAt: "desc" },
-            include: { episode: true },
-          })
-        : Promise.resolve(null),
-      prisma.series.findMany({
-        orderBy: [{ reads: "desc" }, { createdAt: "desc" }],
-        take: 3,
-        include: {
-          _count: {
-            select: {
-              episodes: true,
+async function getHomepageData(userId?: string | null) {
+  const fallback = {
+    latestRead: null as { episode: { id: string } } | null,
+    featuredSeries: [] as HomepageSeries[],
+    totalSeries: 0,
+    totalEpisodes: 0,
+    totalAuthors: 0,
+  };
+
+  try {
+    const [latestRead, featuredSeries, totalSeries, totalEpisodes, totalAuthors] =
+      await Promise.all([
+        userId
+          ? prisma.readEvent.findFirst({
+              where: { userId },
+              orderBy: { createdAt: "desc" },
+              include: { episode: { select: { id: true } } },
+            })
+          : Promise.resolve(null),
+        prisma.series.findMany({
+          orderBy: [{ reads: "desc" }, { createdAt: "desc" }],
+          take: 3,
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            coverImage: true,
+            genre: true,
+            tags: true,
+            reads: true,
+            followers: true,
+            createdAt: true,
+            updatedAt: true,
+            _count: {
+              select: {
+                episodes: true,
+              },
+            },
+            author: {
+              select: {
+                id: true,
+                name: true,
+                writerStatus: true,
+              },
             },
           },
-          author: {
-            select: {
-              id: true,
-              name: true,
-              writerStatus: true,
+        }),
+        prisma.series.count(),
+        prisma.episode.count(),
+        prisma.user.count({
+          where: {
+            role: {
+              in: ["WRITER", "BOARD", "CEO"],
             },
           },
-        },
-      }),
-      prisma.series.count(),
-      prisma.episode.count(),
-      prisma.user.count({
-        where: {
-          role: {
-            in: ["AUTHOR", "ADMIN", "CEO"],
-          },
-        },
-      }),
-    ]);
+        }),
+      ]);
+
+    return {
+      latestRead,
+      featuredSeries,
+      totalSeries,
+      totalEpisodes,
+      totalAuthors,
+    };
+  } catch (error) {
+    console.error("Homepage SSR data failed. Rendering safe fallback.", error);
+    return fallback;
+  }
+}
+
+export default async function HomePage() {
+  const session = await auth().catch((error) => {
+    console.error("Homepage auth lookup failed. Rendering as guest.", error);
+    return null;
+  });
+  const { latestRead, featuredSeries, totalSeries, totalEpisodes, totalAuthors } =
+    await getHomepageData(session?.user?.id);
 
   const continueEpisode = latestRead?.episode ?? null;
   const homepageDiscovery = buildDiscoveryFeedSections(
@@ -58,7 +117,7 @@ export default async function HomePage() {
       followers: series.followers,
       createdAt: series.createdAt,
       updatedAt: series.updatedAt,
-      aiUsageTag: series.aiUsageTag,
+      aiUsageTag: null,
       episodeCount: series._count.episodes,
       author: {
         id: series.author.id,
@@ -115,8 +174,8 @@ export default async function HomePage() {
                 Explore Stories
               </Link>
 
-              <Link href="/write-with-us" className="story-button-secondary min-w-[220px]">
-                Start Writing With Us
+              <Link href="/become-author" className="story-button-secondary min-w-[220px]">
+                Become an Author
               </Link>
 
               {continueEpisode ? (

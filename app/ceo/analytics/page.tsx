@@ -12,7 +12,7 @@ export default async function CEOAnalyticsPage() {
       prisma.episode.aggregate({ _sum: { readerCount: true } }),
       prisma.series.count(),
       prisma.episode.count(),
-      prisma.user.count({ where: { role: "AUTHOR" } }),
+      prisma.user.count({ where: { role: "WRITER" } }),
       prisma.series.findMany({
         orderBy: { reads: "desc" },
         take: 6

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import type { AppShellUser, StudioLink } from "@/lib/navigation";
@@ -28,16 +28,18 @@ export default function AppShell({
   searchAuthors,
   children,
 }: AppShellProps) {
-  const { session, status, refreshSession } = useAuthSession();
+  const { session, status, signOut } = useAuthSession();
+  const router = useRouter();
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const profileRef = useRef<HTMLDivElement | null>(null);
   const mobileNavRef = useRef<HTMLDivElement | null>(null);
   const isExploreRoute = pathname === "/explore";
-  const sessionUser = session?.user ?? user ?? null;
+  const sessionUser = status === "loading" ? session?.user ?? user ?? null : session?.user ?? null;
   const canWrite = hasRoleAccess(sessionUser?.role, "WRITER");
   const canManage = hasRoleAccess(sessionUser?.role, "BOARD");
   const canAccessCEO = hasRoleAccess(sessionUser?.role, "CEO");
@@ -56,6 +58,13 @@ export default function AppShell({
     setProfileOpen(false);
     setMobileNavOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!sessionUser) {
+      setProfileOpen(false);
+      setMobileNavOpen(false);
+    }
+  }, [sessionUser]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -95,6 +104,15 @@ export default function AppShell({
     document.documentElement.classList.add(nextTheme);
   }
 
+  async function handleSignOut() {
+    setIsSigningOut(true);
+    setProfileOpen(false);
+    setMobileNavOpen(false);
+    await signOut();
+    router.refresh();
+    router.push("/");
+  }
+
   const initials = useMemo(() => {
     const seed = sessionUser?.name || sessionUser?.role || "DF";
     return seed
@@ -112,7 +130,7 @@ export default function AppShell({
       label: "For You",
       description: "Future recommendation shelf.",
     },
-    { href: "/write-with-us", label: "Start Writing With Us", description: "Writer onboarding and application flow." },
+    { href: "/become-author", label: "Become an Author", description: "Unlock creator mode when you are ready." },
   ];
 
   const studioLinks = studios.map((studio) => ({
@@ -155,7 +173,7 @@ export default function AppShell({
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:opacity-80 md:hidden"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:opacity-80"
               aria-label="Open search"
             >
               Search
@@ -180,7 +198,7 @@ export default function AppShell({
                   aria-expanded={profileOpen}
                   aria-haspopup="menu"
                   aria-label="Open profile menu"
-                  className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--text-primary)] hover:opacity-80"
+                  className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--text-primary)]"
                 >
                   {sessionUser.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -233,6 +251,15 @@ export default function AppShell({
                           href="/writer-studio"
                           label="Writer Studio"
                           meta="Creator tools"
+                          onNavigate={() => setProfileOpen(false)}
+                        />
+                      )}
+
+                      {!canWrite && (
+                        <DropdownLink
+                          href="/become-author"
+                          label="Become Author"
+                          meta="Unlock creator tools"
                           onNavigate={() => setProfileOpen(false)}
                         />
                       )}
@@ -290,17 +317,12 @@ export default function AppShell({
                         type="button"
                         role="menuitem"
                         onClick={async () => {
-                          setProfileOpen(false);
-                          await fetch("/api/auth/logout", {
-                            method: "POST",
-                            credentials: "include",
-                          });
-                          await refreshSession();
-                          window.location.href = "/";
+                          await handleSignOut();
                         }}
+                        disabled={isSigningOut}
                         className="theme-panel-hover block w-full rounded-[18px] px-3 py-3 text-left text-sm text-[var(--text-primary)]"
                       >
-                        Sign Out
+                        {isSigningOut ? "Signing Out" : "Sign Out"}
                       </button>
                     </div>
                   </div>
@@ -435,6 +457,15 @@ export default function AppShell({
                     className="story-button-secondary w-full justify-center"
                   >
                     Writer Studio
+                  </Link>
+                )}
+                {!canWrite && (
+                  <Link
+                    href="/become-author"
+                    onClick={() => setMobileNavOpen(false)}
+                    className="story-button-secondary w-full justify-center"
+                  >
+                    Become Author
                   </Link>
                 )}
                 {canManage && (

@@ -7,6 +7,7 @@ import SeriesCard from "@/components/SeriesCard";
 import { buildDiscoveryFeedSections } from "@/lib/discovery-ranking";
 import { createViewerMonetizationState } from "@/lib/monetization";
 import { prisma } from "@/lib/prisma";
+import { isWriter } from "@/lib/roles";
 
 export default async function ExplorePage({
   searchParams,
@@ -17,6 +18,7 @@ export default async function ExplorePage({
   const query = searchParams?.q?.trim() || "";
   const view = searchParams?.view || "explore";
   const viewer = createViewerMonetizationState(session?.user?.id);
+  const showBecomeAuthorCta = Boolean(session?.user) && !isWriter(session?.user.role);
 
   const where = query
     ? {
@@ -153,6 +155,25 @@ export default async function ExplorePage({
 
           <div className="space-y-10">
             {view === "for-you" ? <FollowingFeedHint /> : null}
+
+            {showBecomeAuthorCta ? (
+              <section className="rounded-[28px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 md:p-6">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="eyebrow">Creator Mode</p>
+                    <h2 className="font-heading theme-heading mt-3 text-3xl font-semibold">
+                      Reading first. Creating when you are ready.
+                    </h2>
+                    <p className="theme-meta mt-3 max-w-2xl text-sm leading-6">
+                      Your account starts as a reader profile. Become an author when you want Writer Studio, creator identity, WIP journeys, and publishing tools.
+                    </p>
+                  </div>
+                  <Link href="/become-author" className="story-button-primary shrink-0 justify-center">
+                    Become an Author
+                  </Link>
+                </div>
+              </section>
+            ) : null}
 
             <FeaturedContentModule
               viewer={viewer}

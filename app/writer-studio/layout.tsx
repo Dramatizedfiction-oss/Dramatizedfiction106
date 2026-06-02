@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import WriterStudioShell from "@/components/writer/WriterStudioShell";
 import { getWriterStudioContext } from "@/lib/studios";
-import { requireRole } from "@/lib/utils";
+import { requireWriterStudioAccess } from "@/lib/utils";
 
 export default async function WriterStudioLayout({
   children,
@@ -9,11 +9,11 @@ export default async function WriterStudioLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-  requireRole(session, ["WRITER"]);
+  requireWriterStudioAccess(session);
 
   if (session?.user?.id) {
     await getWriterStudioContext(session.user);
   }
 
-  return <WriterStudioShell>{children}</WriterStudioShell>;
+  return <WriterStudioShell user={session?.user ?? null}>{children}</WriterStudioShell>;
 }

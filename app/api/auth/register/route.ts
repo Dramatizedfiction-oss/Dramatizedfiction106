@@ -42,8 +42,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const user = await prisma.user.create({
-    data: {
+  const user = await prisma.user.upsert({
+    where: { email },
+    update: {
+      name,
+      passwordHash: hashPassword(password),
+    },
+    create: {
       name,
       email,
       passwordHash: hashPassword(password),
