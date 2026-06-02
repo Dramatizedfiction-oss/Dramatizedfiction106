@@ -10,7 +10,7 @@ import GlobalSearch, {
   type SearchAuthor,
   type SearchStory,
 } from "@/components/app-shell/GlobalSearch";
-import { hasRoleAccess } from "@/lib/roles";
+import { hasRoleAccess, normalizeRole } from "@/lib/roles";
 import { getRoleLabel } from "@/lib/studios";
 
 type AppShellProps = {
@@ -41,7 +41,7 @@ export default function AppShell({
   const canWrite = hasRoleAccess(sessionUser?.role, "WRITER");
   const canManage = hasRoleAccess(sessionUser?.role, "BOARD");
   const canAccessCEO = hasRoleAccess(sessionUser?.role, "CEO");
-  const roleLabel = getRoleLabel(sessionUser?.role);
+  const roleLabel = getRoleLabel(normalizeRole(sessionUser?.role));
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("df-theme");

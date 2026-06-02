@@ -37,6 +37,18 @@ export default function WriterGuidelinesPage() {
           </p>
         </section>
       </div>
+
+      <section className="theme-panel rounded-[28px] border border-[var(--border-color)] p-6">
+        <p className="eyebrow">Access Path</p>
+        <h3 className="font-heading theme-heading mt-3 text-2xl font-semibold">
+          Ready to apply?
+        </h3>
+        <p className="theme-meta mt-3 max-w-2xl text-sm leading-6">
+          Once you acknowledge the writer policy, the platform will promote your
+          account to author status, initialize your creator records, and unlock
+          the studio automatically.
+        </p>
+      </section>
     </div>
   );
 }
