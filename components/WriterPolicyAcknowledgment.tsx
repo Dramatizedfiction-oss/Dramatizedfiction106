@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+<<<<<<< HEAD
 import { FormEvent, useState } from "react";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 
@@ -73,6 +74,42 @@ export default function WriterPolicyAcknowledgment() {
         </div>
       </section>
     );
+=======
+import { useState } from "react";
+import { useAuthSession } from "@/components/providers/AuthSessionProvider";
+import { isWriter } from "@/lib/roles";
+
+export default function WriterPolicyAcknowledgment() {
+  const router = useRouter();
+  const { session, status, refreshSession } = useAuthSession();
+  const [acknowledged, setAcknowledged] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const writerAccess = isWriter(session?.user?.role);
+
+  async function becomeAuthor() {
+    setError(null);
+    setIsSubmitting(true);
+
+    const response = await fetch("/api/become-author", {
+      method: "POST",
+      credentials: "include",
+    });
+
+    const payload = (await response.json().catch(() => null)) as
+      | { error?: string; redirectTo?: string }
+      | null;
+
+    if (!response.ok) {
+      setError(payload?.error || "We couldn't unlock author access.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    await refreshSession();
+    router.refresh();
+    router.push(payload?.redirectTo || "/writer-studio");
+>>>>>>> 47d1d91ad235961fb721817ecda58db48feaa9fa
   }
 
   return (
@@ -100,10 +137,44 @@ export default function WriterPolicyAcknowledgment() {
           </span>
         </label>
 
+<<<<<<< HEAD
         {error && (
           <p className="mt-4 rounded-[18px] border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--text-primary)]">
             {error}
           </p>
+=======
+      {error ? (
+        <p className="mt-4 rounded-[18px] border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--text-primary)]">
+          {error}
+        </p>
+      ) : null}
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        {writerAccess ? (
+          <Link
+            href="/writer-studio"
+            className="story-button-primary"
+          >
+            Open Writer Studio
+          </Link>
+        ) : status === "unauthenticated" ? (
+          <Link href="/sign-in?callbackUrl=/become-author" className="story-button-primary">
+            Sign In To Become Author
+          </Link>
+        ) : acknowledged ? (
+          <button
+            type="button"
+            onClick={becomeAuthor}
+            disabled={isSubmitting}
+            className="story-button-primary disabled:opacity-60"
+          >
+            {isSubmitting ? "Unlocking..." : "Become Author"}
+          </button>
+        ) : (
+          <button type="button" disabled className="story-button-primary opacity-50">
+            Become Author
+          </button>
+>>>>>>> 47d1d91ad235961fb721817ecda58db48feaa9fa
         )}
 
         <div className="mt-6 flex flex-wrap gap-3">
