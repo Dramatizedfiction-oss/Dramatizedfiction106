@@ -41,7 +41,7 @@ export default function BecomeAuthorForm({
       | null;
 
     if (!response.ok) {
-      setError(payload?.error || "We couldn't unlock author access.");
+      setError(payload?.error || "We couldn't unlock writer access.");
       setIsSubmitting(false);
       return;
     }
@@ -53,7 +53,7 @@ export default function BecomeAuthorForm({
 
   return (
     <form onSubmit={submit} className="theme-panel rounded-[28px] border border-[var(--border-color)] p-5 md:p-6">
-      <p className="eyebrow">Quick Author Setup</p>
+      <p className="eyebrow">Quick Writer Setup</p>
       <h2 className="font-heading theme-heading mt-3 text-3xl font-semibold">
         Set your creator identity
       </h2>
@@ -114,7 +114,7 @@ export default function BecomeAuthorForm({
           disabled={isSubmitting}
           className="story-button-primary justify-center disabled:opacity-60"
         >
-          {isSubmitting ? "Entering creator mode..." : "Become an Author"}
+          {isSubmitting ? "Entering creator mode..." : "Become a Writer"}
         </button>
         <Link href="/explore" className="story-button-secondary justify-center">
           Keep Reading

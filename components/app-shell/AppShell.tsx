@@ -130,7 +130,7 @@ export default function AppShell({
       label: "For You",
       description: "Future recommendation shelf.",
     },
-    { href: "/become-author", label: "Become an Author", description: "Unlock creator mode when you are ready." },
+    { href: "/become-author", label: "Become a Writer", description: "Unlock creator mode when you are ready." },
   ];
 
   const studioLinks = studios.map((studio) => ({
@@ -258,7 +258,7 @@ export default function AppShell({
                       {!canWrite && (
                         <DropdownLink
                           href="/become-author"
-                          label="Become Author"
+                          label="Become Writer"
                           meta="Unlock creator tools"
                           onNavigate={() => setProfileOpen(false)}
                         />
@@ -465,7 +465,7 @@ export default function AppShell({
                     onClick={() => setMobileNavOpen(false)}
                     className="story-button-secondary w-full justify-center"
                   >
-                    Become Author
+                    Become Writer
                   </Link>
                 )}
                 {canManage && (

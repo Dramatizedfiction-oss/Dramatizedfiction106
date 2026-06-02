@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: "AUTH_REQUIRED",
-        message: "Sign in before applying to become an author.",
+        message: "Sign in before applying to become a writer.",
       },
       { status: 401 },
     );
@@ -34,20 +34,20 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Author access granted.",
+      message: "Writer access granted.",
       user: result.user,
       authorProfile: result.authorProfile,
       studioCount: result.studioCount,
     });
   } catch (error) {
-    console.error("Author promotion failed:", error);
+    console.error("Writer promotion failed:", error);
 
     const message =
-      error instanceof Error ? error.message : "Unknown author promotion failure.";
+      error instanceof Error ? error.message : "Unknown writer promotion failure.";
 
     return NextResponse.json(
       {
-        error: "AUTHOR_PROMOTION_FAILED",
+        error: "WRITER_PROMOTION_FAILED",
         message,
       },
       { status: 500 },

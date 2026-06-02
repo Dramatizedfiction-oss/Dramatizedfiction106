@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true
+  reactStrictMode: true,
+  experimental: {
+    workerThreads: true,
+    webpackBuildWorker: false
+  }
 };
 
 module.exports = nextConfig;

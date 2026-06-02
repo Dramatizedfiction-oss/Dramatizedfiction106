@@ -38,7 +38,7 @@ export async function promoteUserToAuthor(userId: string): Promise<AuthorPromoti
   const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: {
-      role: Role.AUTHOR,
+      role: Role.WRITER,
       writerPolicyAcknowledged: true,
       writerStatus: currentUser.writerStatus ?? "BEGINNER",
     },

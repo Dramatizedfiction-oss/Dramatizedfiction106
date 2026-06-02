@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: "You must be signed in to become an author." },
+        { error: "You must be signed in to become a writer." },
         { status: 401 },
       );
     }
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
         }
       | null;
     const displayName =
-      cleanOptionalText(body?.displayName) ?? session.user.name ?? "New Author";
+      cleanOptionalText(body?.displayName) ?? session.user.name ?? "New Writer";
     const profileImage = cleanOptionalText(body?.profileImage) ?? session.user.image;
     const bio = cleanOptionalText(body?.bio) ?? session.user.bio ?? null;
 
@@ -54,13 +54,13 @@ export async function POST(request: Request) {
     const currentRole = normalizeRole(user.role);
 
     if (currentRole !== "READER" && !hasRoleAccess(currentRole, "WRITER")) {
-      console.warn("Blocked invalid author role transition.", {
+      console.warn("Blocked invalid writer role transition.", {
         userId: user.id,
         role: currentRole,
       });
 
       return NextResponse.json(
-        { error: "This account cannot be converted through the public author flow." },
+        { error: "This account cannot be converted through the public writer flow." },
         { status: 403 },
       );
     }
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     const updated = await prisma.user.update({
       where: { id: user.id },
       data: {
-        role: hasRoleAccess(currentRole, "WRITER") ? user.role : "WRITER",
+        role: currentRole === "READER" ? "WRITER" : currentRole,
         writerPolicyAcknowledged: true,
         name: displayName,
         image: profileImage ?? undefined,
@@ -102,12 +102,12 @@ export async function POST(request: Request) {
       redirectTo: "/writer-studio",
     });
   } catch (error) {
-    console.error("Failed to unlock author access.", error);
+    console.error("Failed to unlock writer access.", error);
 
     return NextResponse.json(
       {
-        error: "Author access could not be unlocked. Please try again.",
-        code: "BECOME_AUTHOR_FAILED",
+        error: "Writer access could not be unlocked. Please try again.",
+        code: "BECOME_WRITER_FAILED",
       },
       { status: 500 },
     );

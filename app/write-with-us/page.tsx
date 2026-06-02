@@ -1,6 +1,8 @@
 import WriterPolicyAcknowledgment from "@/components/WriterPolicyAcknowledgment";
 import { WRITER_ONBOARDING_SLUG, getCmsArticle } from "@/lib/cms";
 
+export const dynamic = "force-dynamic";
+
 function renderParagraphs(content: string) {
   return content
     .split(/\n{2,}/)

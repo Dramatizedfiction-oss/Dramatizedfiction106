@@ -5,7 +5,7 @@ import BecomeAuthorForm from "@/components/auth/BecomeAuthorForm";
 import { isWriter } from "@/lib/roles";
 
 const readerItems = ["Read stories", "Follow creators", "Save content", "Comment and interact"];
-const authorItems = [
+const writerItems = [
   "Publish stories",
   "Build a public profile",
   "Create series",
@@ -37,12 +37,12 @@ export default async function BecomeAuthorPage() {
               Build Stories. Grow Your Audience.
             </h1>
             <p className="theme-meta mt-5 max-w-3xl text-base leading-7 md:text-lg">
-              Signing up makes you a reader first. Becoming an author is the intentional step that unlocks Writer Studio, public creator identity, discoverability tools, WIP projects, and future monetization opportunities.
+              Signing up makes you a reader first. Becoming a writer is the intentional step that unlocks Writer Studio, public creator identity, discoverability tools, WIP projects, and future monetization opportunities.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <a href="#quick-setup" className="story-button-primary justify-center">
-                Start Your Author Journey
-              </a>
+                <a href="#quick-setup" className="story-button-primary justify-center">
+                  Start Your Writer Journey
+                </a>
               <Link href="/explore" className="story-button-secondary justify-center">
                 Explore First
               </Link>
@@ -71,27 +71,27 @@ export default async function BecomeAuthorPage() {
 
       <section className="mt-8 grid gap-4 lg:grid-cols-2">
         <RoleCard title="Reader" items={readerItems} />
-        <RoleCard title="Author" items={authorItems} featured />
+        <RoleCard title="Writer" items={writerItems} featured />
       </section>
 
       <section className="mt-8 rounded-[28px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 md:p-7">
         <p className="eyebrow">Creator Philosophy</p>
-        <h2 className="font-heading theme-heading mt-3 text-3xl font-semibold md:text-4xl">
-          Author identity matters here.
-        </h2>
+          <h2 className="font-heading theme-heading mt-3 text-3xl font-semibold md:text-4xl">
+            Writer identity matters here.
+          </h2>
         <p className="theme-meta mt-4 max-w-4xl text-sm leading-7 md:text-base">
-          Dramatized Fiction is built around serialized stories, creator growth, and discovery. Early authors help shape the ecosystem: how stories surface, how WIP journeys build trust, and how readers become followers. Marketing, visibility, and audience-building are core platform priorities.
+          Dramatized Fiction is built around serialized stories, creator growth, and discovery. Early writers help shape the ecosystem: how stories surface, how WIP journeys build trust, and how readers become followers. Marketing, visibility, and audience-building are core platform priorities.
         </p>
       </section>
 
       <section id="quick-setup" className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <BecomeAuthorForm defaultDisplayName={session.user.name || "New Author"} />
+        <BecomeAuthorForm defaultDisplayName={session.user.name || "New Writer"} />
         <aside className="theme-panel rounded-[28px] border border-[var(--border-color)] p-5">
           <p className="eyebrow">Unlocks</p>
           <div className="mt-4 space-y-3">
             {[
               "Writer Studio",
-              "Public author profile",
+              "Public writer profile",
               "Series and story tools",
               "WIP/project systems",
               "Future creator economy setup",
