@@ -6,32 +6,23 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import type { AppShellUser, StudioLink } from "@/lib/navigation";
-import GlobalSearch, {
-  type SearchAuthor,
-  type SearchStory,
-} from "@/components/app-shell/GlobalSearch";
 import { hasRoleAccess, normalizeRole } from "@/lib/roles";
 import { getRoleLabel } from "@/lib/studios";
 
 type AppShellProps = {
   user: (AppShellUser & { name?: string | null; image?: string | null }) | null;
   studios: StudioLink[];
-  searchStories: SearchStory[];
-  searchAuthors: SearchAuthor[];
   children: React.ReactNode;
 };
 
 export default function AppShell({
   user,
   studios,
-  searchStories,
-  searchAuthors,
   children,
 }: AppShellProps) {
   const { session, status, signOut } = useAuthSession();
   const router = useRouter();
   const pathname = usePathname();
-  const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -54,7 +45,6 @@ export default function AppShell({
   }, []);
 
   useEffect(() => {
-    setSearchOpen(false);
     setProfileOpen(false);
     setMobileNavOpen(false);
   }, [pathname]);
@@ -81,7 +71,6 @@ export default function AppShell({
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setSearchOpen(false);
         setProfileOpen(false);
         setMobileNavOpen(false);
       }
@@ -163,22 +152,7 @@ export default function AppShell({
             </div>
           </Link>
 
-          <div className="hidden flex-1 justify-center px-4 md:flex">
-            <div className="w-full max-w-[820px]">
-              <GlobalSearch stories={searchStories} authors={searchAuthors} />
-            </div>
-          </div>
-
           <div className="ml-auto flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setSearchOpen(true)}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:opacity-80"
-              aria-label="Open search"
-            >
-              Search
-            </button>
-
             {status === "loading" ? (
               <div className="inline-flex h-11 min-w-[96px] items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 text-sm text-[var(--text-secondary)]">
                 Loading
@@ -341,14 +315,6 @@ export default function AppShell({
           </div>
         </div>
       </header>
-
-      <GlobalSearch
-        stories={searchStories}
-        authors={searchAuthors}
-        mode="overlay"
-        open={searchOpen}
-        onClose={() => setSearchOpen(false)}
-      />
 
       {mobileNavOpen && (
         <>
