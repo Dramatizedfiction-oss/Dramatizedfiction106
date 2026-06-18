@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import FeaturedContentModule from "@/components/FeaturedContentModule";
+import GlobalSearch from "@/components/app-shell/GlobalSearch";
 import { buildDiscoveryFeedSections } from "@/lib/discovery-ranking";
 import { prisma } from "@/lib/prisma";
 
@@ -96,13 +97,49 @@ async function getHomepageData(userId?: string | null) {
   }
 }
 
+async function getHomepageSearchData() {
+  try {
+    const [searchStories, searchAuthors] = await Promise.all([
+      prisma.series.findMany({
+        orderBy: [{ reads: "desc" }, { createdAt: "desc" }],
+        take: 20,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+        },
+      }),
+      prisma.user.findMany({
+        where: {
+          role: {
+            in: ["WRITER", "BOARD", "CEO"],
+          },
+        },
+        take: 16,
+        select: {
+          id: true,
+          name: true,
+        },
+      }),
+    ]);
+
+    return { searchStories, searchAuthors };
+  } catch (error) {
+    console.error("Homepage search data failed. Rendering safe fallback.", error);
+    return { searchStories: [], searchAuthors: [] };
+  }
+}
+
 export default async function HomePage() {
   const session = await auth().catch((error) => {
     console.error("Homepage auth lookup failed. Rendering as guest.", error);
     return null;
   });
-  const { latestRead, featuredSeries, totalSeries, totalEpisodes, totalAuthors } =
-    await getHomepageData(session?.user?.id);
+  const [{ searchStories, searchAuthors }, { latestRead, featuredSeries, totalSeries, totalEpisodes, totalAuthors }] =
+    await Promise.all([
+      getHomepageSearchData(),
+      getHomepageData(session?.user?.id),
+    ]);
 
   const continueEpisode = latestRead?.episode ?? null;
   const homepageDiscovery = buildDiscoveryFeedSections(
@@ -168,6 +205,10 @@ export default async function HomePage() {
             <p className="theme-body mx-auto mt-4 max-w-3xl text-balance text-lg md:text-xl">
               A premium platform for serialized fiction, immersive reading, and creator-led story worlds.
             </p>
+
+            <div className="mx-auto mt-8 w-full max-w-4xl text-left">
+              <GlobalSearch stories={searchStories} authors={searchAuthors} />
+            </div>
 
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link href="/explore" className="story-button-primary min-w-[180px]">
