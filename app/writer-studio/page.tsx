@@ -26,10 +26,16 @@ export default async function WriterStudioHomePage({
     orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
   });
 
-  // Convert Date objects to ISO strings
+  // Convert all Date objects to ISO strings
   const formattedSeries = series.map((item) => ({
     ...item,
     updatedAt: item.updatedAt.toISOString(),
+    episodes: item.episodes.map((episode) => ({
+      ...episode,
+      createdAt: episode.createdAt.toISOString(),
+      updatedAt: episode.updatedAt.toISOString(),
+      lastSavedAt: episode.lastSavedAt.toISOString(),
+    })),
   }));
 
   return (
