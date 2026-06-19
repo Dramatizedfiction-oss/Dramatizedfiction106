@@ -26,11 +26,17 @@ export default async function WriterStudioHomePage({
     orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
   });
 
+  // Convert Date objects to ISO strings
+  const formattedSeries = series.map((item) => ({
+    ...item,
+    updatedAt: item.updatedAt.toISOString(),
+  }));
+
   return (
     <WriterStudioWorkspace
       userId={session.user.id}
       userName={session.user.name || null}
-      series={series}
+      series={formattedSeries}
       selectedSeriesId={searchParams?.series || null}
       selectedEpisodeId={searchParams?.episode || null}
     />
