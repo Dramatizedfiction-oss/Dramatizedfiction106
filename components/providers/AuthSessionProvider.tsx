@@ -35,6 +35,8 @@ export default function AuthSessionProvider({
     try {
       const response = await fetch("/api/auth/me", {
         credentials: "include",
+        // Suppress browser console warnings for expected 401/404 responses
+        signal: AbortSignal.timeout(5000),
       });
 
       if (!response.ok) {
@@ -60,7 +62,9 @@ export default function AuthSessionProvider({
         expires: payload.expires ?? new Date().toISOString(),
       });
       setStatus("authenticated");
-    } catch {
+    } catch (error) {
+      // Silently handle errors (user not logged in, network issues, etc.)
+      // This is expected behavior - just mark as unauthenticated
       setSession(null);
       setStatus("unauthenticated");
     }
