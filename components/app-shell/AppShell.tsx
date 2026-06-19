@@ -6,18 +6,26 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import type { AppShellUser, StudioLink } from "@/lib/navigation";
+import GlobalSearch, {
+  type SearchAuthor,
+  type SearchStory,
+} from "@/components/app-shell/GlobalSearch";
 import { hasRoleAccess, normalizeRole } from "@/lib/roles";
 import { getRoleLabel } from "@/lib/studios";
 
 type AppShellProps = {
   user: (AppShellUser & { name?: string | null; image?: string | null }) | null;
   studios: StudioLink[];
+  searchStories: SearchStory[];
+  searchAuthors: SearchAuthor[];
   children: React.ReactNode;
 };
 
 export default function AppShell({
   user,
   studios,
+  searchStories,
+  searchAuthors,
   children,
 }: AppShellProps) {
   const { session, status, signOut } = useAuthSession();
@@ -29,7 +37,6 @@ export default function AppShell({
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const profileRef = useRef<HTMLDivElement | null>(null);
   const mobileNavRef = useRef<HTMLDivElement | null>(null);
-  const isExploreRoute = pathname === "/explore";
   const sessionUser = status === "loading" ? session?.user ?? user ?? null : session?.user ?? null;
   const canWrite = hasRoleAccess(sessionUser?.role, "WRITER");
   const canManage = hasRoleAccess(sessionUser?.role, "BOARD");
@@ -132,7 +139,7 @@ export default function AppShell({
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 border-b border-[var(--border-color)] bg-[var(--header-bg)] backdrop-blur-xl">
-        <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-3 px-4 md:px-8">
+        <div className="mx-auto grid w-full max-w-7xl gap-3 px-4 py-4 md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-4 md:px-8">
           <Link href="/" className="flex items-center gap-3">
             <div className="relative h-11 w-11 overflow-hidden rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)]">
               <Image
@@ -152,7 +159,11 @@ export default function AppShell({
             </div>
           </Link>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="w-full md:max-w-[820px] md:justify-self-center">
+            <GlobalSearch stories={searchStories} authors={searchAuthors} />
+          </div>
+
+          <div className="flex items-center justify-between gap-2 md:justify-end">
             {status === "loading" ? (
               <div className="inline-flex h-11 min-w-[96px] items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 text-sm text-[var(--text-secondary)]">
                 Loading
@@ -459,7 +470,7 @@ export default function AppShell({
       )}
 
       <main className="page-shell min-w-0">
-        {isExploreRoute ? children : <div className="surface-panel overflow-hidden">{children}</div>}
+        <div className="surface-panel overflow-hidden">{children}</div>
       </main>
     </div>
   );

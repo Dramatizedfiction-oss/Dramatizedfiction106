@@ -1,169 +1,45 @@
+import Image from "next/image";
 import Link from "next/link";
-import { auth } from "@/auth";
-import FeaturedContentModule from "@/components/FeaturedContentModule";
-import GlobalSearch from "@/components/app-shell/GlobalSearch";
-import { buildDiscoveryFeedSections } from "@/lib/discovery-ranking";
 import { prisma } from "@/lib/prisma";
 
-type HomepageSeries = {
+type TrendingSeries = {
   id: string;
   title: string;
   description: string;
   coverImage: string | null;
-  genre: string;
-  tags: string[];
   reads: number;
-  followers: number;
-  createdAt: Date;
-  updatedAt: Date;
-  _count: {
-    episodes: number;
-  };
   author: {
-    id: string;
     name: string | null;
-    writerStatus: "BEGINNER" | "FULL" | "FEATURED" | "ELITE";
   };
 };
 
-async function getHomepageData(userId?: string | null) {
-  const fallback = {
-    latestRead: null as { episode: { id: string } } | null,
-    featuredSeries: [] as HomepageSeries[],
-    totalSeries: 0,
-    totalEpisodes: 0,
-    totalAuthors: 0,
-  };
-
+async function getHomepageTrendingSeries() {
   try {
-    const [latestRead, featuredSeries, totalSeries, totalEpisodes, totalAuthors] =
-      await Promise.all([
-        userId
-          ? prisma.readEvent.findFirst({
-              where: { userId },
-              orderBy: { createdAt: "desc" },
-              include: { episode: { select: { id: true } } },
-            })
-          : Promise.resolve(null),
-        prisma.series.findMany({
-          orderBy: [{ reads: "desc" }, { createdAt: "desc" }],
-          take: 3,
+    return await prisma.series.findMany({
+      orderBy: [{ reads: "desc" }, { createdAt: "desc" }],
+      take: 3,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        coverImage: true,
+        reads: true,
+        author: {
           select: {
-            id: true,
-            title: true,
-            description: true,
-            coverImage: true,
-            genre: true,
-            tags: true,
-            reads: true,
-            followers: true,
-            createdAt: true,
-            updatedAt: true,
-            _count: {
-              select: {
-                episodes: true,
-              },
-            },
-            author: {
-              select: {
-                id: true,
-                name: true,
-                writerStatus: true,
-              },
-            },
+            name: true,
           },
-        }),
-        prisma.series.count(),
-        prisma.episode.count(),
-        prisma.user.count({
-          where: {
-            role: {
-              in: ["WRITER", "BOARD", "CEO"],
-            },
-          },
-        }),
-      ]);
-
-    return {
-      latestRead,
-      featuredSeries,
-      totalSeries,
-      totalEpisodes,
-      totalAuthors,
-    };
+        },
+      },
+    });
   } catch (error) {
-    console.error("Homepage SSR data failed. Rendering safe fallback.", error);
-    return fallback;
-  }
-}
-
-async function getHomepageSearchData() {
-  try {
-    const [searchStories, searchAuthors] = await Promise.all([
-      prisma.series.findMany({
-        orderBy: [{ reads: "desc" }, { createdAt: "desc" }],
-        take: 20,
-        select: {
-          id: true,
-          title: true,
-          description: true,
-        },
-      }),
-      prisma.user.findMany({
-        where: {
-          role: {
-            in: ["WRITER", "BOARD", "CEO"],
-          },
-        },
-        take: 16,
-        select: {
-          id: true,
-          name: true,
-        },
-      }),
-    ]);
-
-    return { searchStories, searchAuthors };
-  } catch (error) {
-    console.error("Homepage search data failed. Rendering safe fallback.", error);
-    return { searchStories: [], searchAuthors: [] };
+    console.error("Homepage trending data failed. Rendering safe fallback.", error);
+    return [] as TrendingSeries[];
   }
 }
 
 export default async function HomePage() {
-  const session = await auth().catch((error) => {
-    console.error("Homepage auth lookup failed. Rendering as guest.", error);
-    return null;
-  });
-  const [{ searchStories, searchAuthors }, { latestRead, featuredSeries, totalSeries, totalEpisodes, totalAuthors }] =
-    await Promise.all([
-      getHomepageSearchData(),
-      getHomepageData(session?.user?.id),
-    ]);
-
-  const continueEpisode = latestRead?.episode ?? null;
-  const homepageDiscovery = buildDiscoveryFeedSections(
-    featuredSeries.map((series) => ({
-      id: series.id,
-      title: series.title,
-      description: series.description,
-      coverImage: series.coverImage,
-      genre: series.genre,
-      tags: series.tags,
-      reads: series.reads,
-      followers: series.followers,
-      createdAt: series.createdAt,
-      updatedAt: series.updatedAt,
-      aiUsageTag: null,
-      episodeCount: series._count.episodes,
-      author: {
-        id: series.author.id,
-        name: series.author.name,
-        writerStatus: series.author.writerStatus,
-      },
-    })),
-  );
-  const featuredStories = homepageDiscovery[0]?.items.slice(0, 3) ?? [];
+  const trendingSeries = await getHomepageTrendingSeries();
+  const cards = Array.from({ length: 3 }, (_, index) => trendingSeries[index] ?? null);
 
   return (
     <main className="overflow-hidden">
@@ -206,114 +82,33 @@ export default async function HomePage() {
               A premium platform for serialized fiction, immersive reading, and creator-led story worlds.
             </p>
 
-            <div className="mx-auto mt-8 w-full max-w-4xl text-left">
-              <GlobalSearch stories={searchStories} authors={searchAuthors} />
-            </div>
-
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <div className="mt-8 flex justify-center">
               <Link href="/explore" className="story-button-primary min-w-[180px]">
-                Explore Stories
+                Explore
               </Link>
-
-              <Link href="/become-author" className="story-button-secondary min-w-[220px]">
-                Become a Writer
-              </Link>
-
-              {continueEpisode ? (
-                <Link href={`/episode/${continueEpisode.id}`} className="story-button-secondary min-w-[180px]">
-                  Continue Reading
-                </Link>
-              ) : (
-                <Link href="/series/new" className="story-button-secondary min-w-[180px]">
-                  Start Publishing
-                </Link>
-              )}
             </div>
-          </div>
-
-          <div className="mt-12 grid gap-4 md:grid-cols-3">
-            <StatCard label="Series Published" value={String(totalSeries)} />
-            <StatCard label="Episodes Live" value={String(totalEpisodes)} />
-            <StatCard label="Active Creators" value={String(totalAuthors)} />
           </div>
         </div>
       </section>
 
       <section className="border-t border-[var(--border-color)] px-6 py-12 md:px-10">
-        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-          <div>
-            <p className="eyebrow">Featured Worlds</p>
-            <h2 className="font-heading theme-heading mt-3 text-4xl font-semibold md:text-5xl">
-              The front page should feel alive.
-            </h2>
-            <p className="theme-meta mt-4 max-w-2xl">
-              This launch view now uses the Base44-inspired shell you liked: cinematic background, liquid wordmark, glass panels, and stronger content presentation.
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-6 flex items-end justify-between gap-4">
+            <div>
+              <p className="eyebrow">Trending</p>
+              <h2 className="font-heading theme-heading mt-3 text-4xl font-semibold md:text-5xl">
+                Top stories by read count
+              </h2>
+            </div>
+            <p className="theme-meta hidden max-w-xl text-right text-sm leading-6 md:block">
+              The front page now stays cinematic and focused with just one search bar in the navbar and three ranked story cards below.
             </p>
-
-            <FeaturedContentModule
-              featuredStories={featuredStories.map((series) => ({
-                ...series,
-                author: {
-                  id: series.author.id,
-                  name: series.author.name,
-                  tier: series.authorTier,
-                },
-              }))}
-              trendingBanner={
-                featuredStories[0]
-                  ? {
-                      ...featuredStories[0],
-                      author: {
-                        id: featuredStories[0].author.id,
-                        name: featuredStories[0].author.name,
-                        tier: featuredStories[0].authorTier,
-                      },
-                    }
-                  : null
-              }
-              editorsPicks={featuredStories.map((series) => ({
-                ...series,
-                author: {
-                  id: series.author.id,
-                  name: series.author.name,
-                  tier: series.authorTier,
-                },
-              }))}
-            />
           </div>
 
-          <div className="space-y-4">
-            <div className="glass-panel rounded-[28px] border p-6">
-              <p className="eyebrow">Platform Focus</p>
-              <h3 className="font-heading theme-heading mt-3 text-3xl font-semibold">
-                Phase 1 is about stability and story flow.
-              </h3>
-              <p className="theme-meta mt-4">
-                Reader experience, writer publishing, role permissions, and database reliability come first. Monetization stays dormant until you deliberately unlock it.
-              </p>
-            </div>
-
-            <div className="glass-panel rounded-[28px] border p-6">
-              <p className="eyebrow">What Changed</p>
-              <ul className="theme-body mt-4 space-y-3 text-sm">
-                <li>Premium app shell with a real top nav and sidebar studio layout.</li>
-                <li>Animated liquid homepage wordmark inspired directly by your Base44 reference.</li>
-                <li>Reusable glass panels and stronger visual hierarchy across launch surfaces.</li>
-              </ul>
-            </div>
-
-            <div className="glass-panel rounded-[28px] border p-6">
-              <p className="eyebrow">For Writers</p>
-              <h3 className="font-heading theme-heading mt-3 text-3xl font-semibold">
-                Onboarding now has a real home.
-              </h3>
-              <p className="theme-meta mt-4">
-                Start with the shared onboarding article, read the deeper context if you want it, and move into the application step from a cleaner flow.
-              </p>
-              <Link href="/write-with-us" className="story-button-primary mt-5">
-                Open Writer Onboarding
-              </Link>
-            </div>
+          <div className="grid gap-5 md:grid-cols-3">
+            <TrendingCard series={cards[0]} rank={1} />
+            <TrendingCard series={cards[1]} rank={2} />
+            <TrendingCard series={cards[2]} rank={3} />
           </div>
         </div>
       </section>
@@ -321,11 +116,80 @@ export default async function HomePage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function TrendingCard({
+  series,
+  rank,
+}: {
+  series: TrendingSeries | null;
+  rank: 1 | 2 | 3;
+}) {
+  const label = `#${rank} Trending`;
+
+  if (!series) {
+    return (
+      <div className="group overflow-hidden rounded-[30px] border border-white/10 bg-[var(--bg-secondary)] shadow-[0_24px_80px_rgba(0,0,0,0.25)] transition duration-300">
+        <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-black">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.28),transparent_60%)]" />
+          <div className="absolute left-4 top-4 rounded-full border border-white/15 bg-black/55 px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-white/80">
+            {label}
+          </div>
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent p-5">
+            <p className="font-heading text-2xl font-semibold text-white">No Series Yet</p>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              This spot is waiting for a story.
+            </p>
+            <div className="mt-4 inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
+              0 reads
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="glass-panel rounded-[24px] border p-5">
-      <p className="eyebrow">{label}</p>
-      <p className="font-heading theme-heading mt-3 text-4xl font-semibold">{value}</p>
-    </div>
+    <Link
+      href={`/series/${series.id}`}
+      className="group overflow-hidden rounded-[30px] border border-white/10 bg-[var(--bg-secondary)] shadow-[0_24px_80px_rgba(0,0,0,0.25)] transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:shadow-[0_32px_100px_rgba(0,0,0,0.38)]"
+    >
+      <div className="relative aspect-[4/5] overflow-hidden bg-slate-900">
+        {series.coverImage ? (
+          <Image
+            src={series.coverImage}
+            alt={series.title}
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="object-cover transition duration-500 group-hover:scale-[1.03]"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-500/40 to-slate-950" />
+        )}
+        <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.88),rgba(0,0,0,0.14)_55%,rgba(0,0,0,0.18))]" />
+
+        <div className="absolute left-4 top-4 rounded-full border border-white/15 bg-black/55 px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-white/80">
+          {label}
+        </div>
+
+        <div className="absolute inset-x-0 bottom-0 p-5">
+          <div className="space-y-3">
+            <p className="eyebrow text-white/60">Trending Story</p>
+            <h3 className="font-heading text-3xl font-semibold leading-tight text-white line-clamp-2">
+              {series.title}
+            </h3>
+            <p className="max-w-[32ch] text-sm leading-6 text-slate-300 line-clamp-2">
+              {series.description || "A featured story climbing the charts."}
+            </p>
+            <div className="flex flex-wrap items-center gap-2 pt-2 text-sm text-slate-200">
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                {series.author.name || "Anonymous Writer"}
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                {series.reads.toLocaleString()} reads
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
   );
 }
