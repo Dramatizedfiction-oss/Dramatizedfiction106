@@ -15,6 +15,11 @@ type SeriesEpisode = {
   locked: boolean;
   aiUsageTag: string;
   lastSavedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
+  authorId?: string;
+  seriesId?: string;
+  readTime?: number;
 };
 
 type SeriesItem = {
@@ -27,6 +32,9 @@ type SeriesItem = {
   status: "DRAFT" | "PUBLISHED";
   updatedAt: string;
   episodes: SeriesEpisode[];
+  authorId?: string;
+  createdAt?: string;
+  followers?: number;
 };
 
 type WriterStudioWorkspaceProps = {
@@ -317,7 +325,7 @@ export default function WriterStudioWorkspace({
   function insertSceneBreak() {
     if (!editorRef.current) return;
     const divider =
-      '<div data-scene-break="true" class="my-10 select-none text-center text-sm tracking-[0.35em] text-[var(--text-secondary)]">──────── ✦ ────────</div><p><br /></p>';
+      '<div data-scene-break="true" class="my-10 select-none text-center text-sm tracking-[0.35em] text-[var(--text-secondary)]">──────── ✦ ────────</div><p><br></p>';
     editorRef.current.focus();
     document.execCommand("insertHTML", false, divider);
     const nextHtml = editorRef.current.innerHTML;
