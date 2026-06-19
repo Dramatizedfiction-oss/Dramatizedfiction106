@@ -19,8 +19,8 @@ export default async function EpisodeReaderPage({
 }: {
   params: { episodeId: string };
 }) {
-  const episode = await prisma.episode.findUnique({
-    where: { id: params.episodeId },
+  const episode = await prisma.episode.findFirst({
+    where: { id: params.episodeId, status: "PUBLISHED" },
     include: { series: true },
   });
 

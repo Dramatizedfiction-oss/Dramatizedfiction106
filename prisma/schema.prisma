@@ -118,6 +118,8 @@ model Series {
   genre       String
   tags        String[]
   coverImage  String?
+  themeColor  String?
+  status      SeriesStatus @default(DRAFT)
   reads       Int        @default(0)
   followers   Int        @default(0)
   createdAt   DateTime   @default(now())
@@ -132,11 +134,17 @@ model Episode {
   id            String         @id @default(cuid())
   title         String
   episodeNumber Int
+  description   String?
+  contentWarning String?
   body          String
   teaser        String?
   readTime      Int
   readerCount   Int            @default(0)
   locked        Boolean        @default(false)
+  coverImage    String?
+  status        EpisodeStatus  @default(DRAFT)
+  publishedAt   DateTime?
+  lastSavedAt   DateTime       @default(now())
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   seriesId      String
@@ -268,6 +276,17 @@ enum PayoutStatus {
   PENDING
   PAID
   FAILED
+}
+
+enum SeriesStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum EpisodeStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
 }
 
 enum RevenueType {

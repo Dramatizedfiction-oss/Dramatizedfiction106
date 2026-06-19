@@ -4,7 +4,8 @@ export async function getNextEpisode(seriesId: string, currentNumber: number) {
   return prisma.episode.findFirst({
     where: {
       seriesId,
-      episodeNumber: currentNumber + 1
+      episodeNumber: currentNumber + 1,
+      status: "PUBLISHED",
     },
     orderBy: { episodeNumber: "asc" }
   });

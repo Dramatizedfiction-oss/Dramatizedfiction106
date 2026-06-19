@@ -16,6 +16,7 @@ type TrendingSeries = {
 async function getHomepageTrendingSeries() {
   try {
     return await prisma.series.findMany({
+      where: { status: "PUBLISHED" },
       orderBy: [{ reads: "desc" }, { createdAt: "desc" }],
       take: 3,
       select: {

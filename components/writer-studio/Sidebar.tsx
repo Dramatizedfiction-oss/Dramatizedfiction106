@@ -1,30 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { AuthUser } from "@/auth";
 
-type NavItem = {
+type SectionLink = {
   href: string;
   label: string;
-  disabled?: boolean;
-  locked?: boolean;
+  description: string;
 };
 
-const navItems: NavItem[] = [
-  { href: "/writer-studio", label: "Dashboard" },
-  { href: "/writer-studio/stories", label: "Stories" },
-  { href: "/writer-studio/series", label: "Series" },
-  { href: "/writer-studio/drafts", label: "Drafts" },
-  { href: "/writer-studio/wip-projects", label: "WIP Projects" },
-  { href: "/writer-studio/media", label: "Covers & Media" },
-  { href: "/writer-studio/scheduling", label: "Scheduling" },
-  // TODO: Connect these once analytics, monetization, creator payouts, AI editing,
-  // readability optimization, and creator economy systems are ready.
-  { href: "/writer-studio/analytics", label: "Analytics", disabled: true },
-  { href: "/writer-studio/monetization", label: "Monetization", disabled: true, locked: true },
-  { href: "/writer-studio/settings", label: "Settings" },
+type ComingSoonItem = {
+  label: string;
+  description: string;
+};
+
+const storyLinks: SectionLink[] = [
+  { href: "#overview", label: "Overview", description: "Workspace summary and current draft state." },
+  { href: "#series-details", label: "Series Details", description: "Name, genre, theme, and cover." },
+  { href: "#episode-details", label: "Episode Details", description: "Title, number, warnings, and publish settings." },
+];
+
+const referenceLinks: SectionLink[] = [
+  { href: "#story-bible", label: "Story Bible", description: "Core world notes and canon." },
+  { href: "#characters", label: "Characters", description: "People, roles, and relationships." },
+  { href: "#locations", label: "Locations", description: "Places, settings, and recurring backdrops." },
+  { href: "#timeline", label: "Timeline", description: "Story chronology and sequence." },
+];
+
+const planningLinks: SectionLink[] = [
+  { href: "#outline", label: "Outline", description: "Episode flow and major beats." },
+  { href: "#notes", label: "Notes", description: "Draft comments and reminders." },
+  { href: "#research", label: "Research", description: "Reference material for later use." },
+];
+
+const futureTools: ComingSoonItem[] = [
+  { label: "Meridith AI", description: "Coming Soon" },
+  { label: "Analytics", description: "Coming Soon" },
+  { label: "Publishing Tools", description: "Coming Soon" },
 ];
 
 export default function WriterStudioSidebar({
@@ -34,7 +47,6 @@ export default function WriterStudioSidebar({
   user: AuthUser | null;
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const initials = useMemo(() => {
@@ -51,7 +63,7 @@ export default function WriterStudioSidebar({
   const sidebar = (
     <aside
       className={`flex h-full min-h-[calc(100vh-9rem)] flex-col border-r border-[var(--border-color)] bg-[var(--sidebar-bg)]/95 p-4 transition-all duration-300 ${
-        collapsed ? "lg:w-[92px]" : "lg:w-[292px]"
+        collapsed ? "lg:w-[92px]" : "lg:w-[308px]"
       }`}
     >
       <div className={`flex gap-3 ${collapsed ? "flex-col items-center" : "items-center justify-between"}`}>
@@ -86,68 +98,46 @@ export default function WriterStudioSidebar({
       </div>
 
       {!collapsed && (
-        <Link
-          href="/"
-          className="theme-meta mt-3 block rounded-[16px] px-3 py-2 text-xs transition hover:bg-[var(--panel-hover)] hover:text-[var(--text-primary)]"
-          onClick={() => setDrawerOpen(false)}
-        >
-          Home
-        </Link>
+        <div className="mt-5 rounded-[20px] border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-4">
+          <p className="eyebrow">Writer Studio</p>
+          <h2 className="font-heading mt-2 text-2xl font-semibold text-white">
+            Write first.
+          </h2>
+          <p className="theme-meta mt-2 text-xs leading-5">
+            The manuscript is the product. Everything else supports the page.
+          </p>
+        </div>
       )}
 
-      <div className="mt-6">
-        {!collapsed && (
-          <div className="mb-4 px-2">
-            <p className="eyebrow">Writer Studio</p>
-            <p className="theme-meta mt-2 text-xs leading-5">
-              Build stories, organize releases, and keep your audience close.
-            </p>
-          </div>
-        )}
+      <div className="mt-6 space-y-5 overflow-y-auto pr-1">
+        <SidebarSection collapsed={collapsed} title="Story" links={storyLinks} />
+        <SidebarSection collapsed={collapsed} title="Reference" links={referenceLinks} />
+        <SidebarSection collapsed={collapsed} title="Planning" links={planningLinks} />
 
-        <nav className="space-y-1">
-          {navItems.map((item) => {
-            const active =
-              pathname === item.href ||
-              (item.href !== "/writer-studio" && pathname.startsWith(`${item.href}/`));
-
-            if (item.disabled) {
-              return (
-                <div
-                  key={item.href}
-                  className="flex items-center justify-between gap-3 rounded-[18px] px-3 py-3 text-sm text-[var(--text-secondary)] opacity-60"
-                  aria-disabled="true"
-                  title={`${item.label} coming soon`}
-                >
-                  <span className="truncate">{collapsed ? item.label.slice(0, 2) : item.label}</span>
+        <div>
+          {!collapsed && (
+            <div className="mb-3 px-2">
+              <p className="eyebrow">Future Tools</p>
+            </div>
+          )}
+          <div className="space-y-2">
+            {futureTools.map((item) => (
+              <div
+                key={item.label}
+                className="rounded-[18px] border border-[var(--border-color)] px-3 py-3 text-sm text-[var(--text-secondary)]"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span>{collapsed ? item.label.slice(0, 2) : item.label}</span>
                   {!collapsed && (
                     <span className="rounded-full border border-[var(--border-color)] px-2 py-1 text-[10px] uppercase tracking-[0.18em]">
-                      {item.locked ? "Locked" : "Soon"}
+                      {item.description}
                     </span>
                   )}
                 </div>
-              );
-            }
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setDrawerOpen(false)}
-                className={`group flex items-center justify-between gap-3 rounded-[18px] px-3 py-3 text-sm transition duration-200 ${
-                  active
-                    ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-[inset_3px_0_0_rgba(124,58,237,0.75)]"
-                    : "text-[var(--text-secondary)] hover:bg-[var(--panel-hover)] hover:text-[var(--text-primary)]"
-                }`}
-              >
-                <span className="truncate">{collapsed ? item.label.slice(0, 2) : item.label}</span>
-                {!collapsed && active && (
-                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--text-primary)] opacity-70" />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="mt-auto pt-6">
@@ -211,6 +201,42 @@ export default function WriterStudioSidebar({
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function SidebarSection({
+  title,
+  links,
+  collapsed,
+}: {
+  title: string;
+  links: SectionLink[];
+  collapsed: boolean;
+}) {
+  return (
+    <div>
+      {!collapsed && (
+        <div className="mb-3 px-2">
+          <p className="eyebrow">{title}</p>
+        </div>
+      )}
+      <nav className="space-y-2">
+        {links.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="theme-panel-hover block rounded-[18px] border border-[var(--border-color)] px-3 py-3 text-sm text-[var(--text-primary)]"
+          >
+            <span className="block">{collapsed ? link.label.slice(0, 2) : link.label}</span>
+            {!collapsed && (
+              <span className="theme-meta mt-1 block text-[10px] uppercase tracking-[0.2em]">
+                {link.description}
+              </span>
+            )}
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 }

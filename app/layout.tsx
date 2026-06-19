@@ -24,6 +24,7 @@ export default async function RootLayout({
   try {
     [searchStories, searchAuthors, studios] = await Promise.all([
       prisma.series.findMany({
+        where: { status: "PUBLISHED" },
         orderBy: [{ reads: "desc" }, { createdAt: "desc" }],
         take: 20,
         select: {

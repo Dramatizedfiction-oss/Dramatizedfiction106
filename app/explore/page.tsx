@@ -22,6 +22,7 @@ export default async function ExplorePage({
 
   const where = query
     ? {
+        status: "PUBLISHED" as const,
         OR: [
           { title: { contains: query, mode: "insensitive" as const } },
           { description: { contains: query, mode: "insensitive" as const } },
@@ -33,7 +34,7 @@ export default async function ExplorePage({
 
   const [stories, fallbackStories, trending] = await Promise.all([
     prisma.series.findMany({
-      where,
+      where: where ? { ...where, status: "PUBLISHED" } : { status: "PUBLISHED" },
       take: 32,
       include: {
         author: {
@@ -51,6 +52,7 @@ export default async function ExplorePage({
       },
     }),
     prisma.series.findMany({
+      where: { status: "PUBLISHED" },
       orderBy: [{ reads: "desc" }, { followers: "desc" }, { updatedAt: "desc" }],
       take: 24,
       include: {
@@ -69,6 +71,7 @@ export default async function ExplorePage({
       },
     }),
     prisma.series.findMany({
+      where: { status: "PUBLISHED" },
       orderBy: [{ reads: "desc" }, { followers: "desc" }],
       take: 3,
       select: {

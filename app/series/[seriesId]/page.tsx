@@ -21,8 +21,8 @@ export default async function SeriesPage({
   params: { seriesId: string };
 }) {
   const session = await auth();
-  const series = await prisma.series.findUnique({
-    where: { id: params.seriesId },
+  const series = await prisma.series.findFirst({
+    where: { id: params.seriesId, status: "PUBLISHED" },
     include: {
       author: {
         select: {
@@ -30,6 +30,7 @@ export default async function SeriesPage({
         },
       },
       episodes: {
+        where: { status: "PUBLISHED" },
         orderBy: { episodeNumber: "asc" },
       },
     },
