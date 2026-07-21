@@ -34,8 +34,8 @@ export default async function WriterStudioSeriesPage() {
             Organize connected works, reader entry points, and future release arcs from one creator-first shelf.
           </p>
         </div>
-        <Link href="/series/new" className="story-button-primary">
-          New Series
+        <Link href="/writer-studio" className="story-button-primary">
+          Create Series
         </Link>
       </div>
 

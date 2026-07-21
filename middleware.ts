@@ -10,6 +10,20 @@ const SESSION_COOKIE_NAMES = [
 export default function middleware(request: NextRequest) {
   const { nextUrl, cookies } = request;
   const pathname = nextUrl.pathname;
+
+  if (pathname === "/writer" || pathname.startsWith("/writer/")) {
+    const writerPath = pathname.slice("/writer".length) || "/";
+    const legacyRouteMap: Record<string, string> = {
+      "/episodes": "/stories",
+      "/stats": "/analytics",
+      "/new-episode": "/",
+    };
+    const destination = legacyRouteMap[writerPath] ?? writerPath;
+    const writerStudioUrl = new URL(`/writer-studio${destination}`, nextUrl);
+    writerStudioUrl.search = nextUrl.search;
+    return NextResponse.redirect(writerStudioUrl);
+  }
+
   const rule = PROTECTED_ROUTE_RULES.find((entry) => pathname.startsWith(entry.prefix));
 
   if (!rule) {

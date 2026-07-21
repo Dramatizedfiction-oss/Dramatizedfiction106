@@ -41,33 +41,36 @@ export default async function EpisodeReaderPage({
     creatorId: episode.authorId,
   };
   const accessStatus = canUserAccessContent(viewer, episodeMonetization).accessStatus;
+  const canReadEpisode = accessStatus !== "locked";
 
-  await prisma.episode.update({
-    where: { id: params.episodeId },
-    data: { readerCount: { increment: 1 } },
-  });
+  if (canReadEpisode) {
+    await prisma.episode.update({
+      where: { id: params.episodeId },
+      data: { readerCount: { increment: 1 } },
+    });
 
-  await prisma.series.update({
-    where: { id: episode.seriesId },
-    data: { reads: { increment: 1 } },
-  });
+    await prisma.series.update({
+      where: { id: episode.seriesId },
+      data: { reads: { increment: 1 } },
+    });
 
-  await prisma.revenueEvent.create({
-    data: {
-      type: "EPISODE_READ",
-      amount: 1,
-      userId: session?.user?.id ?? null,
-      seriesId: episode.seriesId,
-      episodeId: episode.id,
-    },
-  });
+    await prisma.revenueEvent.create({
+      data: {
+        type: "EPISODE_READ",
+        amount: 1,
+        userId: session?.user?.id ?? null,
+        seriesId: episode.seriesId,
+        episodeId: episode.id,
+      },
+    });
 
-  await prisma.readEvent.create({
-    data: {
-      userId: session?.user?.id ?? null,
-      episodeId: episode.id,
-    },
-  });
+    await prisma.readEvent.create({
+      data: {
+        userId: session?.user?.id ?? null,
+        episodeId: episode.id,
+      },
+    });
+  }
 
   const next = await getNextEpisode(episode.seriesId, episode.episodeNumber);
   const nextEpisodeAccessStatus = next
@@ -146,14 +149,21 @@ export default async function EpisodeReaderPage({
             </header>
 
             <article className="mx-auto max-w-[700px]">
-              <div className="theme-body space-y-6 text-base leading-8 md:text-lg">
-                {episode.body
-                  .split(/\n\s*\n/)
-                  .filter(Boolean)
-                  .map((paragraph, index) => (
-                    <p key={`${episode.id}-${index}`}>{paragraph.trim()}</p>
+              {canReadEpisode ? (
+                <div className="theme-body space-y-6 text-base leading-8 md:text-lg">
+                  {toReadableParagraphs(episode.body).map((paragraph, index) => (
+                    <p key={`${episode.id}-${index}`}>{paragraph}</p>
                   ))}
-              </div>
+                </div>
+              ) : (
+                <div className="theme-panel rounded-[28px] border border-[var(--border-color)] p-6">
+                  <p className="eyebrow">Premium episode</p>
+                  <h2 className="theme-heading mt-3 text-2xl font-semibold">Unlock this chapter to keep reading</h2>
+                  <p className="theme-meta mt-3 text-sm leading-6">
+                    {episode.teaser || episode.description || "This episode is available to subscribers or through an individual unlock."}
+                  </p>
+                </div>
+              )}
             </article>
 
             <div className="mx-auto mt-10 max-w-[700px] lg:hidden">
@@ -180,4 +190,16 @@ export default async function EpisodeReaderPage({
       </main>
     </ReaderChrome>
   );
+}
+
+function toReadableParagraphs(body: string) {
+  const text = body
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<\/(p|div|h[1-6])>/gi, "\n\n")
+    .replace(/<[^>]+>/g, "");
+
+  return text
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
 }

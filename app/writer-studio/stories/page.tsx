@@ -2,13 +2,23 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
-const filters = ["All", "Draft", "Published", "Hidden", "Scheduled"];
+const filters = ["All", "Draft", "Review", "Published"];
 
-export default async function WriterStudioStoriesPage() {
+export default async function WriterStudioStoriesPage({
+  searchParams,
+}: {
+  searchParams?: { status?: string };
+}) {
   const session = await auth();
+  const selectedStatus = filters.includes(searchParams?.status || "")
+    ? searchParams?.status || "All"
+    : "All";
   const episodes = session?.user?.id
     ? await prisma.episode.findMany({
-        where: { authorId: session.user.id },
+        where: {
+          authorId: session.user.id,
+          ...(selectedStatus === "All" ? {} : { status: selectedStatus.toUpperCase() as "DRAFT" | "REVIEW" | "PUBLISHED" }),
+        },
         orderBy: { updatedAt: "desc" },
         take: 12,
         include: {
@@ -40,17 +50,17 @@ export default async function WriterStudioStoriesPage() {
 
       <div className="flex gap-2 overflow-x-auto pb-1">
         {filters.map((filter) => (
-          <button
+          <Link
             key={filter}
-            type="button"
+            href={filter === "All" ? "/writer-studio/stories" : `/writer-studio/stories?status=${filter}`}
             className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm transition ${
-              filter === "All"
+              filter === selectedStatus
                 ? "border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)]"
                 : "border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
             {filter}
-          </button>
+          </Link>
         ))}
       </div>
 
@@ -67,8 +77,9 @@ export default async function WriterStudioStoriesPage() {
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
           {episodes.map((story, index) => (
-            <article
+            <Link
               key={story.id}
+              href={`/writer-studio?series=${story.seriesId}&episode=${story.id}`}
               className="grid gap-4 rounded-[24px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-4 sm:grid-cols-[88px_minmax(0,1fr)]"
             >
               <div
@@ -83,7 +94,7 @@ export default async function WriterStudioStoriesPage() {
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-full border border-[var(--border-color)] px-2.5 py-1 text-xs">
-                    Published
+                    {story.status}
                   </span>
                   <span className="theme-meta text-xs uppercase tracking-[0.18em]">
                     {story.series.title}
@@ -95,7 +106,7 @@ export default async function WriterStudioStoriesPage() {
                   <p className="theme-meta">Reads: {story.readerCount}</p>
                 </div>
               </div>
-            </article>
+            </Link>
           ))}
         </div>
       )}

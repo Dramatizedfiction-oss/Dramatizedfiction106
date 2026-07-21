@@ -15,6 +15,7 @@ export default function BecomeAuthorForm({
   const [displayName, setDisplayName] = useState(defaultDisplayName);
   const [profileImage, setProfileImage] = useState("");
   const [bio, setBio] = useState("");
+  const [acknowledged, setAcknowledged] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -33,6 +34,7 @@ export default function BecomeAuthorForm({
         displayName,
         profileImage,
         bio,
+        acknowledged,
       }),
     });
 
@@ -75,6 +77,19 @@ export default function BecomeAuthorForm({
           />
         </label>
 
+        <label className="flex items-start gap-3 rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm">
+          <input
+            type="checkbox"
+            checked={acknowledged}
+            onChange={(event) => setAcknowledged(event.target.checked)}
+            className="mt-1"
+            required
+          />
+          <span className="theme-meta leading-6">
+            I agree to publish responsibly and follow the platform&apos;s writer guidelines.
+          </span>
+        </label>
+
         <label className="block">
           <span className="theme-meta mb-2 block text-xs uppercase tracking-[0.24em]">
             Profile Image URL
@@ -111,7 +126,7 @@ export default function BecomeAuthorForm({
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !acknowledged}
           className="story-button-primary justify-center disabled:opacity-60"
         >
           {isSubmitting ? "Entering creator mode..." : "Become a Writer"}

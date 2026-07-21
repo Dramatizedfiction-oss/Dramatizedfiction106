@@ -139,7 +139,7 @@ export default function AppShell({
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 border-b border-[var(--border-color)] bg-[var(--header-bg)] backdrop-blur-xl">
-        <div className="mx-auto grid w-full max-w-7xl gap-3 px-4 py-4 md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-4 md:px-8">
+        <div className="mx-auto grid w-full max-w-7xl gap-3 px-4 py-4 md:grid-cols-[auto_auto_minmax(220px,1fr)_auto] md:items-center md:gap-4 md:px-8">
           <Link href="/" className="flex items-center gap-3">
             <div className="relative h-11 w-11 overflow-hidden rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)]">
               <Image
@@ -158,6 +158,20 @@ export default function AppShell({
               </p>
             </div>
           </Link>
+
+          <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
+            <Link href="/explore" className="theme-panel-hover rounded-full px-3 py-2 text-sm text-[var(--text-primary)]">
+              Explore
+            </Link>
+            <Link href="/explore?view=for-you" className="theme-panel-hover rounded-full px-3 py-2 text-sm text-[var(--text-secondary)]">
+              For You
+            </Link>
+            {canWrite ? (
+              <Link href="/writer-studio" className="theme-panel-hover rounded-full px-3 py-2 text-sm text-[var(--text-primary)]">
+                Write
+              </Link>
+            ) : null}
+          </nav>
 
           <div className="w-full md:max-w-[820px] md:justify-self-center">
             <GlobalSearch stories={searchStories} authors={searchAuthors} />

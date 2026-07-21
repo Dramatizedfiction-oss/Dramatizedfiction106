@@ -10,34 +10,22 @@ type SectionLink = {
   description: string;
 };
 
-type ComingSoonItem = {
-  label: string;
-  description: string;
-};
-
 const storyLinks: SectionLink[] = [
-  { href: "#overview", label: "Overview", description: "Workspace summary and current draft state." },
-  { href: "#series-details", label: "Series Details", description: "Name, genre, theme, and cover." },
-  { href: "#episode-details", label: "Episode Details", description: "Title, number, warnings, and publish settings." },
+  { href: "/writer-studio", label: "Workspace", description: "Create, write, and publish in one place." },
+  { href: "/writer-studio/stories", label: "Stories", description: "See every draft and published episode." },
+  { href: "/writer-studio/series", label: "Series", description: "Manage your story worlds." },
+  { href: "/writer-studio/drafts", label: "Drafts", description: "Pick up work in progress." },
 ];
 
 const referenceLinks: SectionLink[] = [
-  { href: "#story-bible", label: "Story Bible", description: "Core world notes and canon." },
-  { href: "#characters", label: "Characters", description: "People, roles, and relationships." },
-  { href: "#locations", label: "Locations", description: "Places, settings, and recurring backdrops." },
-  { href: "#timeline", label: "Timeline", description: "Story chronology and sequence." },
+  { href: "/writer-studio/characters", label: "Characters", description: "Keep recurring people and roles organized." },
+  { href: "/writer-studio/media", label: "Media", description: "Covers and visual story assets." },
 ];
 
 const planningLinks: SectionLink[] = [
-  { href: "#outline", label: "Outline", description: "Episode flow and major beats." },
-  { href: "#notes", label: "Notes", description: "Draft comments and reminders." },
-  { href: "#research", label: "Research", description: "Reference material for later use." },
-];
-
-const futureTools: ComingSoonItem[] = [
-  { label: "Meridith AI", description: "Coming Soon" },
-  { label: "Analytics", description: "Coming Soon" },
-  { label: "Publishing Tools", description: "Coming Soon" },
+  { href: "/writer-studio/scheduling", label: "Schedule", description: "Plan upcoming releases." },
+  { href: "/writer-studio/analytics", label: "Analytics", description: "Understand reading activity." },
+  { href: "/writer-studio/settings", label: "Studio Settings", description: "Manage your creator workspace." },
 ];
 
 export default function WriterStudioSidebar({
@@ -114,30 +102,6 @@ export default function WriterStudioSidebar({
         <SidebarSection collapsed={collapsed} title="Reference" links={referenceLinks} />
         <SidebarSection collapsed={collapsed} title="Planning" links={planningLinks} />
 
-        <div>
-          {!collapsed && (
-            <div className="mb-3 px-2">
-              <p className="eyebrow">Future Tools</p>
-            </div>
-          )}
-          <div className="space-y-2">
-            {futureTools.map((item) => (
-              <div
-                key={item.label}
-                className="rounded-[18px] border border-[var(--border-color)] px-3 py-3 text-sm text-[var(--text-secondary)]"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span>{collapsed ? item.label.slice(0, 2) : item.label}</span>
-                  {!collapsed && (
-                    <span className="rounded-full border border-[var(--border-color)] px-2 py-1 text-[10px] uppercase tracking-[0.18em]">
-                      {item.description}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       <div className="mt-auto pt-6">

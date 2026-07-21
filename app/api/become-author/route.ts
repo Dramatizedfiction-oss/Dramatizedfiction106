@@ -27,8 +27,16 @@ export async function POST(request: Request) {
           displayName?: string;
           profileImage?: string;
           bio?: string;
+          acknowledged?: boolean;
         }
       | null;
+
+    if (!body?.acknowledged) {
+      return NextResponse.json(
+        { error: "Please agree to the writer guidelines before continuing." },
+        { status: 400 },
+      );
+    }
     const displayName =
       cleanOptionalText(body?.displayName) ?? session.user.name ?? "New Writer";
     const profileImage = cleanOptionalText(body?.profileImage) ?? session.user.image;
@@ -56,6 +64,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
+      message: "Writer access granted.",
       role: result.user.role,
       redirectTo: "/writer-studio",
       user: result.user,

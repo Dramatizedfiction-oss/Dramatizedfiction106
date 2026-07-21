@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import { getMockWriterDrafts } from "@/lib/writer-studio";
+import { prisma } from "@/lib/prisma";
 
 export default async function WriterStudioDraftsPage() {
   const session = await auth();
@@ -9,7 +9,11 @@ export default async function WriterStudioDraftsPage() {
     return <p className="theme-meta">Sign in to view drafts.</p>;
   }
 
-  const drafts = getMockWriterDrafts(session.user.id);
+  const drafts = await prisma.episode.findMany({
+    where: { authorId: session.user.id, status: { in: ["DRAFT", "REVIEW"] } },
+    orderBy: { updatedAt: "desc" },
+    include: { series: { select: { title: true } } },
+  });
 
   return (
     <div className="space-y-6">
@@ -29,20 +33,22 @@ export default async function WriterStudioDraftsPage() {
         {drafts.map((draft) => (
           <Link
             key={draft.id}
-            href={`/writer-studio/editor?draft=${draft.id}`}
+            href={`/writer-studio?series=${draft.seriesId}&episode=${draft.id}`}
             className="theme-panel rounded-[24px] border border-[var(--border-color)] p-5 transition hover:border-[var(--text-primary)]"
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="theme-heading text-lg font-semibold">{draft.title}</p>
                 <p className="theme-meta mt-2 text-xs uppercase tracking-[0.24em]">
-                  {draft.seriesTitle}
+                  {draft.series.title} · {draft.status}
                 </p>
               </div>
-              <span className="theme-meta text-xs">{draft.updatedLabel}</span>
+              <span className="theme-meta text-xs">{draft.updatedAt.toLocaleDateString()}</span>
             </div>
-            <p className="theme-body mt-4 text-sm leading-6">{draft.excerpt}</p>
-            <p className="theme-meta mt-4 text-xs">Progress {draft.completion}%</p>
+            <p className="theme-body mt-4 line-clamp-3 text-sm leading-6">
+              {draft.description || "No episode description yet."}
+            </p>
+            <p className="theme-meta mt-4 text-xs">Episode {draft.episodeNumber}</p>
           </Link>
         ))}
       </div>
