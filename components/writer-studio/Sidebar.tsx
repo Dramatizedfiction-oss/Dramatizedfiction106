@@ -31,9 +31,11 @@ const planningLinks: SectionLink[] = [
 export default function WriterStudioSidebar({
   user,
   children,
+  redesignEnabled = false,
 }: {
   user: AuthUser | null;
   children: React.ReactNode;
+  redesignEnabled?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -57,7 +59,7 @@ export default function WriterStudioSidebar({
       <div className={`flex gap-3 ${collapsed ? "flex-col items-center" : "items-center justify-between"}`}>
         <Link
           href="/explore"
-          className="group flex min-w-0 items-center gap-3 rounded-[22px] border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-3 transition hover:-translate-y-0.5 hover:border-[var(--text-secondary)]"
+          className="group flex min-w-0 items-center gap-3 rounded-[22px] border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-3 transition hover:-translate-y-0.5 hover:border-[var(--border-color)]"
           onClick={() => setDrawerOpen(false)}
         >
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--bg-primary)] text-sm text-[var(--text-primary)]">
@@ -77,7 +79,7 @@ export default function WriterStudioSidebar({
 
         <button
           type="button"
-          className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--border-color)] text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] lg:inline-flex"
+          className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--border-color)] text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
           onClick={() => setCollapsed((value) => !value)}
           aria-label={collapsed ? "Expand Writer Studio sidebar" : "Collapse Writer Studio sidebar"}
         >
@@ -94,6 +96,12 @@ export default function WriterStudioSidebar({
           <p className="theme-meta mt-2 text-xs leading-5">
             The manuscript is the product. Everything else supports the page.
           </p>
+
+          {redesignEnabled && (
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-violet-700/10 px-2 py-1 text-xs font-medium text-violet-200">
+              Redesign: ON
+            </div>
+          )}
         </div>
       )}
 
