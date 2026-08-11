@@ -50,6 +50,23 @@ export default function WriterStudioSidebar({
       .toUpperCase();
   }, [user?.email, user?.name]);
 
+  const toggleRedesign = () => {
+    try {
+      const raw = localStorage.getItem("writerStudioRedesign");
+      if (raw === "true") {
+        localStorage.setItem("writerStudioRedesign", "false");
+      } else {
+        localStorage.setItem("writerStudioRedesign", "true");
+      }
+      // reload to let the shell re-read the override
+      location.reload();
+    } catch (e) {
+      // ignore errors
+      // eslint-disable-next-line no-console
+      console.error("Failed to toggle writerStudioRedesign", e);
+    }
+  };
+
   const sidebar = (
     <aside
       className={`flex h-full min-h-[calc(100vh-9rem)] flex-col border-r border-[var(--border-color)] bg-[var(--sidebar-bg)]/95 p-4 transition-all duration-300 ${
@@ -77,14 +94,28 @@ export default function WriterStudioSidebar({
           )}
         </Link>
 
-        <button
-          type="button"
-          className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--border-color)] text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
-          onClick={() => setCollapsed((value) => !value)}
-          aria-label={collapsed ? "Expand Writer Studio sidebar" : "Collapse Writer Studio sidebar"}
-        >
-          {collapsed ? ">" : "<"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--border-color)] text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] lg:flex"
+            onClick={() => setCollapsed((value) => !value)}
+            aria-label={collapsed ? "Expand Writer Studio sidebar" : "Collapse Writer Studio sidebar"}
+          >
+            {collapsed ? ">" : "<"}
+          </button>
+
+          {!collapsed && (
+            <button
+              type="button"
+              onClick={toggleRedesign}
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/5"
+              aria-label="Toggle Writer Studio redesign"
+            >
+              <span className={`inline-flex h-3 w-3 rounded-full ${redesignEnabled ? "bg-violet-400" : "bg-gray-500"}`} />
+              <span>{redesignEnabled ? "Redesign: ON" : "Redesign: OFF"}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {!collapsed && (
