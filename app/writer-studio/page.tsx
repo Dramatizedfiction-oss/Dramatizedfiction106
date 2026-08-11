@@ -29,6 +29,7 @@ export default async function WriterStudioHomePage({
   // Convert all Date objects to ISO strings
   const formattedSeries = series.map((item) => ({
     ...item,
+    createdAt: item.createdAt.toISOString(),
     updatedAt: item.updatedAt.toISOString(),
     episodes: item.episodes.map((episode) => ({
       ...episode,
