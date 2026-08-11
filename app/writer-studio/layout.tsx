@@ -15,5 +15,12 @@ export default async function WriterStudioLayout({
     await getWriterStudioContext(session.user);
   }
 
-  return <WriterStudioShell user={session?.user ?? null}>{children}</WriterStudioShell>;
+  const redesignEnabled = process.env.NEXT_PUBLIC_WRITER_STUDIO_REDESIGN === "true";
+
+  return (
+    // Pass redesign flag so the client shell can opt-in to the new layout
+    <WriterStudioShell user={session?.user ?? null} redesignEnabled={redesignEnabled}>
+      {children}
+    </WriterStudioShell>
+  );
 }
