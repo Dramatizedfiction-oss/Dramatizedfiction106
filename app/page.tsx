@@ -44,8 +44,8 @@ export default async function HomePage() {
 
   return (
     <main className="overflow-hidden">
-      <section className="relative px-6 py-12 md:px-10 md:py-16">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_30%_at_50%_0%,rgba(124,58,237,0.16),transparent_70%)]" />
+      <section className="relative border-b border-[var(--border-color)] px-6 py-16 md:px-10 md:py-24">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_55%_45%_at_50%_5%,rgba(190,113,69,0.2),transparent_70%)]" />
 
         <div className="relative mx-auto max-w-6xl">
           <div className="animate-fade-in-up text-center">
@@ -74,13 +74,13 @@ export default async function HomePage() {
                 Fiction
               </h1>
 
-              <p className="theme-meta animate-subtle-pulse mt-5 font-mono-df text-xs uppercase tracking-[0.35em] md:text-sm">
-                Stories Performed in Text
+              <p className="theme-meta animate-subtle-pulse mt-6 font-mono-df text-xs uppercase tracking-[0.35em] md:text-sm">
+                Serialized stories · performed in text
               </p>
             </div>
 
             <p className="theme-body mx-auto mt-4 max-w-3xl text-balance text-lg md:text-xl">
-              A premium platform for serialized fiction, immersive reading, and creator-led story worlds.
+              A home for stories that unfold one episode at a time—made to be read slowly, followed closely, and written with intent.
             </p>
 
             <div className="mt-8 flex justify-center">
@@ -94,15 +94,15 @@ export default async function HomePage() {
 
       <section className="border-t border-[var(--border-color)] px-6 py-12 md:px-10">
         <div className="mx-auto max-w-6xl">
-          <div className="mb-6 flex items-end justify-between gap-4">
+          <div className="mb-8 flex items-end justify-between gap-4">
             <div>
               <p className="eyebrow">Trending</p>
               <h2 className="font-heading theme-heading mt-3 text-4xl font-semibold md:text-5xl">
-                Top stories by read count
+                Find your next obsession
               </h2>
             </div>
             <p className="theme-meta hidden max-w-xl text-right text-sm leading-6 md:block">
-              The front page now stays cinematic and focused with just one search bar in the navbar and three ranked story cards below.
+              Three stories readers are returning to right now.
             </p>
           </div>
 

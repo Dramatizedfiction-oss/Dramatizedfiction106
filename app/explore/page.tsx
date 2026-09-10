@@ -109,18 +109,18 @@ export default async function ExplorePage({
   const editorsPicks = discoverySections[2]?.items.slice(0, 3) ?? featuredStories;
 
   return (
-    <div className="px-4 py-6 md:px-6 lg:px-8">
+    <div className="editorial-page">
       <div className="flex items-start gap-8">
         <section className="min-w-0 flex-1">
           <div className="mb-8">
             <p className="eyebrow">Explore</p>
             <h1 className="font-heading theme-heading mt-3 text-4xl font-semibold md:text-5xl">
-              {view === "for-you" ? "For You" : "Discovery Feed"}
+              {view === "for-you" ? "Chosen for your next chapter" : "Stories worth getting lost in"}
             </h1>
             <p className="theme-meta mt-3 max-w-3xl text-sm leading-6">
               {view === "for-you"
-                ? "A recommendation-flavored view using the same ranking engine while personalization stays lightweight."
-                : "Explore 2.0 now organizes the platform around momentum, engagement, freshness, and writer strength."}
+                ? "A tailored shelf built from the stories and reading moments that feel most like yours."
+                : "New voices, returning favorites, and serialized worlds with enough pull to keep you reading."}
             </p>
           </div>
 

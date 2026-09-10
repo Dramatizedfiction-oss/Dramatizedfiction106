@@ -352,7 +352,7 @@ export default function WriterStudioWorkspace({
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-0 z-20 rounded-[28px] border border-blue-500/30 bg-blue-600/95 px-4 py-4 text-white shadow-2xl shadow-blue-950/30 backdrop-blur-xl">
+      <div className="studio-toolbar sticky top-0 z-20 rounded-[28px] px-4 py-4 text-white backdrop-blur-xl">
         <div className="grid gap-4 md:grid-cols-[1.1fr_1fr_auto] md:items-center">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-[0.35em] text-white/70">Story Title</p>
@@ -378,14 +378,14 @@ export default function WriterStudioWorkspace({
             <div className="relative">
               <button
                 type="button"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-blue-700 shadow-lg"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f6e8d4] text-[#6a3526] shadow-lg"
                 onClick={() => setShowTools((value) => !value)}
                 aria-label="Open tools"
               >
                 ✦
               </button>
               {showTools && (
-                <div className="absolute right-0 top-full z-30 mt-2 w-44 rounded-[20px] border border-white/20 bg-blue-700 p-2 shadow-2xl">
+                <div className="absolute right-0 top-full z-30 mt-2 w-44 rounded-[20px] border border-white/20 bg-[#4d2c22] p-2 shadow-2xl">
                   <button type="button" className="block w-full rounded-[16px] px-3 py-3 text-left text-sm hover:bg-white/10" onClick={() => formatSelection("formatBlock")}>Title</button>
                   <button type="button" className="block w-full rounded-[16px] px-3 py-3 text-left text-sm hover:bg-white/10" onClick={insertSceneBreak}>Scene Break</button>
                 </div>

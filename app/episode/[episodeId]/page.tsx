@@ -132,7 +132,7 @@ export default async function EpisodeReaderPage({
       backHref={`/series/${episode.seriesId}`}
       episodeTitle={episode.title}
     >
-      <main className="px-4 py-6 md:px-6 lg:px-8">
+      <main className="editorial-page">
         <div className="mx-auto grid max-w-[1400px] gap-8 lg:grid-cols-[minmax(0,700px)_320px] lg:items-start lg:justify-center">
           <div className="min-w-0">
             <header className="mb-8">
@@ -148,9 +148,9 @@ export default async function EpisodeReaderPage({
               </div>
             </header>
 
-            <article className="mx-auto max-w-[700px]">
+            <article className="reader-paper mx-auto max-w-[760px] px-6 py-8 md:px-12 md:py-12">
               {canReadEpisode ? (
-                <div className="theme-body space-y-6 text-base leading-8 md:text-lg">
+                <div className="reading-body theme-body">
                   {toReadableParagraphs(episode.body).map((paragraph, index) => (
                     <p key={`${episode.id}-${index}`}>{paragraph}</p>
                   ))}

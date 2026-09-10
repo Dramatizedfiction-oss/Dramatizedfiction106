@@ -62,8 +62,8 @@ export default async function SeriesPage({
   const seriesAccessStatus = canUserAccessContent(viewer, seriesMonetization).accessStatus;
 
   return (
-    <main className="overflow-hidden px-4 py-6 md:px-6 lg:px-8">
-      <section className="rounded-[32px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 md:p-8">
+    <main className="editorial-page overflow-hidden">
+      <section className="reader-paper p-6 md:p-8">
         <div className="grid gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
           <div className="overflow-hidden rounded-[28px] border border-[var(--border-color)] bg-[var(--bg-primary)]">
             {series.coverImage ? (
@@ -81,13 +81,13 @@ export default async function SeriesPage({
           </div>
 
           <div className="flex flex-col justify-center">
-            <p className="eyebrow">{series.genre}</p>
-            <h1 className="font-heading theme-heading mt-3 text-4xl font-semibold md:text-6xl">
+            <p className="editorial-kicker">{series.genre || "Serialized fiction"}</p>
+            <h1 className="editorial-title theme-heading mt-3 text-4xl font-semibold md:text-6xl">
               {series.title}
             </h1>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <p className="theme-meta text-sm md:text-base">
-                By {series.author.name || "Anonymous Author"} | Rating placeholder: 4.8/5
+                Written by {series.author.name || "Anonymous Author"}
               </p>
               <AuthorTierBadge tier={authorTier} />
               <FollowAuthorButton

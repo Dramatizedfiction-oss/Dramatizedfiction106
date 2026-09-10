@@ -483,9 +483,7 @@ export default function AppShell({
         </>
       )}
 
-      <main className="page-shell min-w-0">
-        <div className="surface-panel overflow-hidden">{children}</div>
-      </main>
+      <main className="page-shell min-w-0">{children}</main>
     </div>
   );
 }
