@@ -351,11 +351,11 @@ export default function WriterStudioWorkspace({
   const topEpisode = activeEpisode?.title || "Untitled Episode";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="studio-toolbar sticky top-0 z-20 rounded-[28px] px-4 py-4 text-white backdrop-blur-xl">
         <div className="grid gap-4 md:grid-cols-[1.1fr_1fr_auto] md:items-center">
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.35em] text-white/70">Story Title</p>
+            <p className="text-[10px] uppercase tracking-[0.35em] text-white/70">Now writing</p>
             <p className="mt-1 truncate text-lg font-semibold">{topTitle}</p>
             <p className="mt-1 text-sm text-white/75">{topEpisode}</p>
           </div>
@@ -395,7 +395,7 @@ export default function WriterStudioWorkspace({
         </div>
       </div>
 
-      <section id="overview" className="rounded-[28px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5">
+      <section id="overview" className="studio-panel p-5 md:p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="eyebrow">Overview</p>
@@ -403,7 +403,7 @@ export default function WriterStudioWorkspace({
               {activeSeries ? "Story workspace" : "Create your first series"}
             </h1>
             <p className="theme-meta mt-3 max-w-3xl text-sm leading-6">
-              The story is the product. Build a series first, then a draft episode, then publish when the piece is ready to reach readers.
+              Build the series, shape the episode, then stay with the page. Everything saves as you work.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -420,11 +420,11 @@ export default function WriterStudioWorkspace({
       </section>
 
       <section id="series-details" className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="rounded-[28px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5">
+        <div className="studio-panel p-5">
           <p className="eyebrow">Series Details</p>
           <div className="mt-4 grid gap-4">
             <input
-              className="theme-panel rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm"
+              className="studio-field px-4 py-3 text-sm"
               placeholder="Series Name"
               value={seriesDraft.title}
               onChange={(e) => {
@@ -434,7 +434,7 @@ export default function WriterStudioWorkspace({
               }}
             />
             <textarea
-              className="theme-panel rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm"
+              className="studio-field px-4 py-3 text-sm"
               rows={4}
               placeholder="Description"
               value={seriesDraft.description}
@@ -446,7 +446,7 @@ export default function WriterStudioWorkspace({
             />
             <div className="grid gap-4 md:grid-cols-2">
               <input
-                className="theme-panel rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm"
+                className="studio-field px-4 py-3 text-sm"
                 placeholder="Genre"
                 value={seriesDraft.genre}
                 onChange={(e) => {
@@ -456,7 +456,7 @@ export default function WriterStudioWorkspace({
                 }}
               />
               <input
-                className="theme-panel rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm"
+                className="studio-field px-4 py-3 text-sm"
                 placeholder="Theme Color"
                 value={seriesDraft.themeColor}
                 onChange={(e) => {
@@ -467,7 +467,7 @@ export default function WriterStudioWorkspace({
               />
             </div>
             <input
-              className="theme-panel rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm"
+              className="studio-field px-4 py-3 text-sm"
               placeholder="Cover Image URL"
               value={seriesDraft.coverImage}
               onChange={(e) => {
@@ -484,7 +484,7 @@ export default function WriterStudioWorkspace({
           )}
         </div>
 
-        <div className="rounded-[28px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5">
+        <div className="studio-panel p-5">
           <p className="eyebrow">Series Shelf</p>
           <div className="mt-4 space-y-3">
             {seriesList.length === 0 ? (
@@ -514,7 +514,7 @@ export default function WriterStudioWorkspace({
         </div>
       </section>
 
-      <section id="episode-details" className="rounded-[28px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5">
+      <section id="episode-details" className="studio-panel p-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="eyebrow">Episode Details</p>
@@ -529,7 +529,7 @@ export default function WriterStudioWorkspace({
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           <input
-            className="theme-panel rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm"
+            className="studio-field px-4 py-3 text-sm"
             placeholder="Episode Title"
             value={episodeDraft.title}
             onChange={(e) => {
@@ -539,7 +539,7 @@ export default function WriterStudioWorkspace({
             }}
           />
           <input
-            className="theme-panel rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm"
+            className="studio-field px-4 py-3 text-sm"
             type="number"
             placeholder="Episode Number"
             value={episodeDraft.episodeNumber}
@@ -550,7 +550,7 @@ export default function WriterStudioWorkspace({
             }}
           />
           <textarea
-            className="theme-panel rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm md:col-span-2"
+            className="studio-field px-4 py-3 text-sm md:col-span-2"
             rows={3}
             placeholder="Episode Description"
             value={episodeDraft.description}
@@ -561,7 +561,7 @@ export default function WriterStudioWorkspace({
             }}
           />
           <input
-            className="theme-panel rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm"
+            className="studio-field px-4 py-3 text-sm"
             placeholder="Content Warning"
             value={episodeDraft.contentWarning}
             onChange={(e) => {
@@ -571,7 +571,7 @@ export default function WriterStudioWorkspace({
             }}
           />
           <select
-            className="theme-panel rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm"
+            className="studio-field px-4 py-3 text-sm"
             value={episodeDraft.aiUsageTag}
             onChange={(e) => {
               const next = { ...episodeDraft, aiUsageTag: e.target.value };
@@ -585,7 +585,7 @@ export default function WriterStudioWorkspace({
             <option value="AI WRITTEN">AI WRITTEN</option>
           </select>
           <input
-            className="theme-panel rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm"
+            className="studio-field px-4 py-3 text-sm"
             placeholder="Episode Cover Image"
             value={episodeDraft.coverImage}
             onChange={(e) => {
@@ -594,7 +594,7 @@ export default function WriterStudioWorkspace({
               scheduleEpisodeSave(bodyHtml, next);
             }}
           />
-          <label className="flex items-center gap-3 rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm md:col-span-2">
+          <label className="studio-field flex items-center gap-3 px-4 py-3 text-sm md:col-span-2">
             <input
               type="checkbox"
               checked={episodeDraft.locked}
@@ -609,10 +609,10 @@ export default function WriterStudioWorkspace({
         </div>
       </section>
 
-      <section className={`rounded-[28px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 ${focusMode ? "shadow-[0_0_0_1px_rgba(255,255,255,0.08)]" : ""}`}>
+      <section className={`studio-panel p-5 md:p-6 ${focusMode ? "shadow-[0_0_0_1px_rgba(194,119,76,0.55)]" : ""}`}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="eyebrow">Main Writing Area</p>
+            <p className="editorial-kicker">The page</p>
             <h2 className="font-heading theme-heading mt-3 text-3xl font-semibold">Manuscript</h2>
           </div>
           <div className="theme-meta text-xs uppercase tracking-[0.24em]">Autosaves continuously</div>
@@ -620,7 +620,7 @@ export default function WriterStudioWorkspace({
 
         <div className="mx-auto mt-6 max-w-[820px]">
           {activeEpisode ? (
-            <div className="rounded-[30px] border border-[var(--border-color)] bg-[var(--bg-primary)] px-5 py-6 shadow-[0_18px_60px_rgba(0,0,0,0.22)] md:px-8 md:py-10">
+            <div className="studio-manuscript rounded-[30px] border border-[var(--border-color)] px-5 py-8 shadow-[0_18px_60px_rgba(0,0,0,0.16)] md:px-16 md:py-12">
               <div className="mb-6 space-y-3 text-center">
                 <p className="theme-meta text-xs uppercase tracking-[0.32em]">
                   {activeSeries?.title || "Series"}
@@ -635,7 +635,7 @@ export default function WriterStudioWorkspace({
                 ref={editorRef}
                 contentEditable
                 suppressContentEditableWarning
-                className="min-h-[60vh] whitespace-pre-wrap text-[18px] leading-9 outline-none md:text-[20px] md:leading-[2.1rem]"
+                className="font-reading min-h-[60vh] whitespace-pre-wrap text-[20px] leading-10 outline-none md:text-[22px] md:leading-[2.35rem]"
                 onInput={(event) => {
                   const html = (event.currentTarget as HTMLDivElement).innerHTML;
                   setBodyHtml(html);

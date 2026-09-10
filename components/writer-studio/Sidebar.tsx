@@ -88,7 +88,7 @@ export default function WriterStudioSidebar({
       {!collapsed && (
         <div className="mt-5 rounded-[20px] border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-4">
           <p className="eyebrow">Writer Studio</p>
-          <h2 className="font-heading mt-2 text-2xl font-semibold text-white">
+          <h2 className="font-heading theme-heading mt-2 text-2xl font-semibold">
             Write first.
           </h2>
           <p className="theme-meta mt-2 text-xs leading-5">
@@ -130,7 +130,7 @@ export default function WriterStudioSidebar({
   );
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] overflow-hidden rounded-[28px] border border-[var(--border-color)] bg-[var(--panel-bg)] shadow-2xl backdrop-blur-xl">
+    <div className="min-h-[calc(100vh-8rem)] overflow-hidden rounded-[28px] border border-[var(--border-color)] bg-[var(--panel-bg)] shadow-[0_22px_65px_rgba(43,29,18,0.12)] backdrop-blur-xl">
       <div className="flex items-center justify-between border-b border-[var(--border-color)] bg-[var(--header-bg)] px-4 py-3 lg:hidden">
         <div>
           <p className="eyebrow">Writer Studio</p>
