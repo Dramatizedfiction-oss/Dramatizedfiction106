@@ -6,18 +6,20 @@
 
 @layer base {
   :root {
-    --bg-primary: #fffdf8;
-    --bg-secondary: #f5f0e7;
-    --text-primary: #211d1a;
-    --text-secondary: #6c6259;
-    --border-color: #ded5c8;
-    --page-bg: #eee7dc;
-    --panel-bg: rgba(255, 253, 248, 0.84);
-    --panel-hover: rgba(67, 49, 34, 0.055);
-    --sidebar-bg: rgba(250, 247, 240, 0.96);
-    --header-bg: rgba(255, 253, 248, 0.78);
-    --overlay-bg: rgba(36, 27, 20, 0.2);
-    --series-accent: 18 47% 43%;
+    --background: 0 0% 98%;
+    --foreground: 0 0% 8%;
+    --bg-primary: #fafafa;
+    --bg-secondary: #f3f3f3;
+    --text-primary: #141414;
+    --text-secondary: #737373;
+    --border-color: rgba(0, 0, 0, 0.08);
+    --page-bg: #f9f9f9;
+    --panel-bg: rgba(255, 255, 255, 0.88);
+    --panel-hover: rgba(0, 0, 0, 0.04);
+    --sidebar-bg: rgba(252, 252, 252, 0.97);
+    --header-bg: rgba(249, 249, 249, 0.86);
+    --overlay-bg: rgba(0, 0, 0, 0.45);
+    --series-accent: 270 80% 55%;
     --font-heading: "Playfair Display", serif;
     --font-body: "Inter", sans-serif;
     --font-mono: "Space Mono", monospace;
@@ -25,17 +27,20 @@
   }
 
   .dark {
-    --bg-primary: #171411;
-    --bg-secondary: #211c18;
-    --text-primary: #f7f0e6;
-    --text-secondary: #b9ac9d;
-    --border-color: #40362f;
-    --page-bg: #100e0c;
-    --panel-bg: rgba(29, 24, 20, 0.86);
-    --panel-hover: rgba(255, 246, 232, 0.065);
-    --sidebar-bg: rgba(21, 18, 15, 0.96);
-    --header-bg: rgba(16, 14, 12, 0.78);
+    --background: 0 0% 1%;
+    --foreground: 0 0% 95%;
+    --bg-primary: #050505;
+    --bg-secondary: #0d0d0d;
+    --text-primary: #f2f2f2;
+    --text-secondary: #808080;
+    --border-color: rgba(255, 255, 255, 0.08);
+    --page-bg: #020202;
+    --panel-bg: rgba(10, 10, 10, 0.86);
+    --panel-hover: rgba(255, 255, 255, 0.06);
+    --sidebar-bg: rgba(2, 2, 2, 0.97);
+    --header-bg: rgba(2, 2, 2, 0.78);
     --overlay-bg: rgba(0, 0, 0, 0.6);
+    --series-accent: 270 80% 65%;
   }
 
   * {
@@ -67,16 +72,7 @@
     min-height: 100vh;
     color: var(--text-primary);
     font-family: var(--font-body);
-    background: radial-gradient(circle at 50% -20%, rgba(182, 124, 71, 0.12), transparent 37%), linear-gradient(180deg, #16120f 0%, #100e0c 100%);
     background-color: var(--page-bg);
-  }
-
-  :root body {
-    background: radial-gradient(circle at 50% -20%, rgba(173, 116, 67, 0.13), transparent 37%), linear-gradient(180deg, #faf7f0 0%, #eee7dc 100%);
-  }
-
-  .dark body {
-    background: radial-gradient(circle at 50% -20%, rgba(182, 124, 71, 0.12), transparent 37%), linear-gradient(180deg, #16120f 0%, #100e0c 100%);
   }
 
   a {
@@ -134,14 +130,13 @@
   .story-button-primary {
     @apply story-button;
     color: #ffffff;
-    background: #b75636;
-    box-shadow: 0 12px 30px rgba(117, 47, 28, 0.24);
+    background: linear-gradient(135deg, #7c3aed, #3b82f6);
+    box-shadow: 0 12px 30px rgba(124, 58, 237, 0.28);
   }
 
   .story-button-primary:hover {
-    transform: translateY(-1px);
-    background: #97452c;
-    box-shadow: 0 18px 38px rgba(117, 47, 28, 0.31);
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 18px 38px rgba(124, 58, 237, 0.36);
   }
 
   .story-button-secondary {
@@ -293,12 +288,27 @@
 }
 
 .liquid-text {
-  background: linear-gradient(135deg, #e2b27b, #bf6c48, #f0d19c, #a94e35, #e2b27b);
+  background: linear-gradient(135deg, #7c3aed, #4f46e5, #9333ea, #6366f1, #a855f7, #3b82f6, #7c3aed);
   background-size: 400% 400%;
   animation: liquidShift 6s ease infinite;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.sidebar-link {
+  @apply flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-light tracking-wide transition-all duration-200;
+  color: color-mix(in srgb, var(--text-primary) 40%, transparent);
+}
+
+.sidebar-link:hover {
+  background: var(--panel-hover);
+  color: color-mix(in srgb, var(--text-primary) 70%, transparent);
+}
+
+.sidebar-link-active {
+  background: var(--panel-hover);
+  color: var(--text-primary);
 }
 
 .animate-fade-in-up {

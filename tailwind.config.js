@@ -14,6 +14,8 @@ module.exports = {
         gold: "#d0a86e",
         night: "#09090f",
         ember: "#f08a5d",
+        foreground: "hsl(var(--foreground) / <alpha-value>)",
+        background: "hsl(var(--background) / <alpha-value>)",
       },
       boxShadow: {
         glow: "0 20px 80px rgba(122, 40, 77, 0.35)",

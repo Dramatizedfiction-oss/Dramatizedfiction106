@@ -142,8 +142,8 @@ export default function GlobalSearch({
   }
 
   const resultsPanel = (
-    <div className="theme-panel rounded-[24px] border border-[var(--border-color)] p-4 shadow-2xl">
-      <div className="grid gap-6 md:grid-cols-2">
+    <div className="rounded-xl border border-foreground/8 bg-[var(--sidebar-bg)] p-3 shadow-2xl">
+      <div className="grid gap-4">
         <section>
           <p className="eyebrow">Stories</p>
           <div className="mt-3 space-y-2">
@@ -154,7 +154,7 @@ export default function GlobalSearch({
                 <Link
                   key={story.id}
                   href={`/series/${story.id}`}
-                  className="theme-panel theme-panel-hover block rounded-2xl border border-[var(--border-color)] px-4 py-3 transition hover:opacity-80"
+                  className="block rounded-lg border border-foreground/8 px-3 py-2 transition hover:bg-foreground/5"
                   onClick={handleResultClick}
                 >
                   <p className="theme-heading font-medium">{story.title}</p>
@@ -177,7 +177,7 @@ export default function GlobalSearch({
                 <Link
                   key={author.id}
                   href={`/author/${author.id}`}
-                  className="theme-panel theme-panel-hover block rounded-2xl border border-[var(--border-color)] px-4 py-3 transition hover:opacity-80"
+                  className="block rounded-lg border border-foreground/8 px-3 py-2 transition hover:bg-foreground/5"
                   onClick={handleResultClick}
                 >
                   <p className="theme-heading font-medium">
@@ -243,21 +243,20 @@ export default function GlobalSearch({
 
   return (
     <div className="relative w-full">
-      <div className="theme-panel flex items-center gap-3 rounded-full border border-[var(--border-color)] px-4 py-3">
-        <span className="theme-meta text-sm">Search</span>
+      <div className="flex items-center rounded-lg border border-foreground/8 bg-foreground/5 px-3 py-2">
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onFocus={handleFocus}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          placeholder="Search stories and authors"
-          className="w-full bg-transparent text-[var(--text-primary)] outline-none placeholder:text-[var(--text-secondary)]"
+          placeholder="Search"
+          className="w-full bg-transparent font-mono-df text-xs text-foreground outline-none placeholder:text-foreground/25"
         />
       </div>
 
       {shouldShowInlineResults && (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-30">
+        <div className="absolute left-0 top-[calc(100%+0.5rem)] z-50 w-[min(22rem,calc(100vw-5rem))]">
           {resultsPanel}
         </div>
       )}

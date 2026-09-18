@@ -1,15 +1,12 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import AppSidebar, { type AppSidebarSeries } from "@/components/app-shell/AppSidebar";
+import type { SearchAuthor, SearchStory } from "@/components/app-shell/GlobalSearch";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
+import { MenuIcon } from "@/components/icons";
 import type { AppShellUser, StudioLink } from "@/lib/navigation";
-import GlobalSearch, {
-  type SearchAuthor,
-  type SearchStory,
-} from "@/components/app-shell/GlobalSearch";
 import { hasRoleAccess, normalizeRole } from "@/lib/roles";
 import { getRoleLabel } from "@/lib/studios";
 
@@ -18,6 +15,7 @@ type AppShellProps = {
   studios: StudioLink[];
   searchStories: SearchStory[];
   searchAuthors: SearchAuthor[];
+  trending: AppSidebarSeries[];
   children: React.ReactNode;
 };
 
@@ -26,22 +24,29 @@ export default function AppShell({
   studios,
   searchStories,
   searchAuthors,
+  trending,
   children,
 }: AppShellProps) {
   const { session, status, signOut } = useAuthSession();
   const router = useRouter();
   const pathname = usePathname();
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const profileRef = useRef<HTMLDivElement | null>(null);
-  const mobileNavRef = useRef<HTMLDivElement | null>(null);
   const sessionUser = status === "loading" ? session?.user ?? user ?? null : session?.user ?? null;
   const canWrite = hasRoleAccess(sessionUser?.role, "WRITER");
   const canManage = hasRoleAccess(sessionUser?.role, "BOARD");
   const canAccessCEO = hasRoleAccess(sessionUser?.role, "CEO");
   const roleLabel = getRoleLabel(normalizeRole(sessionUser?.role));
+  const isReaderRoute = pathname.startsWith("/episode/");
+  const isFlushRoute =
+    pathname === "/" ||
+    pathname.startsWith("/explore") ||
+    pathname.startsWith("/episode") ||
+    pathname.startsWith("/writer-studio") ||
+    pathname.startsWith("/writer") ||
+    pathname.startsWith("/ceo");
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("df-theme");
@@ -52,45 +57,15 @@ export default function AppShell({
   }, []);
 
   useEffect(() => {
-    setProfileOpen(false);
-    setMobileNavOpen(false);
+    setMobileOpen(false);
   }, [pathname]);
 
   useEffect(() => {
-    if (!sessionUser) {
-      setProfileOpen(false);
-      setMobileNavOpen(false);
-    }
-  }, [sessionUser]);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      const target = event.target as Node;
-
-      if (!profileRef.current?.contains(target)) {
-        setProfileOpen(false);
-      }
-
-      if (!mobileNavRef.current?.contains(target)) {
-        setMobileNavOpen(false);
-      }
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setProfileOpen(false);
-        setMobileNavOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
     };
-  }, []);
+  }, [mobileOpen]);
 
   function toggleTheme() {
     const nextTheme = theme === "dark" ? "light" : "dark";
@@ -102,416 +77,97 @@ export default function AppShell({
 
   async function handleSignOut() {
     setIsSigningOut(true);
-    setProfileOpen(false);
-    setMobileNavOpen(false);
+    setMobileOpen(false);
     await signOut();
     router.refresh();
     router.push("/");
   }
 
-  const initials = useMemo(() => {
-    const seed = sessionUser?.name || sessionUser?.role || "DF";
-    return seed
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-  }, [sessionUser?.name, sessionUser?.role]);
-
-  const discoveryLinks = [
-    { href: "/explore", label: "Explore", description: "Main story feed." },
-    {
-      href: "/explore?view=for-you",
-      label: "For You",
-      description: "Future recommendation shelf.",
-    },
-    { href: "/become-author", label: "Become a Writer", description: "Unlock creator mode when you are ready." },
-  ];
-
-  const studioLinks = studios.map((studio) => ({
-    href: `/writer-studio?studio=${studio.slug}`,
-    label: studio.name,
-    description: studio.description || `${studio.kind.toLowerCase()} studio access`,
-    detail: studio.accessRole,
-  }));
-
-  return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-40 border-b border-[var(--border-color)] bg-[var(--header-bg)] backdrop-blur-xl">
-        <div className="mx-auto grid w-full max-w-7xl gap-3 px-4 py-4 md:grid-cols-[auto_auto_minmax(220px,1fr)_auto] md:items-center md:gap-4 md:px-8">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="relative h-11 w-11 overflow-hidden rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)]">
-              <Image
-                src="/logo-934.png"
-                alt="Dramatized Fiction logo"
-                fill
-                sizes="44px"
-                className="object-cover"
-                priority
-              />
-            </div>
-            <div>
-              <p className="eyebrow">Dramatized Fiction</p>
-              <p className="font-heading theme-heading text-2xl font-bold leading-none">
-                Stories Performed in Text
-              </p>
-            </div>
-          </Link>
-
-          <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
-            <Link href="/explore" className="theme-panel-hover rounded-full px-3 py-2 text-sm text-[var(--text-primary)]">
-              Explore
-            </Link>
-            <Link href="/explore?view=for-you" className="theme-panel-hover rounded-full px-3 py-2 text-sm text-[var(--text-secondary)]">
-              For You
-            </Link>
-            {canWrite ? (
-              <Link href="/writer-studio" className="theme-panel-hover rounded-full px-3 py-2 text-sm text-[var(--text-primary)]">
-                Write
-              </Link>
-            ) : null}
-          </nav>
-
-          <div className="w-full md:max-w-[820px] md:justify-self-center">
-            <GlobalSearch stories={searchStories} authors={searchAuthors} />
-          </div>
-
-          <div className="flex items-center justify-between gap-2 md:justify-end">
-            {status === "loading" ? (
-              <div className="inline-flex h-11 min-w-[96px] items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 text-sm text-[var(--text-secondary)]">
-                Loading
-              </div>
-            ) : !sessionUser ? (
-              <Link
-                href="/sign-in"
-                className="story-button-primary min-w-[96px] justify-center"
-              >
-                Sign In
-              </Link>
-            ) : (
-              <div ref={profileRef} className="relative">
-                <button
-                  type="button"
-                  onClick={() => setProfileOpen((value) => !value)}
-                  aria-expanded={profileOpen}
-                  aria-haspopup="menu"
-                  aria-label="Open profile menu"
-                  className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--text-primary)]"
-                >
-                  {sessionUser.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={sessionUser.image}
-                      alt={sessionUser.name || "Profile"}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    initials
-                  )}
-                </button>
-
-                {profileOpen && (
-                  <div
-                    className="glass-panel absolute right-0 top-full z-50 mt-2 w-64 rounded-[24px] border border-[var(--border-color)] p-2 shadow-2xl"
-                    role="menu"
-                  >
-                    <div className="rounded-[18px] px-3 py-3">
-                      <p className="theme-heading font-semibold">
-                        {sessionUser.name || "Member"}
-                      </p>
-                      <p className="theme-meta mt-1 text-xs uppercase tracking-[0.24em]">
-                        {roleLabel}
-                      </p>
-                    </div>
-
-                    {studioLinks.length > 0 && (
-                      <div className="mb-2 border-b border-[var(--border-color)] px-1 pb-2">
-                        <p className="theme-meta px-2 py-2 text-[10px] uppercase tracking-[0.28em]">
-                          Studios
-                        </p>
-                        <div className="space-y-1">
-                          {studioLinks.map((studio) => (
-                            <DropdownLink
-                              key={studio.href}
-                              href={studio.href}
-                              label={studio.label}
-                              meta={studio.detail}
-                              onNavigate={() => setProfileOpen(false)}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="space-y-1 px-1">
-                      {canWrite && (
-                        <DropdownLink
-                          href="/writer-studio"
-                          label="Writer Studio"
-                          meta="Creator tools"
-                          onNavigate={() => setProfileOpen(false)}
-                        />
-                      )}
-
-                      {!canWrite && (
-                        <DropdownLink
-                          href="/become-author"
-                          label="Become Writer"
-                          meta="Unlock creator tools"
-                          onNavigate={() => setProfileOpen(false)}
-                        />
-                      )}
-
-                      {canManage && (
-                        <DropdownLink
-                          href="/command-center"
-                          label="Command Center"
-                          meta="Board tools"
-                          onNavigate={() => setProfileOpen(false)}
-                        />
-                      )}
-
-                      {canAccessCEO && (
-                        <DropdownLink
-                          href="/ceo-studio"
-                          label="CEO Studio"
-                          meta="Executive tools"
-                          onNavigate={() => setProfileOpen(false)}
-                        />
-                      )}
-
-                      <DropdownLink
-                        href="/settings"
-                        label="Settings"
-                        meta="Account"
-                        onNavigate={() => setProfileOpen(false)}
-                      />
-                      <DropdownLink
-                        href="/about"
-                        label="About Platform"
-                        meta="Platform"
-                        onNavigate={() => setProfileOpen(false)}
-                      />
-                      <DropdownLink
-                        href="/ai-usage"
-                        label="AI Usage"
-                        meta="Policy"
-                        onNavigate={() => setProfileOpen(false)}
-                      />
-
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={toggleTheme}
-                        className="theme-panel-hover flex w-full items-center justify-between rounded-[18px] px-3 py-3 text-left text-sm text-[var(--text-primary)]"
-                      >
-                        <span>Theme toggle</span>
-                        <span className="theme-meta text-[10px] uppercase tracking-[0.24em]">
-                          {theme}
-                        </span>
-                      </button>
-
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={async () => {
-                          await handleSignOut();
-                        }}
-                        disabled={isSigningOut}
-                        className="theme-panel-hover block w-full rounded-[18px] px-3 py-3 text-left text-sm text-[var(--text-primary)]"
-                      >
-                        {isSigningOut ? "Signing Out" : "Sign Out"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <button
-              type="button"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] hover:opacity-80 md:hidden"
-              onClick={() => setMobileNavOpen(true)}
-              aria-label="Open navigation"
-            >
-              Menu
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {mobileNavOpen && (
-        <>
-          <button
-            type="button"
-            className="fixed inset-0 z-40 bg-black/60 md:hidden"
-            onClick={() => setMobileNavOpen(false)}
-            aria-label="Close navigation"
-          />
-
-          <div
-            ref={mobileNavRef}
-            className="fixed inset-y-0 right-0 z-50 w-[320px] max-w-[88vw] border-l border-[var(--border-color)] bg-[var(--sidebar-bg)] p-5 shadow-2xl md:hidden"
-          >
-            <div className="mb-6 flex items-start justify-between gap-3">
-              <div>
-                <p className="eyebrow">Navigation</p>
-                <h2 className="font-heading theme-heading mt-3 text-3xl font-semibold">
-                  Platform Menu
-                </h2>
-                <p className="theme-meta mt-2 text-sm">
-                  Move between discovery, creator spaces, and account controls.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                className="story-button-secondary"
-                onClick={() => setMobileNavOpen(false)}
-              >
-                Close
-              </button>
-            </div>
-
-            <nav className="space-y-2">
-              {discoveryLinks.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileNavOpen(false)}
-                  className="theme-panel-hover block rounded-[20px] border border-[var(--border-color)] px-4 py-3"
-                >
-                  <span className="theme-heading block text-sm font-medium">
-                    {item.label}
-                  </span>
-                  <span className="theme-meta mt-1 block text-xs">
-                    {item.description}
-                  </span>
-                </Link>
-              ))}
-            </nav>
-
-            <div className="mt-6 border-t border-[var(--border-color)] pt-5">
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="story-button-secondary w-full justify-center"
-              >
-                {theme === "dark" ? "Switch to Light" : "Switch to Dark"}
-              </button>
-            </div>
-
-            {studioLinks.length > 0 && (
-              <div className="mt-4 border-t border-[var(--border-color)] pt-4">
-                <p className="theme-meta mb-3 text-xs uppercase tracking-[0.24em]">
-                  Accessible Studios
-                </p>
-                <div className="space-y-2">
-                  {studioLinks.map((studio) => (
-                    <Link
-                      key={studio.href}
-                      href={studio.href}
-                      onClick={() => setMobileNavOpen(false)}
-                      className="theme-panel-hover block rounded-[20px] border border-[var(--border-color)] px-4 py-3"
-                    >
-                      <span className="theme-heading block text-sm font-medium">
-                        {studio.label}
-                      </span>
-                      <span className="theme-meta mt-1 block text-xs uppercase tracking-[0.2em]">
-                        {studio.detail}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {!sessionUser && (
-              <div className="mt-4">
-                <Link
-                  href="/sign-in"
-                  onClick={() => setMobileNavOpen(false)}
-                  className="story-button-primary w-full justify-center"
-                >
-                  Sign In
-                </Link>
-              </div>
-            )}
-
-            {sessionUser && (
-              <div className="mt-4 space-y-3 border-t border-[var(--border-color)] pt-4">
-                {canWrite && (
-                  <Link
-                    href="/writer-studio"
-                    onClick={() => setMobileNavOpen(false)}
-                    className="story-button-secondary w-full justify-center"
-                  >
-                    Writer Studio
-                  </Link>
-                )}
-                {!canWrite && (
-                  <Link
-                    href="/become-author"
-                    onClick={() => setMobileNavOpen(false)}
-                    className="story-button-secondary w-full justify-center"
-                  >
-                    Become Writer
-                  </Link>
-                )}
-                {canManage && (
-                  <Link
-                    href="/command-center"
-                    onClick={() => setMobileNavOpen(false)}
-                    className="story-button-secondary w-full justify-center"
-                  >
-                    Command Center
-                  </Link>
-                )}
-                {canAccessCEO && (
-                  <Link
-                    href="/ceo-studio"
-                    onClick={() => setMobileNavOpen(false)}
-                    className="story-button-secondary w-full justify-center"
-                  >
-                    CEO Studio
-                  </Link>
-                )}
-              </div>
-            )}
-          </div>
-        </>
-      )}
-
-      <main className="page-shell min-w-0">{children}</main>
-    </div>
+  const sidebar = (
+    <AppSidebar
+      user={sessionUser}
+      studios={studios}
+      trending={trending}
+      searchStories={searchStories}
+      searchAuthors={searchAuthors}
+      expanded={expanded}
+      theme={theme}
+      roleLabel={roleLabel}
+      canWrite={canWrite}
+      canManage={canManage}
+      canAccessCEO={canAccessCEO}
+      isSigningOut={isSigningOut}
+      onToggleExpanded={() => setExpanded((value) => !value)}
+      onToggleTheme={toggleTheme}
+      onSignOut={handleSignOut}
+    />
   );
-}
 
-function DropdownLink({
-  href,
-  label,
-  meta,
-  onNavigate,
-}: {
-  href: string;
-  label: string;
-  meta?: string;
-  onNavigate: () => void;
-}) {
   return (
-    <Link
-      href={href}
-      role="menuitem"
-      onClick={onNavigate}
-      className="theme-panel-hover block rounded-[18px] px-3 py-3 text-sm text-[var(--text-primary)]"
-    >
-      <span className="block">{label}</span>
-      {meta ? (
-        <span className="theme-meta mt-1 block text-[10px] uppercase tracking-[0.24em]">
-          {meta}
-        </span>
+    <div className="flex min-h-screen overflow-x-hidden" style={{ backgroundColor: "var(--page-bg)" }}>
+      {!isReaderRoute ? (
+        <div className="hidden flex-shrink-0 md:block">
+          <div className="sticky top-0 h-screen">{sidebar}</div>
+        </div>
       ) : null}
-    </Link>
+
+      {!isReaderRoute ? (
+        <button
+          type="button"
+          onClick={() => setMobileOpen(true)}
+          className="fixed z-40 flex h-9 w-9 items-center justify-center rounded-md border border-foreground/10 text-foreground/60 md:hidden"
+          style={{
+            top: "calc(env(safe-area-inset-top, 0px) + 1rem)",
+            left: "max(1rem, env(safe-area-inset-left))",
+            background: "var(--sidebar-bg)",
+            backdropFilter: "blur(8px)",
+          }}
+          aria-label="Open menu"
+        >
+          <MenuIcon size={18} />
+        </button>
+      ) : null}
+
+      {mobileOpen && !isReaderRoute ? (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          <div className="relative h-full flex-shrink-0" style={{ width: 240 }}>
+            <AppSidebar
+              user={sessionUser}
+              studios={studios}
+              trending={trending}
+              searchStories={searchStories}
+              searchAuthors={searchAuthors}
+              expanded
+              isMobile
+              theme={theme}
+              roleLabel={roleLabel}
+              canWrite={canWrite}
+              canManage={canManage}
+              canAccessCEO={canAccessCEO}
+              isSigningOut={isSigningOut}
+              onToggleExpanded={() => undefined}
+              onClose={() => setMobileOpen(false)}
+              onToggleTheme={toggleTheme}
+              onSignOut={handleSignOut}
+            />
+          </div>
+          <button type="button" className="flex-1 bg-black/60" onClick={() => setMobileOpen(false)} aria-label="Close menu" />
+        </div>
+      ) : null}
+
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col overflow-x-hidden">
+        <main className={isFlushRoute ? "flex-1" : "page-shell flex-1"}>{children}</main>
+        {!isReaderRoute ? (
+          <footer className="border-t border-foreground/5 px-6 py-8">
+            <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+              <p className="font-mono-df text-xs uppercase tracking-widest text-foreground/25">
+                Dramatized Fiction
+              </p>
+              <p className="text-xs text-foreground/30">Stories performed in text</p>
+            </div>
+          </footer>
+        ) : null}
+      </div>
+    </div>
   );
 }

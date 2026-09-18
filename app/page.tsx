@@ -1,19 +1,21 @@
-import Image from "next/image";
 import Link from "next/link";
+import { auth } from "@/auth";
+import LiquidWordmark from "@/components/home/LiquidWordmark";
+import CoverSeriesCard from "@/components/home/CoverSeriesCard";
+import { MailIcon, SparklesIcon } from "@/components/icons";
 import { prisma } from "@/lib/prisma";
 
-type TrendingSeries = {
+type FeaturedSeries = {
   id: string;
   title: string;
-  description: string;
   coverImage: string | null;
+  genre: string;
+  themeColor: string | null;
   reads: number;
-  author: {
-    name: string | null;
-  };
+  author: { name: string | null };
 };
 
-async function getHomepageTrendingSeries() {
+async function getFeaturedSeries() {
   try {
     return await prisma.series.findMany({
       where: { status: "PUBLISHED" },
@@ -22,175 +24,93 @@ async function getHomepageTrendingSeries() {
       select: {
         id: true,
         title: true,
-        description: true,
         coverImage: true,
+        genre: true,
+        themeColor: true,
         reads: true,
-        author: {
-          select: {
-            name: true,
-          },
-        },
+        author: { select: { name: true } },
       },
     });
   } catch (error) {
-    console.error("Homepage trending data failed. Rendering safe fallback.", error);
-    return [] as TrendingSeries[];
+    console.error("Homepage featured data failed. Rendering safe fallback.", error);
+    return [] as FeaturedSeries[];
+  }
+}
+
+async function getPublishedCount() {
+  try {
+    return await prisma.series.count({ where: { status: "PUBLISHED" } });
+  } catch {
+    return 0;
   }
 }
 
 export default async function HomePage() {
-  const trendingSeries = await getHomepageTrendingSeries();
-  const cards = Array.from({ length: 3 }, (_, index) => trendingSeries[index] ?? null);
+  const [session, featured, publishedCount] = await Promise.all([
+    auth().catch(() => null),
+    getFeaturedSeries(),
+    getPublishedCount(),
+  ]);
 
   return (
-    <main className="overflow-hidden">
-      <section className="relative border-b border-[var(--border-color)] px-6 py-16 md:px-10 md:py-24">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_55%_45%_at_50%_5%,rgba(190,113,69,0.2),transparent_70%)]" />
-
-        <div className="relative mx-auto max-w-6xl">
-          <div className="animate-fade-in-up text-center">
-            <div className="relative flex flex-col items-center justify-center pt-10 pb-8 select-none">
-              <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_60%_40%_at_50%_50%,rgba(124,58,237,0.12)_0%,transparent_70%)]" />
-
-              <h1
-                className="liquid-text font-heading text-center leading-none"
-                style={{
-                  fontSize: "clamp(3rem, 10vw, 8.5rem)",
-                  fontWeight: 900,
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                Dramatized
-              </h1>
-
-              <h1
-                className="liquid-text font-heading text-center leading-none"
-                style={{
-                  fontSize: "clamp(3rem, 10vw, 8.5rem)",
-                  fontWeight: 900,
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                Fiction
-              </h1>
-
-              <p className="theme-meta animate-subtle-pulse mt-6 font-mono-df text-xs uppercase tracking-[0.35em] md:text-sm">
-                Serialized stories · performed in text
-              </p>
-            </div>
-
-            <p className="theme-body mx-auto mt-4 max-w-3xl text-balance text-lg md:text-xl">
-              A home for stories that unfold one episode at a time—made to be read slowly, followed closely, and written with intent.
-            </p>
-
-            <div className="mt-8 flex justify-center">
-              <Link href="/explore" className="story-button-primary min-w-[180px]">
-                Explore
-              </Link>
-            </div>
+    <div className="min-h-screen px-6 pb-0" style={{ backgroundColor: "var(--page-bg)" }}>
+      <div className="relative">
+        <LiquidWordmark />
+        {!session?.user ? (
+          <div className="flex justify-center pb-4">
+            <Link href="/sign-up" className="story-button-primary gap-2 font-mono-df text-sm">
+              <MailIcon size={13} />
+              Join the Story
+            </Link>
           </div>
-        </div>
-      </section>
+        ) : null}
+      </div>
 
-      <section className="border-t border-[var(--border-color)] px-6 py-12 md:px-10">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-8 flex items-end justify-between gap-4">
-            <div>
-              <p className="eyebrow">Trending</p>
-              <h2 className="font-heading theme-heading mt-3 text-4xl font-semibold md:text-5xl">
-                Find your next obsession
+      <div className="my-2 border-t border-foreground/5" />
+
+      <div className="mx-auto max-w-5xl pt-8">
+        {featured.length > 0 ? (
+          <section className="mt-8">
+            <div className="mb-6 flex items-center gap-2">
+              <SparklesIcon size={14} className="text-purple-400" />
+              <h2 className="font-mono-df text-xs uppercase tracking-[0.3em] text-foreground/30">
+                Featured Stories
               </h2>
             </div>
-            <p className="theme-meta hidden max-w-xl text-right text-sm leading-6 md:block">
-              Three stories readers are returning to right now.
-            </p>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-3">
-            <TrendingCard series={cards[0]} rank={1} />
-            <TrendingCard series={cards[1]} rank={2} />
-            <TrendingCard series={cards[2]} rank={3} />
-          </div>
-        </div>
-      </section>
-    </main>
-  );
-}
-
-function TrendingCard({
-  series,
-  rank,
-}: {
-  series: TrendingSeries | null;
-  rank: 1 | 2 | 3;
-}) {
-  const label = `#${rank} Trending`;
-
-  if (!series) {
-    return (
-      <div className="group overflow-hidden rounded-[30px] border border-white/10 bg-[var(--bg-secondary)] shadow-[0_24px_80px_rgba(0,0,0,0.25)] transition duration-300">
-        <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-black">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.28),transparent_60%)]" />
-          <div className="absolute left-4 top-4 rounded-full border border-white/15 bg-black/55 px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-white/80">
-            {label}
-          </div>
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent p-5">
-            <p className="font-heading text-2xl font-semibold text-white">No Series Yet</p>
-            <p className="mt-2 text-sm leading-6 text-slate-300">
-              This spot is waiting for a story.
-            </p>
-            <div className="mt-4 inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
-              0 reads
+            <div className="mx-auto grid max-w-5xl grid-cols-1 justify-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {featured.map((series, index) => (
+                <CoverSeriesCard
+                  key={series.id}
+                  series={{
+                    id: series.id,
+                    title: series.title,
+                    coverImage: series.coverImage,
+                    genre: series.genre,
+                    themeColor: series.themeColor,
+                    authorName: series.author.name,
+                    reads: series.reads,
+                  }}
+                  rank={index + 1}
+                />
+              ))}
             </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <Link
-      href={`/series/${series.id}`}
-      className="group overflow-hidden rounded-[30px] border border-white/10 bg-[var(--bg-secondary)] shadow-[0_24px_80px_rgba(0,0,0,0.25)] transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:shadow-[0_32px_100px_rgba(0,0,0,0.38)]"
-    >
-      <div className="relative aspect-[4/5] overflow-hidden bg-slate-900">
-        {series.coverImage ? (
-          <Image
-            src={series.coverImage}
-            alt={series.title}
-            fill
-            sizes="(max-width: 768px) 100vw, 33vw"
-            className="object-cover transition duration-500 group-hover:scale-[1.03]"
-          />
+          </section>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-500/40 to-slate-950" />
-        )}
-        <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.88),rgba(0,0,0,0.14)_55%,rgba(0,0,0,0.18))]" />
-
-        <div className="absolute left-4 top-4 rounded-full border border-white/15 bg-black/55 px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-white/80">
-          {label}
-        </div>
-
-        <div className="absolute inset-x-0 bottom-0 p-5">
-          <div className="space-y-3">
-            <p className="eyebrow text-white/60">Trending Story</p>
-            <h3 className="font-heading text-3xl font-semibold leading-tight text-white line-clamp-2">
-              {series.title}
-            </h3>
-            <p className="max-w-[32ch] text-sm leading-6 text-slate-300 line-clamp-2">
-              {series.description || "A featured story climbing the charts."}
+          <div className="py-24 text-center">
+            <p className="font-mono-df text-sm tracking-widest text-foreground/20">
+              The stage is being set...
             </p>
-            <div className="flex flex-wrap items-center gap-2 pt-2 text-sm text-slate-200">
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                {series.author.name || "Anonymous Writer"}
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                {series.reads.toLocaleString()} reads
-              </span>
-            </div>
           </div>
-        </div>
+        )}
+
+        {publishedCount > 3 ? (
+          <div className="mt-10 flex justify-center">
+            <Link href="/explore" className="story-button-primary font-mono-df text-sm">
+              More in Explore →
+            </Link>
+          </div>
+        ) : null}
       </div>
-    </Link>
+    </div>
   );
 }
