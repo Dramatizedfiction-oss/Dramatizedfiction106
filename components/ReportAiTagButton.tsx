@@ -65,7 +65,7 @@ export default function ReportAiTagButton({
 
           {submitted ? (
             <p className="theme-meta mt-3 text-xs">
-              Report queued for admin review.
+              Thanks. Reporting isn&apos;t connected yet, so nothing was sent.
             </p>
           ) : (
             <button

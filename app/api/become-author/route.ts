@@ -56,6 +56,8 @@ export async function POST(request: Request) {
       );
     }
 
+    // Only the session user is ever affected; role/status/userId in the body
+    // are never read.
     const result = await promoteUserToWriter(session.user.id, {
       displayName,
       profileImage,
@@ -64,7 +66,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Writer access granted.",
+      outcome: result.outcome,
+      message:
+        result.outcome === "PROMOTED"
+          ? "Writer access granted."
+          : "You already have writer access.",
       role: result.user.role,
       redirectTo: "/writer-studio",
       user: result.user,

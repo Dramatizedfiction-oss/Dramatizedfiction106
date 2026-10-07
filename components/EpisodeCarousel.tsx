@@ -10,8 +10,6 @@ type EpisodeCarouselEpisode = {
   episodeNumber?: number | null;
   seasonNumber?: number | null;
   teaser?: string | null;
-  body?: string | null;
-  content?: string | null;
   readTime?: number | null;
   readerCount?: number | null;
   isRead?: boolean | null;

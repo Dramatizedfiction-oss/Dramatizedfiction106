@@ -12,9 +12,10 @@ export async function POST(request: Request) {
       }
     | null;
 
-  const name = body?.name?.trim();
-  const email = body?.email?.trim().toLowerCase();
-  const password = body?.password;
+  // Non-string values are treated as missing (400), never passed on.
+  const name = typeof body?.name === "string" ? body.name.trim() : "";
+  const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+  const password = typeof body?.password === "string" ? body.password : "";
 
   if (!name || !email || !password) {
     return NextResponse.json(

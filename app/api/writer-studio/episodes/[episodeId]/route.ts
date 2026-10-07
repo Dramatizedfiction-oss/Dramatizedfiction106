@@ -1,68 +1,77 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { z } from "zod";
 import { serializeAiUsageTag } from "@/lib/ai-usage";
+import {
+  cleanOptionalText,
+  conflict,
+  isUniqueConstraintError,
+  optionalCount,
+  optionalText,
+  parseJsonBody,
+  resolveLockedUpdate,
+  serverError,
+} from "@/lib/api/writer-studio-request";
+import { requireApiRole, requireOwnedEpisode } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/utils";
 
-function cleanOptionalText(value: unknown) {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-}
+// Edit/autosave. Publication state is not accepted here: the autosave's
+// `status: "DRAFT"` is ignored, so saving never unpublishes, and publishing
+// happens only through ./publish. seriesId, authorId, readerCount and
+// timestamps are server-controlled and stripped by the schema.
+const updateEpisodeSchema = z.object({
+  title: optionalText,
+  episodeNumber: optionalCount,
+  description: optionalText,
+  contentWarning: optionalText,
+  body: optionalText,
+  coverImage: optionalText,
+  aiUsageTag: optionalText,
+  readTime: optionalCount,
+  locked: z.boolean().optional(),
+});
 
 export async function PATCH(
   request: Request,
   { params }: { params: { episodeId: string } },
 ) {
-  const session = await auth();
-  requireRole(session, ["WRITER"]);
+  const guard = await requireApiRole("WRITER");
+  if (!guard.ok) return guard.response;
 
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const body = await parseJsonBody(request, updateEpisodeSchema);
+  if (!body.ok) return body.response;
+
+  const owned = await requireOwnedEpisode(params.episodeId, guard.user.id);
+  if (!owned.ok) return owned.response;
+
+  const input = body.data;
+  const has = (key: keyof typeof input) => input[key] !== undefined && input[key] !== null;
+
+  try {
+    const updated = await prisma.episode.update({
+      where: { id: owned.episode.id },
+      data: {
+        // Omitted fields are left unchanged; a blank title keeps the current
+        // one, blank optional text clears it.
+        title: cleanOptionalText(input.title) || undefined,
+        episodeNumber: input.episodeNumber ?? undefined,
+        description: has("description") ? cleanOptionalText(input.description) : undefined,
+        contentWarning: has("contentWarning") ? cleanOptionalText(input.contentWarning) : undefined,
+        body: typeof input.body === "string" ? input.body : undefined,
+        coverImage: has("coverImage") ? cleanOptionalText(input.coverImage) : undefined,
+        aiUsageTag: input.aiUsageTag ? serializeAiUsageTag(input.aiUsageTag) : undefined,
+        readTime: input.readTime ?? undefined,
+        locked: await resolveLockedUpdate(input.locked),
+        lastSavedAt: new Date(),
+      },
+    });
+
+    return NextResponse.json({ success: true, episode: updated });
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      return conflict("An episode with that number already exists in this series.");
+    }
+
+    console.error("Writer Studio episode update failed.", error);
+    return serverError();
   }
-
-  const body = (await request.json().catch(() => null)) as
-    | {
-        title?: string;
-        episodeNumber?: number;
-        description?: string;
-        contentWarning?: string;
-        body?: string;
-        coverImage?: string;
-        aiUsageTag?: string;
-        readTime?: number;
-        status?: "DRAFT" | "REVIEW" | "PUBLISHED";
-        locked?: boolean;
-      }
-    | null;
-
-  const episode = await prisma.episode.findFirst({
-    where: { id: params.episodeId, authorId: session.user.id },
-  });
-
-  if (!episode) {
-    return NextResponse.json({ error: "Episode not found." }, { status: 404 });
-  }
-
-  const updated = await prisma.episode.update({
-    where: { id: params.episodeId },
-    data: {
-      title: cleanOptionalText(body?.title) || undefined,
-      episodeNumber: body?.episodeNumber,
-      description: cleanOptionalText(body?.description),
-      contentWarning: cleanOptionalText(body?.contentWarning),
-      body: typeof body?.body === "string" ? body.body : undefined,
-      coverImage: cleanOptionalText(body?.coverImage),
-      aiUsageTag: body?.aiUsageTag ? serializeAiUsageTag(body.aiUsageTag) : undefined,
-      readTime: body?.readTime,
-      status: body?.status,
-      locked: typeof body?.locked === "boolean" ? body.locked : undefined,
-      lastSavedAt: new Date(),
-    },
-  });
-
-  return NextResponse.json({ success: true, episode: updated });
 }

@@ -1,24 +1,32 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { z } from "zod";
 import { serializeAiUsageTag } from "@/lib/ai-usage";
+import {
+  cleanOptionalText,
+  optionalText,
+  parseJsonBody,
+  serverError,
+} from "@/lib/api/writer-studio-request";
+import { requireApiRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/utils";
 
-function cleanOptionalText(value: unknown) {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-}
+// authorId, status, counters and timestamps are server-controlled and
+// stripped by the schema.
+const createSeriesSchema = z.object({
+  title: optionalText,
+  description: optionalText,
+  genre: optionalText,
+  coverImage: optionalText,
+  themeColor: optionalText,
+  aiUsageTag: optionalText,
+});
 
 export async function GET() {
-  const session = await auth();
-  requireRole(session, ["WRITER"]);
+  const guard = await requireApiRole("WRITER");
+  if (!guard.ok) return guard.response;
 
   const series = await prisma.series.findMany({
-    where: { authorId: session?.user?.id || "" },
+    where: { authorId: guard.user.id },
     include: {
       episodes: {
         orderBy: [{ episodeNumber: "asc" }, { createdAt: "asc" }],
@@ -31,41 +39,32 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  requireRole(session, ["WRITER"]);
+  const guard = await requireApiRole("WRITER");
+  if (!guard.ok) return guard.response;
 
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const body = await parseJsonBody(request, createSeriesSchema);
+  if (!body.ok) return body.response;
+
+  const input = body.data;
+
+  try {
+    const series = await prisma.series.create({
+      data: {
+        title: cleanOptionalText(input.title) || "Untitled Series",
+        description: cleanOptionalText(input.description) || "Series draft",
+        genre: cleanOptionalText(input.genre) || "Genre",
+        tags: [],
+        coverImage: cleanOptionalText(input.coverImage),
+        themeColor: cleanOptionalText(input.themeColor),
+        status: "DRAFT",
+        aiUsageTag: serializeAiUsageTag(input.aiUsageTag),
+        authorId: guard.user.id,
+      },
+    });
+
+    return NextResponse.json({ success: true, series });
+  } catch (error) {
+    console.error("Writer Studio series creation failed.", error);
+    return serverError();
   }
-
-  const body = (await request.json().catch(() => null)) as
-    | {
-        title?: string;
-        description?: string;
-        genre?: string;
-        coverImage?: string;
-        themeColor?: string;
-        aiUsageTag?: string;
-      }
-    | null;
-
-  const title = cleanOptionalText(body?.title) || "Untitled Series";
-  const description = cleanOptionalText(body?.description) || "Series draft";
-  const genre = cleanOptionalText(body?.genre) || "Genre";
-
-  const series = await prisma.series.create({
-    data: {
-      title,
-      description,
-      genre,
-      tags: [],
-      coverImage: cleanOptionalText(body?.coverImage),
-      themeColor: cleanOptionalText(body?.themeColor),
-      status: "DRAFT",
-      aiUsageTag: serializeAiUsageTag(body?.aiUsageTag),
-      authorId: session.user.id,
-    },
-  });
-
-  return NextResponse.json({ success: true, series });
 }

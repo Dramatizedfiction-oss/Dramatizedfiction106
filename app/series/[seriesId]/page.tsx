@@ -13,6 +13,7 @@ import {
   createViewerMonetizationState,
   type MonetizedSeries,
 } from "@/lib/monetization";
+import { PUBLIC_SERIES_WHERE, publicEpisodePreview } from "@/lib/content-visibility";
 import { prisma } from "@/lib/prisma";
 
 export default async function SeriesPage({
@@ -22,16 +23,29 @@ export default async function SeriesPage({
 }) {
   const session = await auth();
   const series = await prisma.series.findFirst({
-    where: { id: params.seriesId, status: "PUBLISHED" },
+    where: { id: params.seriesId, ...PUBLIC_SERIES_WHERE },
     include: {
       author: {
         select: {
           name: true,
         },
       },
+      // Metadata only; `body` is read here solely to build the preview and
+      // is never passed to client components.
       episodes: {
         where: { status: "PUBLISHED" },
         orderBy: { episodeNumber: "asc" },
+        select: {
+          id: true,
+          title: true,
+          episodeNumber: true,
+          teaser: true,
+          body: true,
+          aiUsageTag: true,
+          readTime: true,
+          readerCount: true,
+          locked: true,
+        },
       },
     },
   });
@@ -132,8 +146,7 @@ export default async function SeriesPage({
             id: episode.id,
             title: episode.title,
             episodeNumber: episode.episodeNumber,
-            teaser: episode.teaser,
-            body: episode.body,
+            teaser: publicEpisodePreview(episode),
             aiUsageTag: episode.aiUsageTag,
             readTime: episode.readTime,
             readerCount: episode.readerCount,

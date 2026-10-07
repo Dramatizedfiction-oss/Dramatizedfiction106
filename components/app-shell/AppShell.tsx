@@ -7,8 +7,7 @@ import type { SearchAuthor, SearchStory } from "@/components/app-shell/GlobalSea
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { MenuIcon } from "@/components/icons";
 import type { AppShellUser, StudioLink } from "@/lib/navigation";
-import { hasRoleAccess, normalizeRole } from "@/lib/roles";
-import { getRoleLabel } from "@/lib/studios";
+import { getRoleLabel, hasRoleAccess, normalizeRole } from "@/lib/roles";
 
 type AppShellProps = {
   user: (AppShellUser & { name?: string | null; image?: string | null }) | null;

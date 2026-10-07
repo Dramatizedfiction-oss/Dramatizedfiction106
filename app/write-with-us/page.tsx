@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import WriterPolicyAcknowledgment from "@/components/WriterPolicyAcknowledgment";
 import { WRITER_ONBOARDING_SLUG, getCmsArticle } from "@/lib/cms";
 
@@ -12,6 +13,11 @@ function renderParagraphs(content: string) {
 
 export default async function WriterOnboardingPage() {
   const article = await getCmsArticle(WRITER_ONBOARDING_SLUG);
+
+  if (!article) {
+    notFound();
+  }
+
   const quickParagraphs = renderParagraphs(article.quickSectionContent);
   const deepParagraphs = renderParagraphs(article.deepSectionContent);
 
@@ -22,9 +28,11 @@ export default async function WriterOnboardingPage() {
         <h1 className="font-heading theme-heading mt-3 text-4xl font-semibold md:text-6xl">
           {article.title}
         </h1>
-        <p className="theme-meta mt-4 text-sm">
-          Last updated {article.lastUpdated.toLocaleDateString()}
-        </p>
+        {article.lastUpdated ? (
+          <p className="theme-meta mt-4 text-sm">
+            Last updated {article.lastUpdated.toLocaleDateString()}
+          </p>
+        ) : null}
 
         <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
           <div className="space-y-6">

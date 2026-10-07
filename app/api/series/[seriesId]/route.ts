@@ -1,46 +1,26 @@
-import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
-import { requireRole } from "@/lib/utils";
+import { NextResponse } from "next/server";
 
-export async function GET(
-  req: Request,
-  { params }: { params: { seriesId: string } }
-) {
-  const series = await prisma.series.findUnique({
-    where: { id: params.seriesId },
-    include: { episodes: true }
-  });
+// Retired legacy endpoint (PATCH wrote the raw request body into any series;
+// GET exposed drafts and episode bodies). Writer Studio uses
+// /api/writer-studio/series/[seriesId]. Deletion is CEO-only and will get its
+// own protected endpoint.
+export const dynamic = "force-dynamic";
 
-  return Response.json(series);
+function gone() {
+  return NextResponse.json(
+    { error: "LEGACY_ENDPOINT", message: "This endpoint is no longer supported." },
+    { status: 410 },
+  );
 }
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { seriesId: string } }
-) {
-  const session = await auth();
-  requireRole(session, ["WRITER"]);
-
-  const body = await req.json();
-
-  const updated = await prisma.series.update({
-    where: { id: params.seriesId },
-    data: body
-  });
-
-  return Response.json(updated);
+export function GET() {
+  return gone();
 }
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: { seriesId: string } }
-) {
-  const session = await auth();
-  requireRole(session, ["BOARD"]);
+export function PATCH() {
+  return gone();
+}
 
-  await prisma.series.delete({
-    where: { id: params.seriesId }
-  });
-
-  return Response.json({ success: true });
+export function DELETE() {
+  return gone();
 }

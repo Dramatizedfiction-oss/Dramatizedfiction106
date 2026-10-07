@@ -19,8 +19,8 @@ const defaultPolicyItems = [
 export default function WriterPolicyAcknowledgment({
   className = "",
   onAccept,
-  signInHref = "/login",
-  continueHref = "/writer"
+  signInHref = "/sign-in",
+  continueHref = "/become-author"
 }: WriterPolicyAcknowledgmentProps) {
   const [accepted, setAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);

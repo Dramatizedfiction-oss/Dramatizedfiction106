@@ -1,43 +1,62 @@
-import { auth } from "@/auth";
-import { getCmsArticle } from "@/lib/cms";
-import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/utils";
+import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getCmsArticle, isKnownCmsSlug } from "@/lib/cms";
+import { prisma } from "@/lib/prisma";
+import { parseJsonBody, serverError } from "@/lib/api/writer-studio-request";
+import { apiError, requireApiRole } from "@/lib/auth/guards";
 
 const articleSchema = z.object({
-  title: z.string().trim().min(1),
+  title: z.string().trim().min(1).max(300),
   quickSectionContent: z.string().trim().min(1),
   deepSectionContent: z.string().trim().min(1),
 });
 
+// Public, read-only.
 export async function GET(
   _req: Request,
   { params }: { params: { slug: string } },
 ) {
   const article = await getCmsArticle(params.slug);
-  return Response.json(article);
+
+  if (!article) {
+    return apiError("NOT_FOUND", "Article not found.");
+  }
+
+  return NextResponse.json(article);
 }
 
+// BOARD and CEO may edit the platform's known articles (writer onboarding).
 export async function PATCH(
   req: Request,
   { params }: { params: { slug: string } },
 ) {
-  const session = await auth();
-  requireRole(session, ["CEO", "BOARD"]);
+  const guard = await requireApiRole("BOARD");
+  if (!guard.ok) return guard.response;
 
-  const payload = articleSchema.parse(await req.json());
-  await getCmsArticle(params.slug);
+  if (!isKnownCmsSlug(params.slug)) {
+    return apiError("NOT_FOUND", "Article not found.");
+  }
 
-  const article = await prisma.cmsArticle.upsert({
-    where: { slug: params.slug },
-    update: payload,
-    create: {
-      slug: params.slug,
-      title: payload.title,
-      quickSectionContent: payload.quickSectionContent,
-      deepSectionContent: payload.deepSectionContent,
-    },
-  });
+  const parsed = await parseJsonBody(req, articleSchema);
+  if (!parsed.ok) return parsed.response;
+  const payload = parsed.data;
 
-  return Response.json(article);
+  try {
+    const article = await prisma.cmsArticle.upsert({
+      where: { slug: params.slug },
+      update: payload,
+      create: { slug: params.slug, ...payload },
+      select: {
+        title: true,
+        quickSectionContent: true,
+        deepSectionContent: true,
+        lastUpdated: true,
+      },
+    });
+
+    return NextResponse.json(article);
+  } catch (error) {
+    console.error("CMS article update failed.", error);
+    return serverError();
+  }
 }

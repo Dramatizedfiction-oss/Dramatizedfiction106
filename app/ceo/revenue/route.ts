@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
-import { requireRole } from "@/lib/utils";
+import { requireApiCEO } from "@/lib/auth/guards";
 import { getPlatformSettings } from "@/lib/phases";
 
 export async function GET() {
-  const session = await auth();
-  requireRole(session, ["CEO"]);
+  const guard = await requireApiCEO();
+  if (!guard.ok) return guard.response;
+
   const settings = await getPlatformSettings();
 
   if (!settings.phaseTwoUnlocked && !settings.phaseThreeUnlocked) {
@@ -17,8 +17,13 @@ export async function GET() {
     });
   }
 
+  // EPISODE_READ rows are legacy page-view records, not money: reads are
+  // excluded from revenue totals and are no longer created.
   const [totalRevenue, subscriptionRevenue, adRevenue] = await Promise.all([
-    prisma.revenueEvent.aggregate({ _sum: { amount: true } }),
+    prisma.revenueEvent.aggregate({
+      where: { type: { in: ["SUBSCRIPTION", "AD_WATCH"] } },
+      _sum: { amount: true }
+    }),
     prisma.revenueEvent.aggregate({
       where: { type: "SUBSCRIPTION" },
       _sum: { amount: true }

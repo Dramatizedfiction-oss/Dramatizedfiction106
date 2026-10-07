@@ -50,3 +50,16 @@ export function isBoard(role: string | null | undefined) {
 export function isCEO(role: string | null | undefined) {
   return normalizeRole(role) === "CEO";
 }
+
+export function getRoleLabel(role: AppRole | undefined | null) {
+  switch (role) {
+    case "WRITER":
+      return "Writer";
+    case "BOARD":
+      return "Board";
+    case "CEO":
+      return "CEO";
+    default:
+      return "User";
+  }
+}

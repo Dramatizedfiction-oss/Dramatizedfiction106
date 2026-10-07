@@ -227,15 +227,5 @@ export async function requireStudioAccess(userId: string, studioSlug: string) {
   return membership;
 }
 
-export function getRoleLabel(role: AppRole | undefined | null) {
-  switch (role) {
-    case "WRITER":
-      return "Writer";
-    case "BOARD":
-      return "Board";
-    case "CEO":
-      return "CEO";
-    default:
-      return "User";
-  }
-}
+// Lives in the client-safe roles module; re-exported for existing imports.
+export { getRoleLabel } from "@/lib/auth/roles";

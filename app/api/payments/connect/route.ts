@@ -1,6 +1,5 @@
 import { getStripe } from "@/lib/stripe";
-import { auth } from "@/auth";
-import { requireRole } from "@/lib/utils";
+import { requireApiRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { isPhaseTwoActive } from "@/lib/phases";
 
@@ -13,24 +12,20 @@ export async function POST() {
     return Response.json({ error: "Phase 2 is inactive" }, { status: 403 });
   }
 
-  const session = await auth();
-  requireRole(session, ["WRITER"]);
-
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireApiRole("WRITER");
+  if (!guard.ok) return guard.response;
 
   const stripe = getStripe();
 
   // Create Stripe Connect account
   const account = await stripe.accounts.create({
     type: "express",
-    email: session.user.email || undefined
+    email: guard.user.email || undefined
   });
 
   // Save to DB
   await prisma.user.update({
-    where: { id: session.user.id },
+    where: { id: guard.user.id },
     data: { stripeAccountId: account.id }
   });
 

@@ -1,56 +1,12 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
-import { promoteUserToWriter } from "@/lib/author-onboarding";
 
-export async function POST(request: Request) {
-  const session = await auth();
+// Retired duplicate of /api/become-author (the route the UI uses). Kept as a
+// 410 so it cannot be used as a role-change shortcut.
+export const dynamic = "force-dynamic";
 
-  if (!session?.user?.id) {
-    return NextResponse.json(
-      {
-        error: "AUTH_REQUIRED",
-        message: "Sign in before applying to become a writer.",
-      },
-      { status: 401 },
-    );
-  }
-
-  const body = (await request.json().catch(() => null)) as
-    | { acknowledged?: boolean }
-    | null;
-
-  if (!body?.acknowledged) {
-    return NextResponse.json(
-      {
-        error: "POLICY_NOT_ACKNOWLEDGED",
-        message: "Please acknowledge the writer policy before applying.",
-      },
-      { status: 400 },
-    );
-  }
-
-  try {
-    const result = await promoteUserToWriter(session.user.id);
-
-    return NextResponse.json({
-      success: true,
-      message: "Writer access granted.",
-      user: result.user,
-      authorProfile: result.authorProfile,
-      studioCount: result.studioCount,
-    });
-  } catch (error) {
-    console.error("Writer promotion failed:", error);
-
-    const message =
-      error instanceof Error ? error.message : "Unknown writer promotion failure.";
-
-    return NextResponse.json(
-      {
-      error: "WRITER_PROMOTION_FAILED",
-        message,
-      },
-      { status: 500 },
-    );
-  }
+export function POST() {
+  return NextResponse.json(
+    { error: "LEGACY_ENDPOINT", message: "This endpoint is no longer supported." },
+    { status: 410 },
+  );
 }

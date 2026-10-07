@@ -13,9 +13,13 @@ export function comparePassword(password: string, passwordHash: string) {
     return false;
   }
 
-  const derivedHash = scryptSync(password, salt, 64).toString("hex");
-  return timingSafeEqual(
-    Buffer.from(storedHash, "hex"),
-    Buffer.from(derivedHash, "hex"),
-  );
+  const stored = Buffer.from(storedHash, "hex");
+  const derived = scryptSync(password, salt, 64);
+
+  // A malformed stored hash is a failed login, not a crash.
+  if (stored.length !== derived.length) {
+    return false;
+  }
+
+  return timingSafeEqual(stored, derived);
 }

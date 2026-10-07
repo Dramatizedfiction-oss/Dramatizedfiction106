@@ -1,13 +1,11 @@
-import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 
-export async function POST(req: Request) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.redirect(new URL("/sign-in", req.url));
-  }
+// Retired legacy stub (echoed the request body; never persisted anything).
+export const dynamic = "force-dynamic";
 
-  const data = await req.json();
-
-  return NextResponse.json({ success: true, data });
+export function POST() {
+  return NextResponse.json(
+    { error: "LEGACY_ENDPOINT", message: "This endpoint is no longer supported." },
+    { status: 410 },
+  );
 }

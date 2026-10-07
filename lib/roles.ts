@@ -1,5 +1,6 @@
 export {
   ROLE_ORDER,
+  getRoleLabel,
   hasRole,
   hasRoleAccess,
   isBoard,

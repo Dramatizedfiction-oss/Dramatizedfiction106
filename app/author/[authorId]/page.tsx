@@ -6,6 +6,7 @@ import AuthorWorksCarousel from "@/components/AuthorWorksCarousel";
 import FollowAuthorButton from "@/components/follow/FollowAuthorButton";
 import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
 import { deriveAuthorTier, derivePostingConsistency } from "@/lib/author-tier";
+import { PUBLIC_EPISODE_WHERE, PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
 import { createViewerMonetizationState } from "@/lib/monetization";
 import { prisma } from "@/lib/prisma";
 
@@ -19,13 +20,28 @@ export default async function AuthorProfilePage({
   const session = await auth();
   const author = await prisma.user.findUnique({
     where: { id: params.authorId },
-    include: {
+    // Public profile fields only (never email, password hash, role, Stripe ids).
+    select: {
+      id: true,
+      name: true,
+      bio: true,
+      image: true,
+      bannerImage: true,
+      twitterUrl: true,
+      instagramUrl: true,
+      youtubeUrl: true,
+      websiteUrl: true,
+      discordUrl: true,
+      // Public profile: published work only.
       series: {
+        where: PUBLIC_SERIES_WHERE,
         orderBy: { updatedAt: "desc" },
         include: {
           episodes: {
+            where: { status: "PUBLISHED" },
             orderBy: { episodeNumber: "asc" },
             take: 1,
+            select: { id: true },
           },
         },
       },
@@ -34,6 +50,7 @@ export default async function AuthorProfilePage({
       },
       episodes: {
         where: {
+          ...PUBLIC_EPISODE_WHERE,
           locked: false,
         },
         orderBy: { updatedAt: "desc" },

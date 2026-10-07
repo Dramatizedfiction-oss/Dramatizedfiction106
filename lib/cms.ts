@@ -16,29 +16,37 @@ export type CmsArticleShape = {
   title: string;
   quickSectionContent: string;
   deepSectionContent: string;
-  lastUpdated: Date;
+  /** null when the article has never been saved (defaults are shown). */
+  lastUpdated: Date | null;
 };
 
-export async function getCmsArticle(slug: string): Promise<CmsArticleShape> {
-  const defaults =
-    defaultArticles[slug as keyof typeof defaultArticles] ??
-    defaultArticles[WRITER_ONBOARDING_SLUG];
+export function isKnownCmsSlug(slug: string): slug is keyof typeof defaultArticles {
+  return Object.prototype.hasOwnProperty.call(defaultArticles, slug);
+}
 
-  const article = await prisma.cmsArticle.upsert({
+/**
+ * Read-only: safe for GET handlers and rendering. Returns the stored article,
+ * the built-in defaults for a known slug that has never been saved, or null
+ * for an unknown slug. Rows are only written by the CMS PATCH route.
+ */
+export async function getCmsArticle(slug: string): Promise<CmsArticleShape | null> {
+  const article = await prisma.cmsArticle.findUnique({
     where: { slug },
-    update: {},
-    create: {
-      slug,
-      title: defaults.title,
-      quickSectionContent: defaults.quickSectionContent,
-      deepSectionContent: defaults.deepSectionContent,
+    select: {
+      title: true,
+      quickSectionContent: true,
+      deepSectionContent: true,
+      lastUpdated: true,
     },
   });
 
-  return {
-    title: article.title,
-    quickSectionContent: article.quickSectionContent,
-    deepSectionContent: article.deepSectionContent,
-    lastUpdated: article.lastUpdated,
-  };
+  if (article) {
+    return article;
+  }
+
+  if (isKnownCmsSlug(slug)) {
+    return { ...defaultArticles[slug], lastUpdated: null };
+  }
+
+  return null;
 }

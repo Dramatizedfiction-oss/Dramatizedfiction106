@@ -2,8 +2,9 @@ import "./globals.css";
 import { auth } from "@/auth";
 import AppShell from "@/components/app-shell/AppShell";
 import AuthSessionProvider from "@/components/providers/AuthSessionProvider";
+import { PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
 import { prisma } from "@/lib/prisma";
-import { ensureUserStudioAccess } from "@/lib/studios";
+import { getAccessibleStudiosForUser } from "@/lib/studios";
 
 export default async function RootLayout({
   children,
@@ -33,11 +34,13 @@ export default async function RootLayout({
           description: true,
         },
       }),
+      // Public author search: only people with published work.
       prisma.user.findMany({
         where: {
           role: {
             in: ["WRITER", "BOARD", "CEO"],
           },
+          series: { some: PUBLIC_SERIES_WHERE },
         },
         take: 16,
         select: {
@@ -45,7 +48,9 @@ export default async function RootLayout({
           name: true,
         },
       }),
-      user?.id ? ensureUserStudioAccess(user) : Promise.resolve([]),
+      // Read-only: studios are provisioned on writer onboarding and on
+      // Writer Studio entry, not on every page render.
+      user?.id ? getAccessibleStudiosForUser(user.id) : Promise.resolve([]),
       prisma.series.findMany({
         where: { status: "PUBLISHED" },
         orderBy: [{ reads: "desc" }, { followers: "desc" }],

@@ -14,9 +14,9 @@ type EpisodeCardProps = {
     title?: string | null;
     episodeNumber?: number | null;
     seasonNumber?: number | null;
+    // Server-built preview (lib/content-visibility.ts); full bodies are
+    // never passed to this client component.
     teaser?: string | null;
-    body?: string | null;
-    content?: string | null;
     readTime?: number | null;
     readerCount?: number | null;
     isRead?: boolean | null;
@@ -26,26 +26,11 @@ type EpisodeCardProps = {
   viewer?: MonetizedUser | null;
 };
 
-function buildFallbackTeaser(source?: string | null) {
-  if (!source) {
-    return "Open this episode to step into the next scene.";
-  }
-
-  const cleaned = source.replace(/\s+/g, " ").trim();
-  if (!cleaned) {
-    return "Open this episode to step into the next scene.";
-  }
-
-  const words = cleaned.split(" ").filter(Boolean);
-  const excerpt = words.slice(0, 24).join(" ");
-  return words.length > 24 ? `${excerpt}...` : excerpt;
-}
-
 export default function EpisodeCard({ episode, viewer = null }: EpisodeCardProps) {
   const title = episode.title?.trim() || "Untitled Episode";
   const seasonNumber = episode.seasonNumber ?? 1;
   const episodeNumber = episode.episodeNumber ?? 0;
-  const teaser = episode.teaser?.trim() || buildFallbackTeaser(episode.body || episode.content);
+  const teaser = episode.teaser?.trim() || "Open this episode to step into the next scene.";
   const readTime = episode.readTime ?? 0;
   const readerCount = episode.readerCount ?? 0;
   const isRead = Boolean(episode.isRead);

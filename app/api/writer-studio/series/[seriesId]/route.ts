@@ -1,61 +1,62 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { z } from "zod";
 import { serializeAiUsageTag } from "@/lib/ai-usage";
+import {
+  cleanOptionalText,
+  optionalText,
+  parseJsonBody,
+  serverError,
+} from "@/lib/api/writer-studio-request";
+import { requireApiRole, requireOwnedSeries } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/utils";
 
-function cleanOptionalText(value: unknown) {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-}
+// Editing is not publishing: `status` is not accepted here (a series becomes
+// PUBLISHED only through the episode publish route). authorId, counters and
+// timestamps are server-controlled and stripped by the schema.
+const updateSeriesSchema = z.object({
+  title: optionalText,
+  description: optionalText,
+  genre: optionalText,
+  coverImage: optionalText,
+  themeColor: optionalText,
+  aiUsageTag: optionalText,
+});
 
 export async function PATCH(
   request: Request,
   { params }: { params: { seriesId: string } },
 ) {
-  const session = await auth();
-  requireRole(session, ["WRITER"]);
+  const guard = await requireApiRole("WRITER");
+  if (!guard.ok) return guard.response;
 
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const body = await parseJsonBody(request, updateSeriesSchema);
+  if (!body.ok) return body.response;
+
+  const owned = await requireOwnedSeries(params.seriesId, guard.user.id);
+  if (!owned.ok) return owned.response;
+
+  const input = body.data;
+
+  // Omitted fields are left unchanged. Blank title/description/genre keep the
+  // current value; blank cover/theme clear it.
+  const has = (key: keyof typeof input) => input[key] !== undefined && input[key] !== null;
+
+  try {
+    const updated = await prisma.series.update({
+      where: { id: owned.series.id },
+      data: {
+        title: cleanOptionalText(input.title) || undefined,
+        description: cleanOptionalText(input.description) || undefined,
+        genre: cleanOptionalText(input.genre) || undefined,
+        coverImage: has("coverImage") ? cleanOptionalText(input.coverImage) : undefined,
+        themeColor: has("themeColor") ? cleanOptionalText(input.themeColor) : undefined,
+        aiUsageTag: input.aiUsageTag ? serializeAiUsageTag(input.aiUsageTag) : undefined,
+      },
+    });
+
+    return NextResponse.json({ success: true, series: updated });
+  } catch (error) {
+    console.error("Writer Studio series update failed.", error);
+    return serverError();
   }
-
-  const body = (await request.json().catch(() => null)) as
-    | {
-        title?: string;
-        description?: string;
-        genre?: string;
-        coverImage?: string;
-        themeColor?: string;
-        aiUsageTag?: string;
-        status?: "DRAFT" | "PUBLISHED";
-      }
-    | null;
-
-  const series = await prisma.series.findFirst({
-    where: { id: params.seriesId, authorId: session.user.id },
-  });
-
-  if (!series) {
-    return NextResponse.json({ error: "Series not found." }, { status: 404 });
-  }
-
-  const updated = await prisma.series.update({
-    where: { id: params.seriesId },
-    data: {
-      title: cleanOptionalText(body?.title) || undefined,
-      description: cleanOptionalText(body?.description) || undefined,
-      genre: cleanOptionalText(body?.genre) || undefined,
-      coverImage: cleanOptionalText(body?.coverImage),
-      themeColor: cleanOptionalText(body?.themeColor),
-      aiUsageTag: body?.aiUsageTag ? serializeAiUsageTag(body.aiUsageTag) : undefined,
-      status: body?.status,
-    },
-  });
-
-  return NextResponse.json({ success: true, series: updated });
 }

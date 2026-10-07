@@ -1,38 +1,20 @@
-import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
-import { serializeAiUsageTag } from "@/lib/ai-usage";
-import { requireRole } from "@/lib/utils";
+import { NextResponse } from "next/server";
 
-export async function POST(req: Request) {
-  const session = await auth();
-  requireRole(session, ["WRITER"]);
+// Retired legacy endpoint (no ownership checks, exposed drafts).
+// Writer Studio uses /api/writer-studio/series instead.
+export const dynamic = "force-dynamic";
 
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const body = await req.json();
-  const { title, description, genre, tags, coverImage, aiUsageTag } = body;
-
-  const series = await prisma.series.create({
-    data: {
-      title,
-      description,
-      genre,
-      tags,
-      coverImage,
-      aiUsageTag: serializeAiUsageTag(aiUsageTag),
-      authorId: session.user.id
-    }
-  });
-
-  return Response.json(series);
+function gone() {
+  return NextResponse.json(
+    { error: "LEGACY_ENDPOINT", message: "This endpoint is no longer supported." },
+    { status: 410 },
+  );
 }
 
-export async function GET() {
-  const series = await prisma.series.findMany({
-    orderBy: { createdAt: "desc" }
-  });
+export function GET() {
+  return gone();
+}
 
-  return Response.json(series);
+export function POST() {
+  return gone();
 }

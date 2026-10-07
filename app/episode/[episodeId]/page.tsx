@@ -6,12 +6,14 @@ import PurchasePreviewCard from "@/components/monetization/PurchasePreviewCard";
 import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
 import ReportAiTagButton from "@/components/ReportAiTagButton";
 import ReaderChrome from "@/components/ReaderChrome";
+import ReadTracker from "@/components/ReadTracker";
 import { isPhaseThreeActive } from "@/lib/phases";
 import {
   canUserAccessContent,
   createViewerMonetizationState,
   type MonetizedEpisode,
 } from "@/lib/monetization";
+import { PUBLIC_EPISODE_WHERE } from "@/lib/content-visibility";
 import { prisma } from "@/lib/prisma";
 
 export default async function EpisodeReaderPage({
@@ -20,7 +22,7 @@ export default async function EpisodeReaderPage({
   params: { episodeId: string };
 }) {
   const episode = await prisma.episode.findFirst({
-    where: { id: params.episodeId, status: "PUBLISHED" },
+    where: { id: params.episodeId, ...PUBLIC_EPISODE_WHERE },
     include: { series: true },
   });
 
@@ -43,34 +45,14 @@ export default async function EpisodeReaderPage({
   const accessStatus = canUserAccessContent(viewer, episodeMonetization).accessStatus;
   const canReadEpisode = accessStatus !== "locked";
 
-  if (canReadEpisode) {
-    await prisma.episode.update({
-      where: { id: params.episodeId },
-      data: { readerCount: { increment: 1 } },
-    });
-
-    await prisma.series.update({
-      where: { id: episode.seriesId },
-      data: { reads: { increment: 1 } },
-    });
-
-    await prisma.revenueEvent.create({
-      data: {
-        type: "EPISODE_READ",
-        amount: 1,
-        userId: session?.user?.id ?? null,
-        seriesId: episode.seriesId,
-        episodeId: episode.id,
-      },
-    });
-
-    await prisma.readEvent.create({
-      data: {
-        userId: session?.user?.id ?? null,
-        episodeId: episode.id,
-      },
-    });
-  }
+  // Rendering is read-only. Reader activity is recorded separately via
+  // POST /api/reads (lib/read-tracking.ts re-checks every condition).
+  const viewerId = session?.user?.id;
+  const trackRead =
+    canReadEpisode &&
+    Boolean(viewerId) &&
+    viewerId !== episode.authorId &&
+    viewerId !== episode.series.authorId;
 
   const next = await getNextEpisode(episode.seriesId, episode.episodeNumber);
   const nextEpisodeAccessStatus = next
@@ -132,6 +114,7 @@ export default async function EpisodeReaderPage({
       backHref={`/series/${episode.seriesId}`}
       episodeTitle={episode.title}
     >
+      {trackRead ? <ReadTracker episodeId={episode.id} /> : null}
       <main className="editorial-page">
         <div className="mx-auto grid max-w-[1400px] gap-8 lg:grid-cols-[minmax(0,700px)_320px] lg:items-start lg:justify-center">
           <div className="min-w-0">

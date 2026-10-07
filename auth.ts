@@ -63,7 +63,10 @@ export async function auth(): Promise<AuthSession | null> {
   });
 
   if (!session) {
-    cookieStore.delete(SESSION_COOKIE_NAME);
+    // Missing/expired session = signed out. Cookies are not modified here
+    // because auth() runs during Server Component rendering, where Next.js
+    // forbids cookie writes. Route handlers clear stale cookies with
+    // clearSessionCookie() (see app/api/auth/me).
     return null;
   }
 
@@ -118,7 +121,18 @@ export async function clearSession() {
     await invalidateSession(sessionToken);
   }
 
-  cookieStore.delete(SESSION_COOKIE_NAME);
+  clearSessionCookie();
+}
+
+export function hasSessionCookie() {
+  return Boolean(cookies().get(SESSION_COOKIE_NAME)?.value);
+}
+
+// Route handlers / server actions only. Expires the cookie with the same
+// attributes it was set with; browsers ignore a "__Secure-" Set-Cookie that
+// lacks the Secure flag.
+export function clearSessionCookie() {
+  cookies().set(SESSION_COOKIE_NAME, "", getCookieOptions(new Date(0)));
 }
 
 export function getSessionCookieName() {

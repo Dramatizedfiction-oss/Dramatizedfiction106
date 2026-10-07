@@ -4,13 +4,15 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
+import { safeCallbackPath } from "@/lib/safe-callback";
 
 export default function SignInForm() {
   const router = useRouter();
   const { refreshSession } = useAuthSession();
   const searchParams = useSearchParams();
+  // Only same-origin paths are honoured; anything else falls back to /explore.
   const callbackUrl = useMemo(
-    () => searchParams.get("callbackUrl") || "/explore",
+    () => safeCallbackPath(searchParams.get("callbackUrl")),
     [searchParams],
   );
   const [email, setEmail] = useState("");
