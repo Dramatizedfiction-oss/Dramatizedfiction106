@@ -12,7 +12,7 @@ export default function AiUsageBadge({
   return (
     <span
       className={`inline-flex items-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-[var(--text-secondary)] ${
-        compact ? "" : "gap-2"
+        compact ? "gap-1" : "gap-2"
       }`}
       title={aiUsageDescription(normalized as AiUsageTag)}
     >

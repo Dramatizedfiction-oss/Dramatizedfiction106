@@ -5,6 +5,7 @@ import AuthorTierBadge from "@/components/AuthorTierBadge";
 import AuthorWorksCarousel from "@/components/AuthorWorksCarousel";
 import FollowAuthorButton from "@/components/follow/FollowAuthorButton";
 import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
+import ProfileImagesEditor from "@/components/profile/ProfileImagesEditor";
 import { deriveAuthorTier, derivePostingConsistency } from "@/lib/author-tier";
 import { PUBLIC_EPISODE_WHERE, PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
 import { createViewerMonetizationState } from "@/lib/monetization";
@@ -156,7 +157,7 @@ export default async function AuthorProfilePage({
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="h-full w-full bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.22),transparent_30%),linear-gradient(135deg,rgba(59,130,246,0.16),rgba(15,23,42,0.9))]" />
+            <div className="h-full w-full bg-[radial-gradient(circle_at_12%_0%,rgba(124,58,237,0.3),transparent_45%),linear-gradient(135deg,var(--accent-soft),var(--bg-primary))]" />
           )}
         </div>
 
@@ -184,6 +185,9 @@ export default async function AuthorProfilePage({
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   <AuthorTierBadge tier={authorTier} />
                   <FollowAuthorButton authorId={author.id} authorName={displayName} />
+                  {session?.user?.id === author.id ? (
+                    <ProfileImagesEditor image={author.image} bannerImage={author.bannerImage} />
+                  ) : null}
                 </div>
               </div>
             </div>

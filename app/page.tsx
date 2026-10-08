@@ -53,7 +53,7 @@ export default async function HomePage() {
   ]);
 
   return (
-    <div className="min-h-screen px-6 pb-0" style={{ backgroundColor: "var(--page-bg)" }}>
+    <div className="min-h-screen px-6 pb-0">
       <div className="relative">
         <LiquidWordmark />
         {!session?.user ? (
@@ -66,14 +66,14 @@ export default async function HomePage() {
         ) : null}
       </div>
 
-      <div className="my-2 border-t border-foreground/5" />
+      <div className="my-2 border-t border-[var(--border-color)]" />
 
       <div className="mx-auto max-w-5xl pt-8">
         {featured.length > 0 ? (
           <section className="mt-8">
             <div className="mb-6 flex items-center gap-2">
-              <SparklesIcon size={14} className="text-purple-400" />
-              <h2 className="font-mono-df text-xs uppercase tracking-[0.3em] text-foreground/30">
+              <SparklesIcon size={14} className="text-[var(--accent)]" />
+              <h2 className="font-mono-df text-xs font-bold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
                 Featured Stories
               </h2>
             </div>
@@ -97,7 +97,7 @@ export default async function HomePage() {
           </section>
         ) : (
           <div className="py-24 text-center">
-            <p className="font-mono-df text-sm tracking-widest text-foreground/20">
+            <p className="font-mono-df text-sm tracking-widest text-[var(--text-secondary)]">
               The stage is being set...
             </p>
           </div>

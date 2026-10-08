@@ -1,11 +1,9 @@
+import Link from "next/link";
 import { getNextEpisode } from "@/lib/nextEpisode";
 import { auth } from "@/auth";
-import AiUsageBadge from "@/components/AiUsageBadge";
 import EpisodeTransitionCard from "@/components/EpisodeTransitionCard";
 import EpisodeContent from "@/components/episode-content/EpisodeContent";
 import EpisodeReadingView from "@/components/episode-content/EpisodeReadingView";
-import PurchasePreviewCard from "@/components/monetization/PurchasePreviewCard";
-import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
 import ReportAiTagButton from "@/components/ReportAiTagButton";
 import ReaderChrome from "@/components/ReaderChrome";
 import ReadTracker from "@/components/ReadTracker";
@@ -24,13 +22,32 @@ export default async function EpisodeReaderPage({
 }: {
   params: { episodeId: string };
 }) {
+  // Only published episodes in published series are ever readable here.
   const episode = await prisma.episode.findFirst({
     where: { id: params.episodeId, ...PUBLIC_EPISODE_WHERE },
-    include: { series: true },
+    include: {
+      series: true,
+      author: { select: { id: true, name: true } },
+    },
   });
 
   if (!episode) {
-    return <div className="px-6 py-10">Episode not found.</div>;
+    return (
+      <main className="reader-page flex items-center justify-center px-6 py-24">
+        <div className="max-w-sm text-center">
+          <p className="reader-kicker">Episode not found</p>
+          <h1 className="mt-3 font-heading text-3xl font-semibold text-[var(--paper-ink)]">
+            This story isn&apos;t available
+          </h1>
+          <p className="reader-meta mt-3 leading-6">
+            It may not be published yet, or the link may be wrong.
+          </p>
+          <Link href="/explore" className="story-button-primary mt-6 inline-flex">
+            Browse stories
+          </Link>
+        </div>
+      </main>
+    );
   }
 
   const session = await auth();
@@ -74,96 +91,63 @@ export default async function EpisodeReaderPage({
       })()
     : "free";
 
-  const sidebar = (
-    <aside className="space-y-4">
-      <div className="theme-panel rounded-[28px] border border-[var(--border-color)] p-5">
-      <p className="eyebrow">Series Info</p>
-      <h2 className="theme-heading mt-3 text-2xl font-semibold">{episode.series.title}</h2>
-      <p className="theme-meta mt-3 text-sm leading-6">
-        {episode.series.description}
-      </p>
-      <div className="mt-4">
-        <AiUsageBadge tag={episode.aiUsageTag} />
-      </div>
-
-      {next && (
-        <div className="mt-6">
-          <EpisodeTransitionCard
-            currentEpisodeId={episode.id}
-            nextEpisode={{
-              id: next.id,
-              title: next.title,
-              episodeNumber: next.episodeNumber,
-            }}
-            user={viewer}
-            accessStatus={nextEpisodeAccessStatus}
-            phaseThreeActive={phaseThreeActive}
-          />
-        </div>
-      )}
-      </div>
-
-      <SubscriptionPreviewCard user={viewer} />
-      <PurchasePreviewCard
-        contentType="episode"
-        accessStatus={accessStatus}
-        price={episode.locked ? 2.99 : null}
-      />
-    </aside>
-  );
+  const seriesHref = `/series/${episode.seriesId}`;
 
   return (
-    <ReaderChrome
-      backHref={`/series/${episode.seriesId}`}
-      episodeTitle={episode.title}
-    >
+    <ReaderChrome backHref={seriesHref} seriesTitle={episode.series.title} episodeTitle={episode.title}>
       {trackRead ? <ReadTracker episodeId={episode.id} /> : null}
-      <main className="editorial-page">
-        <div className="mx-auto grid max-w-[1400px] gap-8 lg:grid-cols-[minmax(0,700px)_320px] lg:items-start lg:justify-center">
-          <div className="min-w-0">
-            <EpisodeReadingView
-              episodeNumber={episode.episodeNumber}
-              readTime={episode.readTime}
-              title={episode.title}
-              aiUsageTag={episode.aiUsageTag}
-              headerActions={<ReportAiTagButton subject={episode.title} />}
-            >
-              {canReadEpisode ? (
-                <div className="reading-body theme-body">
-                  <EpisodeContent content={parseEpisodeHtml(episode.body)} />
-                </div>
-              ) : (
-                <div className="theme-panel rounded-[28px] border border-[var(--border-color)] p-6">
-                  <p className="eyebrow">Premium episode</p>
-                  <h2 className="theme-heading mt-3 text-2xl font-semibold">Unlock this chapter to keep reading</h2>
-                  <p className="theme-meta mt-3 text-sm leading-6">
-                    {episode.teaser || episode.description || "This episode is available to subscribers or through an individual unlock."}
-                  </p>
-                </div>
-              )}
-            </EpisodeReadingView>
+      <main className="pb-24">
+        <EpisodeReadingView
+          seriesTitle={episode.series.title}
+          seriesHref={seriesHref}
+          authorName={episode.author.name}
+          authorHref={`/author/${episode.author.id}`}
+          episodeNumber={episode.episodeNumber}
+          readTime={episode.readTime}
+          title={episode.title}
+          aiUsageTag={episode.aiUsageTag}
+          contentWarning={episode.contentWarning}
+          headerActions={<ReportAiTagButton subject={episode.title} />}
+        >
+          {canReadEpisode ? (
+            <div className="reading-body">
+              <EpisodeContent content={parseEpisodeHtml(episode.body)} />
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-[var(--paper-rule)] px-6 py-8 text-center">
+              <p className="reader-kicker">Not available</p>
+              <p className="mt-3 font-heading text-2xl font-semibold text-[var(--paper-ink)]">
+                This episode can&apos;t be read right now
+              </p>
+              {episode.teaser || episode.description ? (
+                <p className="reader-meta mx-auto mt-3 max-w-md leading-6">{episode.teaser || episode.description}</p>
+              ) : null}
+            </div>
+          )}
 
-            <div className="mx-auto mt-10 max-w-[700px] lg:hidden">
+          <footer className="mt-16">
+            <div className="reader-ornament" aria-hidden>
+              ✦ ✦ ✦
+            </div>
+            <p className="reader-meta text-center">End of Episode {episode.episodeNumber}</p>
+            <div className="mt-10">
               <EpisodeTransitionCard
                 currentEpisodeId={episode.id}
                 nextEpisode={
-                  next
-                    ? {
-                        id: next.id,
-                        title: next.title,
-                        episodeNumber: next.episodeNumber,
-                      }
-                    : null
+                  next ? { id: next.id, title: next.title, episodeNumber: next.episodeNumber } : null
                 }
                 user={viewer}
                 accessStatus={nextEpisodeAccessStatus}
                 phaseThreeActive={phaseThreeActive}
               />
             </div>
-          </div>
-
-          <div className="hidden lg:block">{sidebar}</div>
-        </div>
+            <p className="mt-8 text-center">
+              <Link href={seriesHref} className="reader-meta inline-block px-3 py-3 underline-offset-4 hover:text-[var(--paper-ink)] hover:underline">
+                Back to {episode.series.title}
+              </Link>
+            </p>
+          </footer>
+        </EpisodeReadingView>
       </main>
     </ReaderChrome>
   );

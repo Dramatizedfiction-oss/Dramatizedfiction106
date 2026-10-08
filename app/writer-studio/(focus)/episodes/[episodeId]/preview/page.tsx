@@ -23,9 +23,9 @@ export default async function EpisodePreviewPage({ params }: { params: { episode
   const live = isLive(episode.status);
 
   return (
-    <>
-      <div className="sticky top-0 z-50 border-b border-[var(--studio-border)] bg-[var(--header-bg)] backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1100px] flex-wrap items-center justify-between gap-3 px-4 py-3">
+    <div className="reader-page">
+      <div className="sticky top-0 z-50 border-b border-[var(--paper-rule)] bg-[var(--header-bg)] backdrop-blur-xl">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <p className="text-sm text-[var(--studio-text)]">
             <span className={`studio-status mr-2 ${live ? "studio-status-live" : "studio-status-warning"}`}>
               {live ? "Live version" : "Draft preview"}
@@ -38,25 +38,25 @@ export default async function EpisodePreviewPage({ params }: { params: { episode
         </div>
       </div>
 
-      <main className="editorial-page">
-        <div className="mx-auto max-w-[760px]">
-          <p className="theme-meta mb-6 text-sm">{episode.series.title}</p>
-          <EpisodeReadingView
-            episodeNumber={episode.episodeNumber}
-            readTime={episode.readTime}
-            title={episode.title}
-            aiUsageTag={episode.aiUsageTag}
-          >
-            {episode.content.document.length > 0 ? (
-              <div className="reading-body theme-body">
-                <EpisodeContent content={episode.content.document} />
-              </div>
-            ) : (
-              <p className="theme-meta text-center text-sm">Nothing written yet.</p>
-            )}
-          </EpisodeReadingView>
-        </div>
+      <main className="pb-24">
+        <EpisodeReadingView
+          seriesTitle={episode.series.title}
+          authorName={user.name}
+          episodeNumber={episode.episodeNumber}
+          readTime={episode.readTime}
+          title={episode.title}
+          aiUsageTag={episode.aiUsageTag}
+          contentWarning={episode.contentWarning}
+        >
+          {episode.content.document.length > 0 ? (
+            <div className="reading-body">
+              <EpisodeContent content={episode.content.document} />
+            </div>
+          ) : (
+            <p className="reader-meta text-center">Nothing written yet.</p>
+          )}
+        </EpisodeReadingView>
       </main>
-    </>
+    </div>
   );
 }

@@ -21,12 +21,12 @@ export default function BookshelfMeter({ progress }: Props) {
         </div>
       </div>
 
-      <p className="text-slate-300 text-sm">
+      <p className="theme-meta text-sm">
         Shelf fill: <span className="font-semibold">{percent}%</span>
       </p>
 
       {percent >= 100 && (
-        <p className="text-lime-400 font-semibold text-lg animate-pulse">
+        <p className="text-[var(--status-live)] font-semibold text-lg animate-pulse">
           BURP! The shelf is full. Time to file the LLC.
         </p>
       )}

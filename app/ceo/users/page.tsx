@@ -13,7 +13,7 @@ export default async function CEOUsersPage() {
 
   return (
     <main className="p-8 space-y-6">
-      <h1 className="text-3xl font-bold">User Management</h1>
+      <h1 className="theme-heading text-3xl font-bold">User Management</h1>
 
       <div className="space-y-4">
         {users.map(
@@ -27,11 +27,11 @@ export default async function CEOUsersPage() {
           ) => (
             <div
               key={u.id}
-              className="bg-slate-900 p-4 rounded-lg border border-slate-800"
+              className="theme-panel rounded-lg border p-4"
             >
-              <p className="font-semibold">{u.name || "Unnamed User"}</p>
-              <p className="text-slate-400 text-sm">{u.email}</p>
-              <p className="text-slate-500 text-xs mt-1">Role: {u.role}</p>
+              <p className="theme-heading font-semibold">{u.name || "Unnamed User"}</p>
+              <p className="theme-meta text-sm">{u.email}</p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">Role: {u.role}</p>
             </div>
           )
         )}

@@ -22,22 +22,22 @@ export default async function GoalPage() {
   const progress = Math.min(monthlyReads / TARGET_READS, 1);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 flex flex-col items-center p-8 gap-10">
+    <main className="min-h-screen flex flex-col items-center p-8 gap-10 text-[var(--text-primary)]">
 
       {/* ⭐ You will edit this text later in CEO Studio */}
       <section className="max-w-3xl text-center space-y-4">
-        <h1 className="text-4xl font-bold">LLC Finish Line</h1>
-        <p className="text-slate-300">
+        <h1 className="font-heading text-4xl font-bold">LLC Finish Line</h1>
+        <p className="theme-body">
           This dark oak shelf fills with animated liquid as readers consume stories.
           When it reaches the top, we hit the milestone needed to form the LLC.
         </p>
 
-        <p className="text-slate-400 text-sm">
+        <p className="theme-meta text-sm">
           Current month reads:{" "}
           <span className="font-semibold">{monthlyReads}</span> / {TARGET_READS}
         </p>
 
-        <p className="text-slate-400 text-sm">
+        <p className="theme-meta text-sm">
           Days left in this month:{" "}
           <span className="font-semibold">{daysLeft}</span>
         </p>
@@ -46,8 +46,8 @@ export default async function GoalPage() {
       <BookshelfMeter progress={progress} />
 
       {/* ⭐ You will edit this text later in CEO Studio */}
-      <section className="max-w-3xl space-y-4 text-slate-300">
-        <h2 className="text-2xl font-bold">The Goal</h2>
+      <section className="theme-body max-w-3xl space-y-4">
+        <h2 className="font-heading text-2xl font-bold">The Goal</h2>
         <p>
           Once the shelf fills, Dramatized Fiction becomes an official company with
           full author payouts, contracts, and long‑term infrastructure.

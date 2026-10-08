@@ -49,8 +49,8 @@ export default async function BecomeAuthorPage() {
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-[var(--border-color)] bg-[var(--bg-primary)]/70 p-4 shadow-glow">
-            <div className="aspect-[4/5] rounded-[24px] bg-gradient-to-br from-violet-500/60 via-fuchsia-500/25 to-slate-950 p-5">
+          <div className="rounded-[28px] border border-[var(--border-color)] bg-[var(--bg-primary)] p-4 shadow-glow">
+            <div className="aspect-[4/5] rounded-[24px] bg-[linear-gradient(140deg,#6d28d9_0%,#3b0764_48%,#0b0a10_100%)] p-5">
               <div className="flex h-full flex-col justify-between rounded-[20px] border border-white/15 bg-black/25 p-5">
                 <div>
                   <p className="text-xs uppercase tracking-[0.28em] text-white/70">Writer Studio</p>
@@ -121,7 +121,7 @@ function RoleCard({
     <article
       className={`rounded-[28px] border p-6 ${
         featured
-          ? "border-violet-400/40 bg-violet-500/10"
+          ? "border-[var(--accent)] bg-[var(--accent-soft)]"
           : "border-[var(--border-color)] bg-[var(--bg-secondary)]"
       }`}
     >

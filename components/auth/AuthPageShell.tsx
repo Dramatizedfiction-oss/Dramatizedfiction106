@@ -20,8 +20,8 @@ export default function AuthPageShell({
   links?: AuthLink[];
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)] px-4 py-10">
-      <div className="theme-panel w-full max-w-md rounded-[28px] border border-[var(--border-color)] p-6 shadow-xl">
+    <div className="flex min-h-screen items-center justify-center px-4 py-10">
+      <div className="w-full max-w-md rounded-[28px] border border-[var(--border-color)] bg-[var(--surface-raised)] p-6 shadow-[var(--shadow-raised)]">
         <p className="theme-meta text-xs font-semibold uppercase tracking-[0.28em]">
           {eyebrow}
         </p>

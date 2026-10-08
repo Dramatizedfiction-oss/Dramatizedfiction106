@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { serializeAiUsageTag } from "@/lib/ai-usage";
 import {
+  badRequest,
   cleanOptionalText,
   optionalText,
   parseJsonBody,
@@ -9,6 +10,7 @@ import {
 } from "@/lib/api/writer-studio-request";
 import { requireApiRole, requireOwnedSeries } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
+import { decideImageField, deleteReplacedImage } from "@/lib/uploads/image-storage";
 
 // Editing is not publishing: `status` is not accepted here (a series becomes
 // PUBLISHED only through the episode publish route). authorId, counters and
@@ -41,6 +43,10 @@ export async function PATCH(
   // current value; blank cover/theme clear it.
   const has = (key: keyof typeof input) => input[key] !== undefined && input[key] !== null;
 
+  // A new cover must be an uploaded image; the stored one may be kept as is.
+  const cover = decideImageField(input.coverImage, owned.series.coverImage);
+  if (!cover.ok) return badRequest(cover.message);
+
   try {
     const updated = await prisma.series.update({
       where: { id: owned.series.id },
@@ -48,11 +54,13 @@ export async function PATCH(
         title: cleanOptionalText(input.title) || undefined,
         description: cleanOptionalText(input.description) || undefined,
         genre: cleanOptionalText(input.genre) || undefined,
-        coverImage: has("coverImage") ? cleanOptionalText(input.coverImage) : undefined,
+        coverImage: cover.value,
         themeColor: has("themeColor") ? cleanOptionalText(input.themeColor) : undefined,
         aiUsageTag: input.aiUsageTag ? serializeAiUsageTag(input.aiUsageTag) : undefined,
       },
     });
+
+    await deleteReplacedImage(owned.series.coverImage, updated.coverImage);
 
     return NextResponse.json({ success: true, series: updated });
   } catch (error) {

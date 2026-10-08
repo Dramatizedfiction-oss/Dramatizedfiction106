@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import AiUsageSelector from "@/components/AiUsageSelector";
+import ImageUploadField from "@/components/uploads/ImageUploadField";
 import type { AiUsageTag } from "@/lib/ai-usage";
 import { plural } from "@/lib/writer-studio/format";
 
@@ -24,7 +25,14 @@ export default function EpisodeDetailsForm({
   values: EpisodeDetailsValues;
   onChange: (next: EpisodeDetailsValues) => void;
   readOnly: boolean;
-  meta: { seriesId: string; episodeNumber: number; live: boolean; wordCount: number; readTime: number };
+  meta: {
+    episodeId: string;
+    seriesId: string;
+    episodeNumber: number;
+    live: boolean;
+    wordCount: number;
+    readTime: number;
+  };
 }) {
   const set = <K extends keyof EpisodeDetailsValues>(key: K, value: EpisodeDetailsValues[K]) =>
     onChange({ ...values, [key]: value });
@@ -76,18 +84,21 @@ export default function EpisodeDetailsForm({
           />
         </label>
 
-        <label className="block">
-          <span className={labelClass}>Cover image URL</span>
-          <input
-            className="studio-field w-full px-3 py-2.5 text-sm"
-            value={values.coverImage}
-            onChange={(event) => set("coverImage", event.target.value)}
-            placeholder="https://…"
-            inputMode="url"
-          />
-          <span className="theme-meta mt-1.5 block text-xs">Optional. Uploads aren&apos;t available yet.</span>
-        </label>
       </fieldset>
+
+      <ImageUploadField
+        label="Cover image"
+        purpose="episode-cover"
+        targetId={meta.episodeId}
+        value={values.coverImage}
+        onChange={(url) => set("coverImage", url)}
+        disabled={readOnly}
+        hint={
+          meta.live
+            ? "Optional. Goes live when you press Update live."
+            : "Optional. JPEG, PNG or WebP; saved with your draft."
+        }
+      />
 
       <Link
         href={`/writer-studio/series/${meta.seriesId}?edit=details`}

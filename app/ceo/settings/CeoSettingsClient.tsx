@@ -92,7 +92,7 @@ export default function CeoSettingsClient({ onboardingSlug }: { onboardingSlug: 
             <label className="block">
               <span className="theme-meta text-sm">Site Name</span>
               <input
-                className="mt-2 w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] px-4 py-3 text-[var(--text-primary)]"
+                className="mt-2 ui-input w-full rounded-2xl px-4 py-3"
                 value={siteName}
                 onChange={(e) => setSiteName(e.target.value)}
               />
@@ -157,7 +157,7 @@ export default function CeoSettingsClient({ onboardingSlug }: { onboardingSlug: 
             <label className="block">
               <span className="theme-meta text-sm">Title</span>
               <input
-                className="mt-2 w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] px-4 py-3 text-[var(--text-primary)]"
+                className="mt-2 ui-input w-full rounded-2xl px-4 py-3"
                 value={article.title}
                 onChange={(e) =>
                   setArticle((current) => ({ ...current, title: e.target.value }))
@@ -168,7 +168,7 @@ export default function CeoSettingsClient({ onboardingSlug }: { onboardingSlug: 
             <label className="block">
               <span className="theme-meta text-sm">Quick section content</span>
               <textarea
-                className="mt-2 min-h-[160px] w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] px-4 py-3 text-[var(--text-primary)]"
+                className="mt-2 min-h-[160px] ui-input w-full rounded-2xl px-4 py-3"
                 value={article.quickSectionContent}
                 onChange={(e) =>
                   setArticle((current) => ({
@@ -182,7 +182,7 @@ export default function CeoSettingsClient({ onboardingSlug }: { onboardingSlug: 
             <label className="block">
               <span className="theme-meta text-sm">Deep section content</span>
               <textarea
-                className="mt-2 min-h-[220px] w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] px-4 py-3 text-[var(--text-primary)]"
+                className="mt-2 min-h-[220px] ui-input w-full rounded-2xl px-4 py-3"
                 value={article.deepSectionContent}
                 onChange={(e) =>
                   setArticle((current) => ({
@@ -232,7 +232,7 @@ function UnlockCard({
       </div>
 
       <input
-        className="mt-4 w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3 text-[var(--text-primary)]"
+        className="mt-4 ui-input w-full rounded-2xl px-4 py-3"
         placeholder={placeholder}
         value={code}
         onChange={(e) => setCode(e.target.value)}

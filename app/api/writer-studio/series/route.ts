@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { serializeAiUsageTag } from "@/lib/ai-usage";
 import {
+  badRequest,
   cleanOptionalText,
   optionalText,
   parseJsonBody,
@@ -9,6 +10,7 @@ import {
 } from "@/lib/api/writer-studio-request";
 import { requireApiRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
+import { decideImageField } from "@/lib/uploads/image-storage";
 
 // authorId, status, counters and timestamps are server-controlled and
 // stripped by the schema.
@@ -47,6 +49,9 @@ export async function POST(request: Request) {
 
   const input = body.data;
 
+  const cover = decideImageField(input.coverImage, null);
+  if (!cover.ok) return badRequest(cover.message);
+
   try {
     const series = await prisma.series.create({
       data: {
@@ -54,7 +59,7 @@ export async function POST(request: Request) {
         description: cleanOptionalText(input.description) || "Series draft",
         genre: cleanOptionalText(input.genre) || "Genre",
         tags: [],
-        coverImage: cleanOptionalText(input.coverImage),
+        coverImage: cover.value ?? null,
         themeColor: cleanOptionalText(input.themeColor),
         status: "DRAFT",
         aiUsageTag: serializeAiUsageTag(input.aiUsageTag),

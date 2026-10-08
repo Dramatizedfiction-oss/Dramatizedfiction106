@@ -29,7 +29,7 @@ export default function LiquidWordmark() {
       >
         Fiction
       </h1>
-      <p className="animate-subtle-pulse mt-6 font-mono-df text-sm uppercase tracking-[0.3em] text-foreground/30">
+      <p className="mt-6 font-mono-df text-sm font-bold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
         Stories Performed in Text
       </p>
     </div>

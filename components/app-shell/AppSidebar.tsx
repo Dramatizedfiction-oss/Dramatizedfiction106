@@ -20,6 +20,7 @@ import {
   ChevronRightIcon,
 } from "@/components/icons";
 import type { StudioLink } from "@/lib/navigation";
+import { safeHexColor } from "@/lib/writer-studio/format";
 
 export type AppSidebarSeries = {
   id: string;
@@ -49,7 +50,8 @@ type AppSidebarProps = {
   onSignOut: () => void;
 };
 
-const RANK_COLORS = ["#f59e0b", "#94a3b8", "#cd7c2f"];
+// Gold / silver / bronze, tuned per theme in globals.css.
+const RANK_COLORS = ["var(--rank-1)", "var(--rank-2)", "var(--rank-3)"];
 
 export default function AppSidebar({
   user,
@@ -80,7 +82,7 @@ export default function AppSidebar({
 
   return (
     <aside
-      className="relative flex h-full flex-shrink-0 flex-col overflow-hidden border-r border-foreground/5"
+      className="relative flex h-full flex-shrink-0 flex-col overflow-hidden border-r border-[var(--border-color)]"
       style={{
         width: showLabels ? 240 : 64,
         background: "var(--sidebar-bg)",
@@ -91,7 +93,7 @@ export default function AppSidebar({
         <button
           type="button"
           onClick={onToggleExpanded}
-          className="absolute right-3 top-6 z-10 flex h-6 w-6 items-center justify-center text-foreground/30 hover:text-foreground/60"
+          className="absolute right-3 top-6 z-10 flex h-6 w-6 items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
         >
           <span style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)", display: "inline-flex", transition: "transform 280ms ease" }}>
@@ -108,7 +110,7 @@ export default function AppSidebar({
           <BookOpenIcon size={14} className="text-white" />
         </div>
         {showLabels ? (
-          <span className="whitespace-nowrap font-mono-df text-xs uppercase tracking-widest text-foreground/50">
+          <span className="whitespace-nowrap font-mono-df text-xs uppercase tracking-widest text-[var(--text-secondary)]">
             Dramatized
           </span>
         ) : null}
@@ -136,7 +138,7 @@ export default function AppSidebar({
           <Link
             href="/become-author"
             onClick={onClose}
-            className={`sidebar-link ${pathname === "/become-author" ? "sidebar-link-active" : "text-purple-400/60 hover:bg-purple-500/8 hover:text-purple-400"}`}
+            className={`sidebar-link ${pathname === "/become-author" ? "sidebar-link-active" : "text-[var(--accent)] hover:bg-[var(--accent-soft)]"}`}
           >
             <FeatherIcon size={16} className="flex-shrink-0" />
             {showLabels ? <span>Become Author</span> : null}
@@ -172,11 +174,11 @@ export default function AppSidebar({
 
       <div className="mb-3 mt-6 flex items-center gap-2 px-4">
         {!showLabels ? (
-          <TrendingUpIcon size={14} className="flex-shrink-0 text-foreground/25" />
+          <TrendingUpIcon size={14} className="flex-shrink-0 text-[var(--text-muted)]" />
         ) : (
           <>
-            <TrendingUpIcon size={11} className="flex-shrink-0 text-purple-400/60" />
-            <p className="font-mono-df text-[10px] uppercase tracking-[0.2em] text-foreground/25">
+            <TrendingUpIcon size={11} className="flex-shrink-0 text-[var(--accent)]" />
+            <p className="font-mono-df text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
               Trending This Week
             </p>
           </>
@@ -185,7 +187,7 @@ export default function AppSidebar({
 
       <div className="flex-1 space-y-1 overflow-y-auto px-2 pb-4">
         {trending.map((series, idx) => {
-          const accent = series.themeColor || "#7c3aed";
+          const accent = safeHexColor(series.themeColor);
           const rankColor = RANK_COLORS[idx] || RANK_COLORS[2];
           const active = pathname === `/series/${series.id}`;
           const hovered = hoveredSeries === series.id;
@@ -216,13 +218,13 @@ export default function AppSidebar({
                   <span
                     className="block truncate text-sm leading-tight"
                     style={{
-                      color: active || hovered ? accent : "hsl(var(--foreground) / 0.65)",
+                      color: active || hovered ? "var(--text-primary)" : "var(--text-secondary)",
                       fontWeight: active ? 600 : 400,
                     }}
                   >
                     {series.title}
                   </span>
-                  <span className="mt-0.5 block font-mono-df text-[10px]" style={{ color: `${rankColor}aa` }}>
+                  <span className="mt-0.5 block font-mono-df text-[10px]" style={{ color: "var(--text-muted)" }}>
                     {series.reads > 0 ? `${series.reads.toLocaleString()} reads` : "New"}
                   </span>
                 </span>
@@ -231,20 +233,20 @@ export default function AppSidebar({
           );
         })}
         {trending.length === 0 && showLabels ? (
-          <p className="px-3 py-2 font-mono-df text-[11px] text-foreground/20">No series yet.</p>
+          <p className="px-3 py-2 font-mono-df text-[11px] text-[var(--text-muted)]">No series yet.</p>
         ) : null}
       </div>
 
-      <div className="space-y-1 border-t border-foreground/5 px-2 pb-4 pt-3">
+      <div className="space-y-1 border-t border-[var(--border-color)] px-2 pb-4 pt-3">
         {showLabels && studios.length > 0 ? (
           <div className="px-2 pb-2">
-            <p className="mb-1 font-mono-df text-[10px] uppercase tracking-[0.2em] text-foreground/25">Studios</p>
+            <p className="mb-1 font-mono-df text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Studios</p>
             {studios.slice(0, 3).map((studio) => (
               <Link
                 key={studio.id}
                 href={`/writer-studio?studio=${studio.slug}`}
                 onClick={onClose}
-                className="block truncate rounded-md px-2 py-1.5 text-xs text-foreground/50 hover:text-foreground/80"
+                className="block truncate rounded-md px-2 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               >
                 {studio.name}
               </Link>
@@ -271,8 +273,8 @@ export default function AppSidebar({
           <>
             {showLabels ? (
               <div className="rounded-md px-3 py-2">
-                <p className="truncate text-sm text-foreground/80">{user.name || "Member"}</p>
-                <p className="font-mono-df text-[10px] uppercase tracking-[0.2em] text-foreground/30">{roleLabel}</p>
+                <p className="truncate text-sm font-medium text-[var(--text-primary)]">{user.name || "Member"}</p>
+                <p className="font-mono-df text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">{roleLabel}</p>
               </div>
             ) : null}
             <button type="button" onClick={onSignOut} disabled={isSigningOut} className="sidebar-link w-full">

@@ -402,7 +402,14 @@ export default function EpisodeEditor({
       }}
       onChange={onDetailsChange}
       readOnly={blocked}
-      meta={{ seriesId: episode.series.id, episodeNumber: episode.episodeNumber, live, wordCount, readTime }}
+      meta={{
+        episodeId: episode.id,
+        seriesId: episode.series.id,
+        episodeNumber: episode.episodeNumber,
+        live,
+        wordCount,
+        readTime,
+      }}
     />
   );
 

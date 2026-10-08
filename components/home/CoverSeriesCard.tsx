@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { safeHexColor } from "@/lib/writer-studio/format";
 
 export type CoverSeries = {
   id: string;
@@ -21,7 +22,9 @@ export default function CoverSeriesCard({
   variant?: "poster" | "wide";
   className?: string;
 }) {
-  const accent = series.themeColor || "#7c3aed";
+  // Stored theme colors may be free text from older forms ("Black"); only a
+  // hex value can take the alpha suffixes used below.
+  const accent = safeHexColor(series.themeColor);
   const isWide = variant === "wide";
 
   return (
@@ -35,7 +38,7 @@ export default function CoverSeriesCard({
       }
     >
       <div
-        className="relative overflow-hidden rounded-xl"
+        className="relative overflow-hidden rounded-xl shadow-[var(--shadow-card)] ring-1 ring-[var(--border-color)] transition group-hover:ring-[var(--border-strong)]"
         style={{
           aspectRatio: isWide ? "1.6" : "0.75",
           background: `linear-gradient(160deg, #0a0a0a 0%, ${accent}55 100%)`,
@@ -59,10 +62,12 @@ export default function CoverSeriesCard({
           />
         )}
 
+        {/* Cover art is its own dark world in both themes: a neutral scrim keeps the
+            white title readable over any image or series color; the accent tints it. */}
         <div
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(to top, ${accent}99 0%, rgba(0,0,0,0.18) 48%, transparent 72%)`,
+            background: `linear-gradient(to top, rgba(8,8,14,0.88) 0%, rgba(8,8,14,0.45) 38%, transparent 66%), linear-gradient(to top, ${accent}55 0%, transparent 55%)`,
           }}
         />
 
@@ -74,11 +79,10 @@ export default function CoverSeriesCard({
 
         {series.genre ? (
           <span
-            className="absolute left-3 top-3 font-mono-df text-[10px] uppercase tracking-widest rounded px-2 py-1"
+            className="absolute left-3 top-3 rounded px-2 py-1 font-mono-df text-[10px] font-bold uppercase tracking-widest text-white backdrop-blur-sm"
             style={{
-              backgroundColor: `${accent}30`,
-              color: variant === "poster" ? accent : "#fff",
-              border: `1px solid ${accent}40`,
+              backgroundColor: "rgba(8,8,14,0.55)",
+              border: `1px solid ${accent}99`,
             }}
           >
             {series.genre}
@@ -90,7 +94,7 @@ export default function CoverSeriesCard({
             {series.title}
           </h3>
           {series.authorName ? (
-            <p className="mt-1 font-mono-df text-[10px] tracking-wide text-white/55">
+            <p className="mt-1 font-mono-df text-[10px] tracking-wide text-white/80">
               by {series.authorName}
             </p>
           ) : null}

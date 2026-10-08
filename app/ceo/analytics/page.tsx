@@ -21,7 +21,7 @@ export default async function CEOAnalyticsPage() {
 
   return (
     <main className="p-8 space-y-10">
-      <h1 className="text-3xl font-bold">Platform Analytics</h1>
+      <h1 className="theme-heading text-3xl font-bold">Platform Analytics</h1>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -36,7 +36,7 @@ export default async function CEOAnalyticsPage() {
 
       {/* Trending Series */}
       <section>
-        <h2 className="text-2xl font-semibold mb-4">Trending Series</h2>
+        <h2 className="theme-heading mb-4 text-2xl font-semibold">Trending Series</h2>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {trending.map((s) => (
@@ -56,9 +56,9 @@ function StatCard({
   value: number | string;
 }) {
   return (
-    <div className="bg-slate-900 p-6 rounded-lg border border-slate-800">
-      <h3 className="text-lg font-semibold">{title}</h3>
-      <p className="text-3xl font-bold mt-2">
+    <div className="theme-panel rounded-lg border p-6">
+      <h3 className="theme-meta text-sm font-semibold uppercase tracking-[0.16em]">{title}</h3>
+      <p className="theme-heading mt-2 text-3xl font-bold">
         {typeof value === "number" ? value.toLocaleString() : value}
       </p>
     </div>

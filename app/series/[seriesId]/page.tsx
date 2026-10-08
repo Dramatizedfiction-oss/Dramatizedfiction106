@@ -119,7 +119,7 @@ export default async function SeriesPage({
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <select
-                className="rounded-full border border-[var(--border-color)] bg-[var(--bg-primary)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none"
+                className="ui-input rounded-full px-4 py-3 text-sm"
                 aria-label="Choose season"
                 defaultValue="Season 1"
               >

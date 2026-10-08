@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { serializeAiUsageTag } from "@/lib/ai-usage";
 import {
+  badRequest,
   cleanOptionalText,
   optionalText,
   parseJsonBody,
@@ -10,6 +11,7 @@ import {
 } from "@/lib/api/writer-studio-request";
 import { requireApiRole, requireOwnedEpisode, requireOwnedSeries } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
+import { decideImageField, deleteReplacedImage } from "@/lib/uploads/image-storage";
 
 // The only route that publishes. status/publishedAt are set here by the
 // server; client-sent status, authorId, seriesId, counters are stripped.
@@ -45,13 +47,16 @@ export async function POST(
   const episode = owned.episode;
   const has = (key: keyof typeof input) => input[key] !== undefined && input[key] !== null;
 
+  const cover = decideImageField(input.coverImage, episode.coverImage);
+  if (!cover.ok) return badRequest(cover.message);
+
   try {
     const updated = await prisma.episode.update({
       where: { id: episode.id },
       data: {
         title: cleanOptionalText(input.title) || episode.title,
         description: has("description") ? cleanOptionalText(input.description) : undefined,
-        coverImage: has("coverImage") ? cleanOptionalText(input.coverImage) : undefined,
+        coverImage: cover.value,
         contentWarning: has("contentWarning") ? cleanOptionalText(input.contentWarning) : undefined,
         aiUsageTag: input.aiUsageTag ? serializeAiUsageTag(input.aiUsageTag) : episode.aiUsageTag,
         locked: await resolveLockedUpdate(input.locked),
@@ -65,6 +70,8 @@ export async function POST(
       where: { id: ownedSeries.series.id },
       data: { status: "PUBLISHED" },
     });
+
+    await deleteReplacedImage(episode.coverImage, updated.coverImage);
 
     return NextResponse.json({ success: true, episode: updated, seriesId: episode.seriesId });
   } catch (error) {

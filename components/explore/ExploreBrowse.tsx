@@ -59,18 +59,18 @@ export default function ExploreBrowse({
   }, [filtered]);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "var(--page-bg)" }}>
+    <div className="min-h-screen">
       <div
-        className="sticky top-0 z-30 flex items-center gap-3 border-b border-foreground/5 py-3 pl-16 pr-4 md:pl-8 md:pr-8"
-        style={{ background: "var(--sidebar-bg)", backdropFilter: "blur(16px)" }}
+        className="sticky top-0 z-30 flex items-center gap-3 border-b border-[var(--border-color)] py-3 pl-16 pr-4 md:pl-8 md:pr-8"
+        style={{ background: "var(--header-bg)", backdropFilter: "blur(16px)" }}
       >
         <div className="relative max-w-md flex-1">
-          <SearchIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/30" />
+          <SearchIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search series, authors, genres..."
-            className="w-full rounded-lg border border-foreground/8 bg-foreground/5 py-2 pl-9 pr-4 font-mono-df text-sm text-foreground placeholder:text-foreground/25 focus:border-purple-500/40 focus:outline-none"
+            className="ui-input w-full rounded-lg py-2 pl-9 pr-4 font-mono-df text-sm"
           />
         </div>
         <div className="hidden items-center gap-1 overflow-x-auto scrollbar-hide lg:flex">
@@ -93,10 +93,10 @@ export default function ExploreBrowse({
       <div className="space-y-10 py-8">
         {showBecomeAuthorCta ? (
           <div className="px-4 md:px-8">
-            <div className="flex flex-col gap-4 rounded-xl border border-foreground/8 bg-foreground/3 p-5 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-4 theme-panel rounded-xl border p-5 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="font-mono-df text-[10px] uppercase tracking-[0.2em] text-foreground/30">Creator Mode</p>
-                <p className="mt-2 text-sm text-foreground/70">Become a writer when you are ready to publish.</p>
+                <p className="font-mono-df text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Creator Mode</p>
+                <p className="mt-2 text-sm text-[var(--text-primary)]">Become a writer when you are ready to publish.</p>
               </div>
               <Link href="/become-author" className="story-button-primary shrink-0 justify-center font-mono-df text-sm">
                 Become a Writer
@@ -109,7 +109,7 @@ export default function ExploreBrowse({
           filtered.length > 0 ? (
             <ExploreRow title={`${filtered.length} result${filtered.length === 1 ? "" : "s"}`} series={filtered} />
           ) : (
-            <p className="py-16 text-center font-mono-df text-sm text-foreground/20">No results found.</p>
+            <p className="py-16 text-center font-mono-df text-sm text-[var(--text-secondary)]">No results found.</p>
           )
         ) : (
           <>
@@ -145,7 +145,7 @@ function GenreChip({
       type="button"
       onClick={onClick}
       className={`whitespace-nowrap rounded-full px-3 py-1.5 font-mono-df text-xs capitalize transition-all ${
-        active ? "bg-purple-600 text-white" : "bg-foreground/5 text-foreground/40 hover:text-foreground/70"
+        active ? "border border-transparent bg-[var(--accent-solid)] text-[var(--accent-fg)]" : "border border-[var(--border-color)] bg-[var(--surface-raised)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
       }`}
     >
       {label}

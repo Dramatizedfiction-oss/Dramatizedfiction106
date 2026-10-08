@@ -78,14 +78,9 @@ export default function EpisodeTransitionCard({
 
   if (!nextEpisode) {
     return (
-      <div className="theme-panel rounded-[28px] border border-[var(--border-color)] p-5">
-        <p className="eyebrow">Season Complete</p>
-        <h3 className="theme-heading mt-3 text-2xl font-semibold">
-          You&apos;re caught up
-        </h3>
-        <p className="theme-meta mt-3 text-sm leading-6">
-          No next episode exists yet, so the ad transition system stays out of the way.
-        </p>
+      <div className="text-center">
+        <p className="reader-kicker">You&apos;re caught up</p>
+        <p className="reader-meta mt-2">This is the latest episode. New episodes appear in the series.</p>
       </div>
     );
   }
@@ -98,18 +93,17 @@ export default function EpisodeTransitionCard({
 
   if (!decision.shouldShowAd) {
     return (
-      <div className="theme-panel rounded-[28px] border border-[var(--border-color)] p-5">
-        <p className="eyebrow">Next Episode</p>
-        <h3 className="theme-heading mt-3 text-2xl font-semibold">{nextEpisode.title}</h3>
-        <p className="theme-meta mt-3 text-sm leading-6">
-          Continue cleanly into Episode {nextEpisode.episodeNumber}. Reading stays uninterrupted unless a controlled transition ad is actually due.
+      <div className="text-center">
+        <p className="reader-kicker">Next · Episode {nextEpisode.episodeNumber}</p>
+        <p className="mx-auto mt-2 max-w-[24ch] text-balance font-heading text-2xl font-semibold leading-tight text-[var(--paper-ink)]">
+          {nextEpisode.title}
         </p>
         <Link
           href={`/episode/${nextEpisode.id}`}
           onClick={handleContinue}
           className="story-button-primary mt-5 inline-flex"
         >
-          Continue to Episode {nextEpisode.episodeNumber}
+          Continue reading →
         </Link>
       </div>
     );

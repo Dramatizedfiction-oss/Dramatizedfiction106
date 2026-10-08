@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import AppSidebar, { type AppSidebarSeries } from "@/components/app-shell/AppSidebar";
 import type { SearchAuthor, SearchStory } from "@/components/app-shell/GlobalSearch";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
+import { useTheme } from "@/components/providers/ThemeProvider";
 import { MenuIcon } from "@/components/icons";
 import type { AppShellUser, StudioLink } from "@/lib/navigation";
 import { getRoleLabel, hasRoleAccess, normalizeRole } from "@/lib/roles";
@@ -32,7 +33,7 @@ export default function AppShell({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expanded, setExpanded] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const { resolvedTheme: theme, setPreference } = useTheme();
   const sessionUser = status === "loading" ? session?.user ?? user ?? null : session?.user ?? null;
   const canWrite = hasRoleAccess(sessionUser?.role, "WRITER");
   const canManage = hasRoleAccess(sessionUser?.role, "BOARD");
@@ -51,14 +52,6 @@ export default function AppShell({
     pathname.startsWith("/ceo");
 
   useEffect(() => {
-    const storedTheme = window.localStorage.getItem("df-theme");
-    const nextTheme = storedTheme === "light" ? "light" : "dark";
-    setTheme(nextTheme);
-    document.documentElement.classList.remove("light", "dark");
-    document.documentElement.classList.add(nextTheme);
-  }, []);
-
-  useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
@@ -69,12 +62,10 @@ export default function AppShell({
     };
   }, [mobileOpen]);
 
+  // Quick switch in the sidebar: an explicit choice, so it overrides "system".
+  // Settings offers Light / Dark / System.
   function toggleTheme() {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-    setTheme(nextTheme);
-    window.localStorage.setItem("df-theme", nextTheme);
-    document.documentElement.classList.remove("light", "dark");
-    document.documentElement.classList.add(nextTheme);
+    setPreference(theme === "dark" ? "light" : "dark");
   }
 
   async function handleSignOut() {
@@ -106,7 +97,7 @@ export default function AppShell({
   );
 
   return (
-    <div className="flex min-h-screen overflow-x-hidden" style={{ backgroundColor: "var(--page-bg)" }}>
+    <div className="app-canvas flex min-h-screen overflow-x-hidden">
       {!isReaderRoute ? (
         <div className="hidden flex-shrink-0 md:block">
           <div className="sticky top-0 h-screen">{sidebar}</div>
@@ -117,7 +108,7 @@ export default function AppShell({
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
-          className="fixed z-40 flex h-9 w-9 items-center justify-center rounded-md border border-foreground/10 text-foreground/60 md:hidden"
+          className="fixed z-40 flex h-9 w-9 items-center justify-center rounded-md border border-[var(--border-strong)] text-[var(--text-primary)] shadow-sm md:hidden"
           style={{
             top: "calc(env(safe-area-inset-top, 0px) + 1rem)",
             left: "max(1rem, env(safe-area-inset-left))",
@@ -153,19 +144,19 @@ export default function AppShell({
               onSignOut={handleSignOut}
             />
           </div>
-          <button type="button" className="flex-1 bg-black/60" onClick={() => setMobileOpen(false)} aria-label="Close menu" />
+          <button type="button" className="flex-1 bg-[var(--overlay-bg)]" onClick={() => setMobileOpen(false)} aria-label="Close menu" />
         </div>
       ) : null}
 
       <div className="flex min-h-screen min-w-0 flex-1 flex-col overflow-x-hidden">
         <main className={isFlushRoute ? "flex-1" : "page-shell flex-1"}>{children}</main>
         {!isReaderRoute ? (
-          <footer className="border-t border-foreground/5 px-6 py-8">
+          <footer className="border-t border-[var(--border-color)] px-6 py-8">
             <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-              <p className="font-mono-df text-xs uppercase tracking-widest text-foreground/25">
+              <p className="font-mono-df text-xs uppercase tracking-widest text-[var(--text-muted)]">
                 Dramatized Fiction
               </p>
-              <p className="text-xs text-foreground/30">Stories performed in text</p>
+              <p className="text-xs text-[var(--text-muted)]">Stories performed in text</p>
             </div>
           </footer>
         ) : null}

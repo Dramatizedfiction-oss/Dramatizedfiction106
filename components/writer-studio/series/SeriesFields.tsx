@@ -1,9 +1,10 @@
 "use client";
 
 import AiUsageSelector from "@/components/AiUsageSelector";
+import ImageUploadField from "@/components/uploads/ImageUploadField";
 import type { AiUsageTag } from "@/lib/ai-usage";
 import { GENRES } from "@/lib/genres";
-import { safeHexColor, safeImageUrl } from "@/lib/writer-studio/format";
+import { safeHexColor } from "@/lib/writer-studio/format";
 
 export type SeriesFormValues = {
   title: string;
@@ -17,7 +18,6 @@ export type SeriesFormValues = {
 const THEME_SWATCHES = ["#7c3aed", "#2563eb", "#0891b2", "#059669", "#ca8a04", "#ea580c", "#dc2626", "#db2777", "#475569"];
 
 const labelClass = "theme-heading mb-2 block text-sm font-semibold";
-const hintClass = "theme-meta mt-1.5 block text-xs";
 
 /**
  * Series form fields. `basicOnly` shows what's needed to start a series;
@@ -27,16 +27,18 @@ export default function SeriesFields({
   values,
   onChange,
   basicOnly = false,
+  seriesId,
 }: {
   values: SeriesFormValues;
   onChange: (next: SeriesFormValues) => void;
   basicOnly?: boolean;
+  /** Needed for the cover upload (the server checks the series is yours). */
+  seriesId?: string;
 }) {
   const set = <K extends keyof SeriesFormValues>(key: K, value: SeriesFormValues[K]) =>
     onChange({ ...values, [key]: value });
   const genres: string[] = [...GENRES];
   if (values.genre && !genres.includes(values.genre)) genres.unshift(values.genre);
-  const coverPreview = safeImageUrl(values.coverImage);
 
   return (
     <div className="space-y-6">
@@ -92,27 +94,16 @@ export default function SeriesFields({
 
       {!basicOnly ? (
         <>
-          <div>
-            <label className="block">
-              <span className={labelClass}>Cover image URL</span>
-              <input
-                className="studio-field w-full px-4 py-3 text-sm"
-                value={values.coverImage}
-                onChange={(event) => set("coverImage", event.target.value)}
-                placeholder="https://…"
-                inputMode="url"
-              />
-              <span className={hintClass}>Paste a link to an image. Uploads aren&apos;t available yet.</span>
-            </label>
-            {coverPreview ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={coverPreview}
-                alt="Cover preview"
-                className="mt-3 h-40 w-28 rounded-lg border border-[var(--studio-border)] object-cover"
-              />
-            ) : null}
-          </div>
+          {seriesId ? (
+            <ImageUploadField
+              label="Cover image"
+              purpose="series-cover"
+              targetId={seriesId}
+              value={values.coverImage}
+              onChange={(url) => set("coverImage", url)}
+              hint="A tall image works best (2:3). JPEG, PNG or WebP. Saved when you press Save."
+            />
+          ) : null}
 
           <fieldset>
             <legend className={labelClass}>Theme color</legend>

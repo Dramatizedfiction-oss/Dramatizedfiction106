@@ -25,14 +25,14 @@ export default function ExploreRow({
     <section className="px-4 md:px-8">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {highlight ? <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-purple-400" /> : null}
-          <h2 className="font-heading text-lg tracking-tight text-foreground/85 sm:text-xl">{title}</h2>
+          {highlight ? <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--accent)]" /> : null}
+          <h2 className="font-heading text-lg font-semibold tracking-tight text-[var(--text-primary)] sm:text-xl">{title}</h2>
         </div>
         <div className="hidden items-center gap-1 md:flex">
           <button
             type="button"
             onClick={() => scroll(-1)}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-foreground/30 transition hover:bg-foreground/8 hover:text-foreground/70"
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--border-color)] text-[var(--text-secondary)] transition hover:bg-[var(--panel-hover)] hover:text-[var(--text-primary)]"
             aria-label={`Scroll ${title} left`}
           >
             <ChevronLeftIcon size={14} />
@@ -40,7 +40,7 @@ export default function ExploreRow({
           <button
             type="button"
             onClick={() => scroll(1)}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-foreground/30 transition hover:bg-foreground/8 hover:text-foreground/70"
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--border-color)] text-[var(--text-secondary)] transition hover:bg-[var(--panel-hover)] hover:text-[var(--text-primary)]"
             aria-label={`Scroll ${title} right`}
           >
             <ChevronRightIcon size={14} />

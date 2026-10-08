@@ -89,7 +89,7 @@ export default function SeriesDetailsSheet({
           </div>
         }
       >
-        <SeriesFields values={values} onChange={setValues} />
+        <SeriesFields values={values} onChange={setValues} seriesId={seriesId} />
       </Sheet>
     </>
   );

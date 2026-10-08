@@ -2,6 +2,8 @@ import "./globals.css";
 import { auth } from "@/auth";
 import AppShell from "@/components/app-shell/AppShell";
 import AuthSessionProvider from "@/components/providers/AuthSessionProvider";
+import ThemeProvider from "@/components/providers/ThemeProvider";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
 import { prisma } from "@/lib/prisma";
 import { getAccessibleStudiosForUser } from "@/lib/studios";
@@ -69,21 +71,28 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    // "light" is the server default; THEME_INIT_SCRIPT swaps it for the stored
+    // preference before first paint (hence suppressHydrationWarning).
+    <html lang="en" className="light" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="bg-[var(--page-bg)] text-[var(--text-primary)]">
-        <AuthSessionProvider session={session}>
-          <div className="min-h-screen">
-            <AppShell
-              user={user}
-              studios={studios}
-              searchStories={searchStories}
-              searchAuthors={searchAuthors}
-              trending={trending}
-            >
-              {children}
-            </AppShell>
-          </div>
-        </AuthSessionProvider>
+        <ThemeProvider>
+          <AuthSessionProvider session={session}>
+            <div className="min-h-screen">
+              <AppShell
+                user={user}
+                studios={studios}
+                searchStories={searchStories}
+                searchAuthors={searchAuthors}
+                trending={trending}
+              >
+                {children}
+              </AppShell>
+            </div>
+          </AuthSessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

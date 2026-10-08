@@ -8,7 +8,7 @@ export default function PhaseLockedPreview({
   children?: React.ReactNode;
 }) {
   return (
-    <section className="rounded-[24px] border border-dashed border-[var(--border-color)] bg-[var(--bg-secondary)]/60 p-5 opacity-80">
+    <section className="rounded-[24px] border border-dashed border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 opacity-80">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="eyebrow">Unlocks in Phase 2</p>

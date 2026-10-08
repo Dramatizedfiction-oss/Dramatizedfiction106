@@ -20,7 +20,7 @@ export default function AiUsageSelector({
         </p>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div role="radiogroup" aria-label={label} className="grid gap-2 sm:grid-cols-2">
         {AI_USAGE_OPTIONS.map((option) => {
           const active = option === value;
 
@@ -28,14 +28,12 @@ export default function AiUsageSelector({
             <button
               key={option}
               type="button"
+              role="radio"
+              aria-checked={active}
               onClick={() => onChange(option)}
-              className={`rounded-[20px] border px-4 py-4 text-left transition ${
-                active
-                  ? "border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)]"
-                  : "border-[var(--border-color)] text-[var(--text-secondary)] hover:opacity-80"
-              }`}
+              className="ui-choice rounded-[20px] px-4 py-4 text-left"
             >
-              <p className="theme-heading text-sm font-semibold">{option}</p>
+              <p className={`text-sm font-semibold ${active ? "text-[var(--accent)]" : "theme-heading"}`}>{option}</p>
               <p className="theme-meta mt-2 text-xs leading-5">
                 {aiUsageDescription(option)}
               </p>

@@ -52,52 +52,52 @@ export default function WriterPolicyAcknowledgment({
   return (
     <section
       className={[
-        "w-full rounded-2xl border border-slate-800 bg-slate-950/90 p-6 shadow-2xl shadow-black/20",
+        "theme-panel w-full rounded-2xl border p-6",
         className
       ].join(" ")}
     >
       <div className="space-y-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+          <p className="eyebrow">
             Writer onboarding
           </p>
-          <h2 className="mt-2 text-2xl font-semibold text-white">
+          <h2 className="theme-heading mt-2 text-2xl font-semibold">
             Before you apply to write with us
           </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-300">
+          <p className="theme-meta mt-2 text-sm leading-6">
             Please review the policy below so we can keep the creator program clear,
             consistent, and easy to manage later.
           </p>
         </div>
 
-        <ul className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-300">
+        <ul className="theme-body space-y-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] p-4 text-sm">
           {defaultPolicyItems.map((item) => (
             <li key={item} className="flex gap-3">
-              <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500" />
+              <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[var(--accent)]" />
               <span>{item}</span>
             </li>
           ))}
         </ul>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="flex items-start gap-3 rounded-xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-200">
+          <label className="theme-body flex items-start gap-3 rounded-xl border border-[var(--border-strong)] bg-[var(--surface-raised)] p-4 text-sm">
             <input
               type="checkbox"
               checked={accepted}
               onChange={(event) => setAccepted(event.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-950 text-blue-500 focus:ring-blue-500"
+              className="mt-1 h-4 w-4 accent-[var(--accent-solid)]"
             />
             <span>I have read and agree to the writer policy.</span>
           </label>
 
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {error && <p className="text-sm text-[var(--status-danger)]">{error}</p>}
 
           <div className="flex flex-wrap items-center gap-3">
             {onAccept ? (
               <button
                 type="submit"
                 disabled={!canContinue}
-                className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="story-button-primary px-5 py-2.5 disabled:opacity-50"
               >
                 {submitting ? "Submitting..." : "Continue"}
               </button>
@@ -105,10 +105,10 @@ export default function WriterPolicyAcknowledgment({
               <Link
                 href={continueHref}
                 className={[
-                  "rounded-full px-5 py-2.5 text-sm font-semibold transition",
+                  "px-5 py-2.5",
                   accepted
-                    ? "bg-blue-600 text-white hover:bg-blue-500"
-                    : "cursor-not-allowed bg-slate-800 text-slate-500"
+                    ? "story-button-primary"
+                    : "story-button cursor-not-allowed border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-muted)]"
                 ].join(" ")}
                 aria-disabled={!accepted}
                 tabIndex={accepted ? 0 : -1}
@@ -119,7 +119,7 @@ export default function WriterPolicyAcknowledgment({
 
             <Link
               href={signInHref}
-              className="text-sm font-medium text-slate-300 transition hover:text-white"
+              className="text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
             >
               Already have an account? Sign in
             </Link>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { serializeAiUsageTag } from "@/lib/ai-usage";
 import {
+  badRequest,
   cleanOptionalText,
   conflict,
   isUniqueConstraintError,
@@ -12,6 +13,7 @@ import {
 } from "@/lib/api/writer-studio-request";
 import { requireApiRole, requireOwnedSeries } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
+import { decideImageField } from "@/lib/uploads/image-storage";
 
 // authorId, status, locked, counters and timestamps are server-controlled and
 // stripped by the schema.
@@ -41,6 +43,9 @@ export async function POST(request: Request) {
   const owned = await requireOwnedSeries(input.seriesId, guard.user.id);
   if (!owned.ok) return owned.response;
 
+  const cover = decideImageField(input.coverImage, null);
+  if (!cover.ok) return badRequest(cover.message);
+
   try {
     const latestEpisode = await prisma.episode.findFirst({
       where: { seriesId: owned.series.id },
@@ -58,7 +63,7 @@ export async function POST(request: Request) {
         contentWarning: cleanOptionalText(input.contentWarning),
         body: input.body || "",
         teaser: null,
-        coverImage: cleanOptionalText(input.coverImage),
+        coverImage: cover.value ?? null,
         readTime: input.readTime ?? 5,
         locked: false,
         status: "DRAFT",

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
+import ImageUploadField from "@/components/uploads/ImageUploadField";
 
 export default function BecomeAuthorForm({
   defaultDisplayName,
@@ -73,7 +74,7 @@ export default function BecomeAuthorForm({
             onChange={(event) => setDisplayName(event.target.value)}
             maxLength={80}
             required
-            className="theme-panel w-full rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--text-primary)]"
+            className="ui-input w-full rounded-[18px] px-4 py-3 text-sm"
           />
         </label>
 
@@ -90,17 +91,14 @@ export default function BecomeAuthorForm({
           </span>
         </label>
 
-        <label className="block">
-          <span className="theme-meta mb-2 block text-xs uppercase tracking-[0.24em]">
-            Profile Image URL
-          </span>
-          <input
-            value={profileImage}
-            onChange={(event) => setProfileImage(event.target.value)}
-            placeholder="Optional"
-            className="theme-panel w-full rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--text-primary)]"
-          />
-        </label>
+        <ImageUploadField
+          label="Profile picture (optional)"
+          purpose="profile-image"
+          shape="avatar"
+          value={profileImage}
+          onChange={setProfileImage}
+          hint="A square photo works best. JPEG, PNG or WebP."
+        />
 
         <label className="block">
           <span className="theme-meta mb-2 block text-xs uppercase tracking-[0.24em]">
@@ -112,13 +110,13 @@ export default function BecomeAuthorForm({
             rows={4}
             maxLength={280}
             placeholder="Optional"
-            className="theme-panel w-full rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--text-primary)]"
+            className="ui-input w-full rounded-[18px] px-4 py-3 text-sm"
           />
         </label>
       </div>
 
       {error ? (
-        <p className="mt-4 rounded-[18px] border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--text-primary)]">
+        <p role="alert" className="ui-alert-error mt-4 rounded-[18px] px-4 py-3 text-sm">
           {error}
         </p>
       ) : null}

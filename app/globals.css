@@ -1,68 +1,144 @@
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Cormorant+Garamond:wght@300;400;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;0,7..72,700;1,7..72,400;1,7..72,600&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /*
+   * Theme tokens. Light is the default; .dark (set on <html> by the
+   * pre-paint script in app/layout.tsx) switches every token at once.
+   *
+   * Layers, back to front:
+   *   --page-bg       the page
+   *   --bg-secondary  surfaces: cards, panels, sections ("surface")
+   *   --bg-primary    inset layer inside a surface: inner tiles, wells
+   *   --surface-raised  floating layers: dialogs, sheets, menus, popovers
+   *   --paper-bg      the reading surface (reader + editor)
+   * Text: --text-primary > --text-secondary > --text-muted (placeholders,
+   * disabled, tertiary). --border-color separates surfaces; --border-strong
+   * outlines controls.
+   */
   :root {
-    --background: 0 0% 98%;
-    --foreground: 0 0% 8%;
-    --bg-primary: #fafafa;
-    --bg-secondary: #f3f3f3;
-    --text-primary: #141414;
-    --text-secondary: #737373;
-    --border-color: rgba(0, 0, 0, 0.08);
-    --page-bg: #f9f9f9;
-    --panel-bg: rgba(255, 255, 255, 0.88);
-    --panel-hover: rgba(0, 0, 0, 0.04);
-    --sidebar-bg: rgba(252, 252, 252, 0.97);
-    --header-bg: rgba(249, 249, 249, 0.86);
-    --overlay-bg: rgba(0, 0, 0, 0.45);
-    --series-accent: 270 80% 55%;
+    color-scheme: light;
+    --background: 240 14% 97%;
+    --foreground: 240 12% 8%;
+
+    --page-bg: #f4f4f7;
+    --page-glow: radial-gradient(1100px 520px at 75% -12%, rgba(124, 58, 237, 0.07), transparent 65%);
+    --bg-secondary: #ffffff;
+    --bg-primary: #f5f5f8;
+    --surface-raised: #ffffff;
+    --panel-bg: rgba(255, 255, 255, 0.92);
+    --panel-hover: rgba(24, 24, 40, 0.05);
+    --sidebar-bg: #ffffff;
+    --header-bg: rgba(255, 255, 255, 0.9);
+    --overlay-bg: rgba(16, 16, 28, 0.42);
+
+    --text-primary: #111118;
+    --text-secondary: #4b4b58;
+    --text-muted: #6b6b78;
+    --border-color: rgba(24, 24, 40, 0.13);
+    --border-strong: rgba(24, 24, 40, 0.26);
+
+    --accent: #6d28d9;
+    --accent-solid: #7c3aed;
+    --accent-solid-hover: #6d28d9;
+    --accent-fg: #ffffff;
+    --accent-soft: rgba(124, 58, 237, 0.1);
+    --focus-ring: rgba(109, 40, 217, 0.6);
+    --series-accent: 265 75% 50%;
+
+    --input-bg: #ffffff;
+    --shadow-card: 0 1px 2px rgba(16, 16, 32, 0.05), 0 6px 18px rgba(16, 16, 32, 0.05);
+    --shadow-raised: 0 18px 48px rgba(16, 16, 32, 0.16);
+
+    --rank-1: #b45309;
+    --rank-2: #52525b;
+    --rank-3: #9a3412;
+
     --font-heading: "Playfair Display", serif;
     --font-body: "Inter", sans-serif;
     --font-mono: "Space Mono", monospace;
-    --font-reading: "Cormorant Garamond", serif;
+    /* Story body: Literata, a serif drawn for long-form screen reading. */
+    --font-reading: "Literata", Georgia, "Times New Roman", serif;
 
-    /* Reading surface, shared by the reader and the Writer Studio editor. */
-    --paper-bg: color-mix(in srgb, var(--bg-primary) 92%, transparent);
-    --paper-ink: var(--text-primary);
+    /* Reading surface, shared by the reader and the Writer Studio editor:
+       a warm, slightly softened page rather than pure white. */
+    --paper-bg: #fbfaf7;
+    --paper-ink: #1f1d24;
+    --paper-muted: #5c5765;
+    --paper-rule: rgba(31, 29, 36, 0.14);
+    --paper-glow: none;
 
     /* Writer Studio: aliases of the global tokens so the studio follows the theme. */
     --studio-surface: var(--bg-secondary);
-    --studio-raised: var(--bg-primary);
+    --studio-raised: var(--surface-raised);
     --studio-text: var(--text-primary);
     --studio-muted: var(--text-secondary);
     --studio-border: var(--border-color);
-    --studio-accent: hsl(var(--series-accent));
+    --studio-accent: var(--accent);
 
-    /* Semantic status colors. */
-    --status-draft: #6b6b6b;
+    /* Semantic status colors (text and outlines). */
+    --status-draft: #5b5b66;
     --status-live: #15803d;
     --status-warning: #b45309;
     --status-danger: #b91c1c;
   }
 
+  /* Dark: layered ink surfaces with a faint violet atmosphere, never flat black. */
   .dark {
-    --status-draft: #9a9a9a;
+    color-scheme: dark;
+    --background: 252 22% 5%;
+    --foreground: 260 30% 96%;
+
+    --page-bg: #0b0a10;
+    --page-glow:
+      radial-gradient(1200px 600px at 78% -14%, rgba(124, 58, 237, 0.16), transparent 62%),
+      radial-gradient(900px 500px at -10% 110%, rgba(59, 130, 246, 0.07), transparent 60%);
+    --bg-secondary: #15141c;
+    --bg-primary: #0f0e15;
+    --surface-raised: #1c1b25;
+    --panel-bg: rgba(21, 20, 28, 0.9);
+    --panel-hover: rgba(255, 255, 255, 0.07);
+    --sidebar-bg: #0f0e15;
+    --header-bg: rgba(15, 14, 21, 0.86);
+    --overlay-bg: rgba(0, 0, 0, 0.66);
+
+    --text-primary: #f3f1f8;
+    --text-secondary: #b3afc0;
+    --text-muted: #8e8a9c;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --border-strong: rgba(255, 255, 255, 0.2);
+
+    --accent: #b49cfc;
+    --accent-solid: #7c3aed;
+    --accent-solid-hover: #8b5cf6;
+    --accent-fg: #ffffff;
+    --accent-soft: rgba(167, 139, 250, 0.14);
+    --focus-ring: rgba(180, 156, 252, 0.75);
+    --series-accent: 265 90% 75%;
+
+    --input-bg: #0f0e15;
+    --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 10px 28px rgba(0, 0, 0, 0.45);
+    --shadow-raised: 0 24px 64px rgba(0, 0, 0, 0.6);
+
+    --rank-1: #fbbf24;
+    --rank-2: #cbd5e1;
+    --rank-3: #fb923c;
+
+    /* Night page: deep ink, softened (not pure white) text to limit glare,
+       and a faint violet light falling from the top. */
+    --paper-bg: #131118;
+    --paper-ink: #e4dfe8;
+    --paper-muted: #a39dad;
+    --paper-rule: rgba(255, 255, 255, 0.12);
+    --paper-glow: radial-gradient(900px 420px at 50% -140px, rgba(124, 58, 237, 0.16), transparent 70%);
+
+    --status-draft: #a8a4b6;
     --status-live: #4ade80;
     --status-warning: #fbbf24;
     --status-danger: #f87171;
-    --background: 0 0% 1%;
-    --foreground: 0 0% 95%;
-    --bg-primary: #050505;
-    --bg-secondary: #0d0d0d;
-    --text-primary: #f2f2f2;
-    --text-secondary: #808080;
-    --border-color: rgba(255, 255, 255, 0.08);
-    --page-bg: #020202;
-    --panel-bg: rgba(10, 10, 10, 0.86);
-    --panel-hover: rgba(255, 255, 255, 0.06);
-    --sidebar-bg: rgba(2, 2, 2, 0.97);
-    --header-bg: rgba(2, 2, 2, 0.78);
-    --overlay-bg: rgba(0, 0, 0, 0.6);
-    --series-accent: 270 80% 65%;
   }
 
   * {
@@ -108,9 +184,21 @@
     font: inherit;
   }
 
+  ::placeholder {
+    color: var(--text-muted);
+    opacity: 1;
+  }
+
+  /* One visible keyboard focus style everywhere (mouse clicks don't show it). */
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
   ::selection {
-    background: rgba(124, 58, 237, 0.28);
-    color: #ffffff;
+    background: var(--accent-soft);
+    background: color-mix(in srgb, var(--accent-solid) 28%, transparent);
+    color: inherit;
   }
 }
 
@@ -131,12 +219,17 @@
     @apply mx-auto w-full max-w-[1500px] px-4 pb-16 pt-6 md:px-8;
   }
 
+  /* The app canvas: page color plus the theme's atmosphere (stronger in dark). */
+  .app-canvas {
+    background-color: var(--page-bg);
+    background-image: var(--page-glow);
+    background-attachment: fixed;
+  }
+
   .glass-panel {
     background: var(--panel-bg);
     border: 1px solid var(--border-color);
-    box-shadow:
-      0 18px 55px rgba(43, 29, 18, 0.14),
-      inset 0 1px 0 rgba(255, 255, 255, 0.24);
+    box-shadow: var(--shadow-card);
     backdrop-filter: blur(22px);
     -webkit-backdrop-filter: blur(22px);
   }
@@ -149,87 +242,173 @@
     @apply inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition duration-200;
   }
 
-  .story-button-primary {
-    @apply story-button;
-    color: #ffffff;
-    background: linear-gradient(135deg, #7c3aed, #3b82f6);
-    box-shadow: 0 12px 30px rgba(124, 58, 237, 0.28);
+  .story-button:disabled,
+  .story-button[aria-disabled="true"] {
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
   }
 
-  .story-button-primary:hover {
-    transform: translateY(-1px) scale(1.03);
-    box-shadow: 0 18px 38px rgba(124, 58, 237, 0.36);
+  .story-button-primary {
+    @apply story-button;
+    color: var(--accent-fg);
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    box-shadow: 0 10px 26px rgba(124, 58, 237, 0.3);
+  }
+
+  .story-button-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 34px rgba(124, 58, 237, 0.4);
+    filter: brightness(1.06);
   }
 
   .story-button-secondary {
     @apply story-button;
-    border: 1px solid var(--border-color);
-    background: var(--bg-secondary);
+    border: 1px solid var(--border-strong);
+    background: var(--surface-raised);
     color: var(--text-primary);
   }
 
-  .story-button-secondary:hover {
-    opacity: 0.8;
+  .story-button-secondary:hover:not(:disabled) {
+    background: var(--bg-primary);
+    border-color: var(--text-muted);
   }
 
   .eyebrow {
-    @apply font-mono-df text-xs uppercase tracking-[0.32em];
+    @apply font-mono-df text-xs font-bold uppercase tracking-[0.28em];
     color: var(--text-secondary);
   }
 
+  /*
+   * Story typography, shared by the reader, the Studio preview and the
+   * editor (so writers see what readers see). Book conventions: paragraphs
+   * run on with a first-line indent instead of blank-line gaps; the first
+   * paragraph of a section (start, after a heading, quote or scene break) is
+   * not indented. ~17px on phones rising to 20px on wide screens; the reading
+   * column (.reader-column) keeps lines to roughly 60-70 characters.
+   */
   .reading-body {
     font-family: var(--font-reading);
-    font-size: clamp(1.28rem, 1.9vw, 1.5rem);
-    line-height: 1.92;
-    letter-spacing: 0.01em;
+    font-size: clamp(1.0625rem, 0.98rem + 0.35vw, 1.25rem);
+    line-height: 1.72;
+    letter-spacing: 0.002em;
+    font-optical-sizing: auto;
+    font-kerning: normal;
+    font-variant-numeric: oldstyle-nums proportional-nums;
+    text-rendering: optimizeLegibility;
+    overflow-wrap: break-word;
+    -webkit-hyphens: auto;
+    hyphens: auto;
+    color: var(--paper-ink);
+  }
+
+  .reading-body > :first-child {
+    margin-top: 0;
   }
 
   .reading-body p {
-    margin-bottom: 1.15em;
+    margin: 0;
+  }
+
+  .reading-body p + p {
+    margin-top: 0.2em;
+    text-indent: 1.5em;
   }
 
   .reading-body h1,
   .reading-body h2,
   .reading-body h3 {
-    font-family: var(--font-heading);
-    margin-top: 1.4em;
-    margin-bottom: 0.5em;
-    color: var(--text-primary);
-  }
-
-  .reading-body h2 {
-    font-size: 1.35em;
+    font-family: var(--font-reading);
+    font-weight: 600;
+    font-size: 1.3em;
     line-height: 1.3;
+    margin: 2em 0 0.75em;
+    color: var(--paper-ink);
+    text-wrap: balance;
+    -webkit-hyphens: manual;
+    hyphens: manual;
   }
 
   .reading-body blockquote {
-    margin: 1.4em 0;
-    padding-left: 1.1em;
-    border-left: 2px solid hsl(var(--series-accent) / 0.6);
-    font-style: italic;
-    color: color-mix(in srgb, var(--paper-ink) 82%, transparent);
+    margin: 1.3em 0 1.3em 1.5em;
+    padding-left: 1em;
+    border-left: 2px solid var(--paper-rule);
+    color: color-mix(in srgb, var(--paper-ink) 86%, var(--paper-bg));
   }
 
   .reading-body strong {
     font-weight: 700;
   }
 
-  /* Scene break: stored as <hr>, drawn as an ornament. */
+  /* The content contract has no links or images today; these keep any future
+     ones inside the reading column and on-theme. */
+  .reading-body a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+
+  .reading-body img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 1.75em auto;
+  }
+
+  /* Scene break: stored as <hr>, drawn as a quiet ornament. */
   .reading-body hr {
     border: 0;
     height: auto;
-    margin: 2.2em 0;
+    margin: 2em 0;
     text-align: center;
     overflow: visible;
   }
 
   .reading-body hr::after {
-    content: "✦";
-    display: inline-block;
-    font-size: 0.85em;
-    letter-spacing: 1.2em;
-    padding-left: 1.2em;
-    color: var(--text-secondary);
+    content: "\2726\2003\2726\2003\2726";
+    font-size: 0.7em;
+    color: var(--paper-muted);
+  }
+
+  /* ---- Reader page (app/episode/[episodeId]) and Studio preview ---- */
+
+  /* The whole page is the reading surface: no card around the story. */
+  .reader-page {
+    min-height: 100vh;
+    background-color: var(--paper-bg);
+    background-image: var(--paper-glow);
+    background-repeat: no-repeat;
+    color: var(--paper-ink);
+  }
+
+  .reader-column {
+    width: 100%;
+    max-width: 42rem;
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 5vw, 2rem);
+  }
+
+  .reader-kicker {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .reader-meta {
+    font-size: 0.875rem;
+    color: var(--paper-muted);
+  }
+
+  .reader-ornament {
+    margin: 2.25rem 0;
+    text-align: center;
+    font-size: 0.8rem;
+    letter-spacing: 0.9em;
+    padding-left: 0.9em;
+    color: var(--paper-muted);
   }
 
   /* Writer Studio editor (Tiptap/ProseMirror). */
@@ -263,7 +442,7 @@
 
   .studio-status-draft {
     color: var(--status-draft);
-    border-color: color-mix(in srgb, var(--status-draft) 35%, transparent);
+    border-color: color-mix(in srgb, var(--status-draft) 45%, transparent);
   }
 
   .studio-status-live {
@@ -288,8 +467,8 @@
   }
 
   .studio-tool[aria-pressed="true"] {
-    background: color-mix(in srgb, hsl(var(--series-accent)) 14%, transparent);
-    color: var(--studio-text);
+    background: var(--accent-soft);
+    color: var(--accent);
   }
 
   .studio-tool:disabled {
@@ -323,6 +502,7 @@
   .theme-panel {
     background: var(--bg-secondary);
     border-color: var(--border-color);
+    box-shadow: var(--shadow-card);
   }
 
   .theme-panel-hover:hover {
@@ -353,28 +533,69 @@
     color: var(--paper-ink);
     border: 1px solid var(--border-color);
     border-radius: 2rem;
-    box-shadow: 0 20px 60px rgba(43, 29, 18, 0.13);
+    box-shadow: var(--shadow-card);
   }
 
   .studio-panel {
-    background: color-mix(in srgb, var(--bg-secondary) 88%, transparent);
+    background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 1.5rem;
-    box-shadow: 0 12px 32px rgba(43, 29, 18, 0.06);
+    box-shadow: var(--shadow-card);
   }
 
+  /* Text inputs, textareas and selects. .studio-field is the Writer Studio name for the same control. */
+  .ui-input,
   .studio-field {
-    background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
-    border: 1px solid var(--border-color);
+    background: var(--input-bg);
+    border: 1px solid var(--border-strong);
     border-radius: 0.9rem;
     color: var(--text-primary);
     transition: border-color 160ms ease, box-shadow 160ms ease;
   }
 
+  .ui-input:hover:not(:disabled),
+  .studio-field:hover:not(:disabled) {
+    border-color: var(--text-muted);
+  }
+
+  .ui-input:focus,
   .studio-field:focus {
-    border-color: hsl(var(--series-accent));
-    box-shadow: 0 0 0 3px hsl(var(--series-accent) / 0.14);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
     outline: none;
+  }
+
+  .ui-input:disabled,
+  .studio-field:disabled {
+    background: var(--bg-primary);
+    color: var(--text-muted);
+    cursor: not-allowed;
+  }
+
+  /* Inline form error. */
+  .ui-alert-error {
+    color: var(--status-danger);
+    background: color-mix(in srgb, var(--status-danger) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--status-danger) 35%, transparent);
+  }
+
+  /* Choice tiles (radio-like buttons such as the AI label picker and theme picker). */
+  .ui-choice {
+    border: 1px solid var(--border-strong);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    transition: border-color 160ms ease, background 160ms ease;
+  }
+
+  .ui-choice:hover {
+    border-color: var(--text-muted);
+  }
+
+  .ui-choice[aria-pressed="true"],
+  .ui-choice[aria-checked="true"] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
   }
 }
 
@@ -419,18 +640,19 @@
 }
 
 .sidebar-link {
-  @apply flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-light tracking-wide transition-all duration-200;
-  color: color-mix(in srgb, var(--text-primary) 40%, transparent);
+  @apply flex items-center gap-3 rounded-md px-3 py-2.5 text-sm tracking-wide transition-all duration-200;
+  color: var(--text-secondary);
 }
 
 .sidebar-link:hover {
   background: var(--panel-hover);
-  color: color-mix(in srgb, var(--text-primary) 70%, transparent);
+  color: var(--text-primary);
 }
 
 .sidebar-link-active {
-  background: var(--panel-hover);
+  background: var(--accent-soft);
   color: var(--text-primary);
+  font-weight: 600;
 }
 
 .animate-fade-in-up {

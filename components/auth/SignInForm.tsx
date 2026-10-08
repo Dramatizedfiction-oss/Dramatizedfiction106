@@ -61,7 +61,7 @@ export default function SignInForm() {
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="theme-panel w-full rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--text-primary)]"
+            className="ui-input w-full rounded-[18px] px-4 py-3 text-sm"
             autoComplete="email"
             required
           />
@@ -75,14 +75,14 @@ export default function SignInForm() {
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="theme-panel w-full rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--text-primary)]"
+            className="ui-input w-full rounded-[18px] px-4 py-3 text-sm"
             autoComplete="current-password"
             required
           />
         </label>
 
         {error && (
-          <p className="rounded-[18px] border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--text-primary)]">
+          <p role="alert" className="ui-alert-error rounded-[18px] px-4 py-3 text-sm">
             {error}
           </p>
         )}

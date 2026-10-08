@@ -142,7 +142,7 @@ export default function GlobalSearch({
   }
 
   const resultsPanel = (
-    <div className="rounded-xl border border-foreground/8 bg-[var(--sidebar-bg)] p-3 shadow-2xl">
+    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--surface-raised)] p-3 shadow-[var(--shadow-raised)]">
       <div className="grid gap-4">
         <section>
           <p className="eyebrow">Stories</p>
@@ -154,7 +154,7 @@ export default function GlobalSearch({
                 <Link
                   key={story.id}
                   href={`/series/${story.id}`}
-                  className="block rounded-lg border border-foreground/8 px-3 py-2 transition hover:bg-foreground/5"
+                  className="block rounded-lg border border-[var(--border-color)] px-3 py-2 transition hover:bg-[var(--panel-hover)]"
                   onClick={handleResultClick}
                 >
                   <p className="theme-heading font-medium">{story.title}</p>
@@ -177,7 +177,7 @@ export default function GlobalSearch({
                 <Link
                   key={author.id}
                   href={`/author/${author.id}`}
-                  className="block rounded-lg border border-foreground/8 px-3 py-2 transition hover:bg-foreground/5"
+                  className="block rounded-lg border border-[var(--border-color)] px-3 py-2 transition hover:bg-[var(--panel-hover)]"
                   onClick={handleResultClick}
                 >
                   <p className="theme-heading font-medium">
@@ -205,7 +205,7 @@ export default function GlobalSearch({
           aria-label="Close search"
         />
 
-        <div className="relative mx-auto flex min-h-screen w-full max-w-3xl flex-col bg-[var(--bg-primary)] px-4 py-6 md:px-8">
+        <div className="relative mx-auto flex min-h-screen w-full max-w-3xl flex-col bg-[var(--page-bg)] px-4 py-6 md:px-8">
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
               <p className="eyebrow">Global Search</p>
@@ -223,7 +223,7 @@ export default function GlobalSearch({
             </button>
           </div>
 
-          <div className="theme-panel flex items-center gap-3 rounded-full border border-[var(--border-color)] px-4 py-3">
+          <div className="ui-input flex items-center gap-3 rounded-full px-4 py-3">
             <span className="theme-meta text-sm">Search</span>
             <input
               autoFocus
@@ -231,7 +231,7 @@ export default function GlobalSearch({
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search stories and authors"
-              className="w-full bg-transparent text-[var(--text-primary)] outline-none placeholder:text-[var(--text-secondary)]"
+              className="w-full bg-transparent text-[var(--text-primary)] outline-none"
             />
           </div>
 
@@ -243,7 +243,7 @@ export default function GlobalSearch({
 
   return (
     <div className="relative w-full">
-      <div className="flex items-center rounded-lg border border-foreground/8 bg-foreground/5 px-3 py-2">
+      <div className="ui-input flex items-center rounded-lg px-3 py-2 focus-within:border-[var(--accent)]">
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -251,7 +251,7 @@ export default function GlobalSearch({
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           placeholder="Search"
-          className="w-full bg-transparent font-mono-df text-xs text-foreground outline-none placeholder:text-foreground/25"
+          className="w-full bg-transparent font-mono-df text-xs text-[var(--text-primary)] outline-none"
         />
       </div>
 

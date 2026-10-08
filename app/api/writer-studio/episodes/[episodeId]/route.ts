@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { serializeAiUsageTag } from "@/lib/ai-usage";
 import {
+  badRequest,
   cleanOptionalText,
   conflict,
   isUniqueConstraintError,
@@ -13,6 +14,7 @@ import {
 } from "@/lib/api/writer-studio-request";
 import { requireApiRole, requireOwnedEpisode } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
+import { decideImageField, deleteReplacedImage } from "@/lib/uploads/image-storage";
 
 // Edit/autosave. Publication state is not accepted here: the autosave's
 // `status: "DRAFT"` is ignored, so saving never unpublishes, and publishing
@@ -46,6 +48,10 @@ export async function PATCH(
   const input = body.data;
   const has = (key: keyof typeof input) => input[key] !== undefined && input[key] !== null;
 
+  // A new cover must be an uploaded image; the stored one may be kept as is.
+  const cover = decideImageField(input.coverImage, owned.episode.coverImage);
+  if (!cover.ok) return badRequest(cover.message);
+
   try {
     const updated = await prisma.episode.update({
       where: { id: owned.episode.id },
@@ -57,13 +63,15 @@ export async function PATCH(
         description: has("description") ? cleanOptionalText(input.description) : undefined,
         contentWarning: has("contentWarning") ? cleanOptionalText(input.contentWarning) : undefined,
         body: typeof input.body === "string" ? input.body : undefined,
-        coverImage: has("coverImage") ? cleanOptionalText(input.coverImage) : undefined,
+        coverImage: cover.value,
         aiUsageTag: input.aiUsageTag ? serializeAiUsageTag(input.aiUsageTag) : undefined,
         readTime: input.readTime ?? undefined,
         locked: await resolveLockedUpdate(input.locked),
         lastSavedAt: new Date(),
       },
     });
+
+    await deleteReplacedImage(owned.episode.coverImage, updated.coverImage);
 
     return NextResponse.json({ success: true, episode: updated });
   } catch (error) {
