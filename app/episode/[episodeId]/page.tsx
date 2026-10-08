@@ -2,6 +2,8 @@ import { getNextEpisode } from "@/lib/nextEpisode";
 import { auth } from "@/auth";
 import AiUsageBadge from "@/components/AiUsageBadge";
 import EpisodeTransitionCard from "@/components/EpisodeTransitionCard";
+import EpisodeContent from "@/components/episode-content/EpisodeContent";
+import EpisodeReadingView from "@/components/episode-content/EpisodeReadingView";
 import PurchasePreviewCard from "@/components/monetization/PurchasePreviewCard";
 import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
 import ReportAiTagButton from "@/components/ReportAiTagButton";
@@ -14,6 +16,7 @@ import {
   type MonetizedEpisode,
 } from "@/lib/monetization";
 import { PUBLIC_EPISODE_WHERE } from "@/lib/content-visibility";
+import { parseEpisodeHtml } from "@/lib/episode-content";
 import { prisma } from "@/lib/prisma";
 
 export default async function EpisodeReaderPage({
@@ -118,25 +121,16 @@ export default async function EpisodeReaderPage({
       <main className="editorial-page">
         <div className="mx-auto grid max-w-[1400px] gap-8 lg:grid-cols-[minmax(0,700px)_320px] lg:items-start lg:justify-center">
           <div className="min-w-0">
-            <header className="mb-8">
-              <p className="eyebrow">
-                Episode {episode.episodeNumber} | {episode.readTime} min read
-              </p>
-              <h1 className="font-heading theme-heading mt-3 text-4xl font-semibold md:text-5xl">
-                {episode.title}
-              </h1>
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <AiUsageBadge tag={episode.aiUsageTag} />
-                <ReportAiTagButton subject={episode.title} />
-              </div>
-            </header>
-
-            <article className="reader-paper mx-auto max-w-[760px] px-6 py-8 md:px-12 md:py-12">
+            <EpisodeReadingView
+              episodeNumber={episode.episodeNumber}
+              readTime={episode.readTime}
+              title={episode.title}
+              aiUsageTag={episode.aiUsageTag}
+              headerActions={<ReportAiTagButton subject={episode.title} />}
+            >
               {canReadEpisode ? (
                 <div className="reading-body theme-body">
-                  {toReadableParagraphs(episode.body).map((paragraph, index) => (
-                    <p key={`${episode.id}-${index}`}>{paragraph}</p>
-                  ))}
+                  <EpisodeContent content={parseEpisodeHtml(episode.body)} />
                 </div>
               ) : (
                 <div className="theme-panel rounded-[28px] border border-[var(--border-color)] p-6">
@@ -147,7 +141,7 @@ export default async function EpisodeReaderPage({
                   </p>
                 </div>
               )}
-            </article>
+            </EpisodeReadingView>
 
             <div className="mx-auto mt-10 max-w-[700px] lg:hidden">
               <EpisodeTransitionCard
@@ -173,16 +167,4 @@ export default async function EpisodeReaderPage({
       </main>
     </ReaderChrome>
   );
-}
-
-function toReadableParagraphs(body: string) {
-  const text = body
-    .replace(/<br\s*\/?\s*>/gi, "\n")
-    .replace(/<\/(p|div|h[1-6])>/gi, "\n\n")
-    .replace(/<[^>]+>/g, "");
-
-  return text
-    .split(/\n\s*\n/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
 }

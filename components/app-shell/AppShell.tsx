@@ -38,7 +38,10 @@ export default function AppShell({
   const canManage = hasRoleAccess(sessionUser?.role, "BOARD");
   const canAccessCEO = hasRoleAccess(sessionUser?.role, "CEO");
   const roleLabel = getRoleLabel(normalizeRole(sessionUser?.role));
-  const isReaderRoute = pathname.startsWith("/episode/");
+  // The reader and the Writer Studio focus screens (editor, preview, publish)
+  // replace the global chrome with their own top bar.
+  const isStudioFocusRoute = /^\/writer-studio\/episodes\/(?!new(?:\/|$))[^/]+/.test(pathname);
+  const isReaderRoute = pathname.startsWith("/episode/") || isStudioFocusRoute;
   const isFlushRoute =
     pathname === "/" ||
     pathname.startsWith("/explore") ||

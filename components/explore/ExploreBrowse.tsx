@@ -5,19 +5,7 @@ import Link from "next/link";
 import ExploreRow from "@/components/explore/ExploreRow";
 import { SearchIcon } from "@/components/icons";
 import type { CoverSeries } from "@/components/home/CoverSeriesCard";
-
-const GENRES = [
-  "thriller",
-  "romance",
-  "sci-fi",
-  "fantasy",
-  "drama",
-  "horror",
-  "mystery",
-  "comedy",
-  "historical",
-  "literary",
-];
+import { GENRES } from "@/lib/genres";
 
 export type ExploreStory = CoverSeries & {
   description?: string | null;

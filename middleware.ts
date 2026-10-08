@@ -14,9 +14,7 @@ export default function middleware(request: NextRequest) {
   if (pathname === "/writer" || pathname.startsWith("/writer/")) {
     const writerPath = pathname.slice("/writer".length) || "/";
     const legacyRouteMap: Record<string, string> = {
-      "/episodes": "/stories",
-      "/stats": "/analytics",
-      "/new-episode": "/",
+      "/new-episode": "/episodes/new",
     };
     const destination = legacyRouteMap[writerPath] ?? writerPath;
     const writerStudioUrl = new URL(`/writer-studio${destination}`, nextUrl);
