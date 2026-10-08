@@ -4,15 +4,9 @@ import AiUsageBadge from "@/components/AiUsageBadge";
 import AuthorTierBadge from "@/components/AuthorTierBadge";
 import EpisodeCarousel from "@/components/EpisodeCarousel";
 import FollowAuthorButton from "@/components/follow/FollowAuthorButton";
-import PurchasePreviewCard from "@/components/monetization/PurchasePreviewCard";
-import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
 import ReportAiTagButton from "@/components/ReportAiTagButton";
 import { deriveAuthorTier, derivePostingConsistency } from "@/lib/author-tier";
-import {
-  canUserAccessContent,
-  createViewerMonetizationState,
-  type MonetizedSeries,
-} from "@/lib/monetization";
+import { createViewerMonetizationState } from "@/lib/monetization";
 import { PUBLIC_SERIES_WHERE, publicEpisodePreview } from "@/lib/content-visibility";
 import { prisma } from "@/lib/prisma";
 
@@ -65,15 +59,6 @@ export default async function SeriesPage({
     ),
     completionRate: Math.min(0.96, 0.45 + Math.min(series.episodes.length, 12) * 0.03),
   });
-  const seriesMonetization: MonetizedSeries = {
-    contentType: "series",
-    id: series.id,
-    isFree: true,
-    isLocked: false,
-    price: 9.99,
-    creatorId: series.authorId,
-  };
-  const seriesAccessStatus = canUserAccessContent(viewer, seriesMonetization).accessStatus;
 
   return (
     <main className="editorial-page overflow-hidden">
@@ -156,19 +141,10 @@ export default async function SeriesPage({
               id: episode.id,
               isFree: !episode.locked,
               isLocked: episode.locked,
-              price: episode.locked ? 2.99 : null,
+              price: null,
               creatorId: series.authorId,
             },
           }))}
-        />
-      </section>
-
-      <section className="mt-8 grid gap-4 xl:grid-cols-2">
-        <SubscriptionPreviewCard user={viewer} />
-        <PurchasePreviewCard
-          contentType="series"
-          accessStatus={seriesAccessStatus}
-          price={9.99}
         />
       </section>
     </main>

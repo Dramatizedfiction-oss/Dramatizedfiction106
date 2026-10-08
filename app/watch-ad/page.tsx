@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import PurchasePreviewCard from "@/components/monetization/PurchasePreviewCard";
-import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
 import {
   DEFAULT_AD_TRANSITION_STATE,
   recordTransitionAd,
@@ -83,15 +81,6 @@ export default function WatchAdPage() {
             </Link>
           ) : null}
         </div>
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-2">
-        <SubscriptionPreviewCard user={null} />
-        <PurchasePreviewCard
-          contentType="episode"
-          accessStatus="locked"
-          price={2.99}
-        />
       </div>
     </main>
   );

@@ -132,7 +132,7 @@ export default function StoryCard({
 
         {locked && (
           <p className="theme-meta mt-4 text-xs uppercase tracking-[0.2em]">
-            Teaser only | {monetizedContent.price !== null ? `$${monetizedContent.price.toFixed(2)}` : "Premium"}
+            Teaser only
           </p>
         )}
 

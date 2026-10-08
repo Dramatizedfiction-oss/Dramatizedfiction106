@@ -1,5 +1,6 @@
 import type { EpisodeStatus, Prisma } from "@prisma/client";
 import { deserializeAiUsageTag } from "@/lib/ai-usage";
+import { PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
 import { analyzeEpisodeHtml, normalizeEpisodeHtml } from "@/lib/episode-content";
 import { prisma } from "@/lib/prisma";
 
@@ -286,6 +287,36 @@ export async function getEpisodeForReview(userId: string, episodeId: string) {
 
   const { body, ...rest } = episode;
   return { ...rest, content: analyzeEpisodeHtml(body) };
+}
+
+/**
+ * The writer's work as readers can see it, for GROW share links. Uses the
+ * public visibility rules (not just authorId) so drafts and unpublished
+ * episodes never become shareable.
+ */
+export async function getShareableWork(userId: string) {
+  const series = await prisma.series.findMany({
+    where: { authorId: userId, ...PUBLIC_SERIES_WHERE },
+    orderBy: { updatedAt: "desc" },
+    select: {
+      id: true,
+      title: true,
+      genre: true,
+      episodes: {
+        where: { status: "PUBLISHED" },
+        orderBy: { episodeNumber: "asc" },
+        select: { id: true, episodeNumber: true },
+      },
+    },
+  });
+
+  return series
+    .filter((item) => item.episodes.length > 0)
+    .map(({ episodes, ...item }) => ({
+      ...item,
+      publishedEpisodes: episodes.length,
+      firstEpisode: episodes[0],
+    }));
 }
 
 export async function getStudioStats(userId: string) {

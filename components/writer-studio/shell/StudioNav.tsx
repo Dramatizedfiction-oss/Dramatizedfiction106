@@ -8,6 +8,7 @@ const TABS = [
   { href: "/writer-studio/series", label: "Series" },
   { href: "/writer-studio/episodes", label: "Episodes" },
   { href: "/writer-studio/stats", label: "Stats" },
+  { href: "/writer-studio/grow", label: "Grow" },
   { href: "/writer-studio/guidelines", label: "Guidelines" },
 ];
 

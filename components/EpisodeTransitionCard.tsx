@@ -2,9 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import PurchasePreviewCard from "@/components/monetization/PurchasePreviewCard";
-import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
-import type { ContentAccessStatus, MonetizedUser } from "@/lib/monetization";
+import type { ContentAccessStatus } from "@/lib/monetization";
 import {
   DEFAULT_AD_TRANSITION_STATE,
   recordTransitionContinue,
@@ -46,13 +44,11 @@ function writeState(state: EpisodeTransitionAdState) {
 export default function EpisodeTransitionCard({
   currentEpisodeId,
   nextEpisode,
-  user,
   accessStatus,
   phaseThreeActive,
 }: {
   currentEpisodeId: string;
   nextEpisode: NextEpisodeSummary | null;
-  user: MonetizedUser | null;
   accessStatus: ContentAccessStatus;
   phaseThreeActive: boolean;
 }) {
@@ -110,31 +106,20 @@ export default function EpisodeTransitionCard({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="theme-panel rounded-[28px] border border-[var(--border-color)] p-5">
-        <p className="eyebrow">Episode Transition</p>
-        <h3 className="theme-heading mt-3 text-2xl font-semibold">
-          Watch sponsored content to continue
-        </h3>
-        <p className="theme-meta mt-3 text-sm leading-6">
-          Ads only appear between episodes, never during reading. This transition can unlock Episode {nextEpisode.episodeNumber}.
-        </p>
-        <Link
-          href={`/watch-ad?episode=${nextEpisode.id}&from=${currentEpisodeId}`}
-          className="story-button-primary mt-5 inline-flex"
-        >
-          Watch Ad
-        </Link>
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-2">
-        <SubscriptionPreviewCard user={user} />
-        <PurchasePreviewCard
-          contentType="episode"
-          accessStatus={accessStatus}
-          price={2.99}
-        />
-      </div>
+    <div className="theme-panel rounded-[28px] border border-[var(--border-color)] p-5">
+      <p className="eyebrow">Episode Transition</p>
+      <h3 className="theme-heading mt-3 text-2xl font-semibold">
+        Watch sponsored content to continue
+      </h3>
+      <p className="theme-meta mt-3 text-sm leading-6">
+        Ads only appear between episodes, never during reading. This transition can unlock Episode {nextEpisode.episodeNumber}.
+      </p>
+      <Link
+        href={`/watch-ad?episode=${nextEpisode.id}&from=${currentEpisodeId}`}
+        className="story-button-primary mt-5 inline-flex"
+      >
+        Watch Ad
+      </Link>
     </div>
   );
 }

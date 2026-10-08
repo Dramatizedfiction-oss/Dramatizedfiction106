@@ -136,7 +136,6 @@ export default async function EpisodeReaderPage({
                 nextEpisode={
                   next ? { id: next.id, title: next.title, episodeNumber: next.episodeNumber } : null
                 }
-                user={viewer}
                 accessStatus={nextEpisodeAccessStatus}
                 phaseThreeActive={phaseThreeActive}
               />

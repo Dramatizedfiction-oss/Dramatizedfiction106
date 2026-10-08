@@ -4,7 +4,6 @@ import AiUsageBadge from "@/components/AiUsageBadge";
 import AuthorTierBadge from "@/components/AuthorTierBadge";
 import AuthorWorksCarousel from "@/components/AuthorWorksCarousel";
 import FollowAuthorButton from "@/components/follow/FollowAuthorButton";
-import SubscriptionPreviewCard from "@/components/monetization/SubscriptionPreviewCard";
 import ProfileImagesEditor from "@/components/profile/ProfileImagesEditor";
 import { deriveAuthorTier, derivePostingConsistency } from "@/lib/author-tier";
 import { PUBLIC_EPISODE_WHERE, PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
@@ -233,8 +232,6 @@ export default async function AuthorProfilePage({
           emptyDescription="Finished books and completed releases will appear here when this author publishes them."
           viewer={viewer}
         />
-
-        <SubscriptionPreviewCard user={viewer} />
 
         <section className="glass-panel rounded-[28px] border border-[var(--border-color)] p-6">
           <p className="eyebrow">Platform Content</p>

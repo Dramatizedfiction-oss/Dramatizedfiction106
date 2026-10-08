@@ -80,7 +80,7 @@ export default function EpisodeCard({ episode, viewer = null }: EpisodeCardProps
 
       {locked && (
         <p className="theme-meta mt-3 text-xs uppercase tracking-[0.2em]">
-          Lock icon | teaser only {monetizedContent.price !== null ? `| $${monetizedContent.price.toFixed(2)}` : ""}
+          Teaser only
         </p>
       )}
 
