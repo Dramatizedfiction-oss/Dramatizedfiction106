@@ -55,6 +55,10 @@ Environment variables: see `.env.example`. `.env` (production) and `.env.local` 
 
 `prisma/schema.prisma` is the source of truth. Migrations: `0_baseline` (the full schema as of 2026-10-09, generated from the datamodel), `20260525213000_app_roles_writer_flow` (Role enum rename; runs harmlessly after the baseline on a fresh DB), `20261009120000_administration` (additive: `MemberRestriction`, `AdminAuditLog`, `PlatformAvatar`, new `Settings` columns). Production was built with `db push` and has drifted before (e.g. a missing `Series.aiUsageTag` column), so before migrating production: diff it against the schema, then `migrate resolve --applied` the first two migrations and `migrate deploy` the rest — never run the baseline against it. Develop against the development DB only (`db:dev:*` scripts; see the protocol below), and never flip the live `Settings` phase flags. Models `UserStats`, `AuthorPayout`, `Subscription`, `Book`, `Account`, `VerificationToken` are unused; `Studio`/`StudioMembership` are populated but barely consumed.
 
+## Pre-launch mode (user decision, 2026-10-09)
+
+The site is not live yet, so the user has chosen to work **directly on the main (production, `.env`) database** and deploy straight to `main`; the development database is parked until launch. This overrides the "development only" rules below for now. Still required on production: drift-diff before migrating, show the user the migration SQL before applying it, additive changes by default, explicit approval for anything destructive (`migrate reset`, `db push --accept-data-loss`, dropping columns/tables), never print connection strings or `CEO_PASSWORD`, never flip the `Settings` phase flags. Restore the protocol below once the site goes live.
+
 ## Database safety protocol (follow every session, before any database work)
 
 Two databases exist. `.env` → **production** (`ep-holy-sunset-…`). `.env.local` → **development** (`ep-withered-leaf-…`, a Neon copy of production that contains real member data: treat it as sensitive). All schema changes, migrations and integration tests happen on development only.
