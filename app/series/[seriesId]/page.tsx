@@ -62,9 +62,10 @@ export default async function SeriesPage({
 
   return (
     <main className="editorial-page overflow-hidden">
-      <section className="reader-paper p-6 md:p-8">
-        <div className="grid gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <div className="overflow-hidden rounded-[28px] border border-[var(--border-color)] bg-[var(--bg-primary)]">
+      <section className="reader-paper p-5 sm:p-6 md:p-8">
+        <div className="grid gap-6 md:gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
+          {/* Phones: a contained poster so the title and Start Reading stay near the top. */}
+          <div className="mx-auto w-full max-w-[160px] overflow-hidden rounded-[22px] border border-[var(--border-color)] bg-[var(--bg-primary)] sm:max-w-[260px] md:rounded-[28px] lg:max-w-none">
             {series.coverImage ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -81,7 +82,7 @@ export default async function SeriesPage({
 
           <div className="flex flex-col justify-center">
             <p className="editorial-kicker">{series.genre || "Serialized fiction"}</p>
-            <h1 className="editorial-title theme-heading mt-3 text-4xl font-semibold md:text-6xl">
+            <h1 className="editorial-title theme-heading mt-3 text-balance text-4xl font-semibold md:text-6xl">
               {series.title}
             </h1>
             <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -98,11 +99,12 @@ export default async function SeriesPage({
               <AiUsageBadge tag={series.aiUsageTag} />
               <ReportAiTagButton subject={series.title} />
             </div>
-            <p className="theme-body mt-6 max-w-3xl text-base leading-7 md:text-lg">
+            {/* Below desktop the description follows the actions, so Start Reading is reachable sooner. */}
+            <p className="theme-body order-last mt-6 max-w-3xl text-base leading-7 md:text-lg lg:order-none">
               {series.description}
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="mt-6 flex flex-wrap items-center gap-3 lg:mt-8">
               <select
                 className="ui-input rounded-full px-4 py-3 text-sm"
                 aria-label="Choose season"
@@ -114,7 +116,7 @@ export default async function SeriesPage({
               {series.episodes[0] && (
                 <Link
                   href={`/episode/${series.episodes[0].id}`}
-                  className="story-button-primary"
+                  className="story-button-primary flex-1 sm:flex-none"
                 >
                   Start Reading
                 </Link>

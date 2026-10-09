@@ -22,7 +22,7 @@ export default async function GoalPage() {
   const progress = Math.min(monthlyReads / TARGET_READS, 1);
 
   return (
-    <main className="min-h-screen flex flex-col items-center p-8 gap-10 text-[var(--text-primary)]">
+    <main className="flex min-h-screen flex-col items-center gap-10 py-4 text-[var(--text-primary)] md:p-8">
 
       {/* ⭐ You will edit this text later in CEO Studio */}
       <section className="max-w-3xl text-center space-y-4">

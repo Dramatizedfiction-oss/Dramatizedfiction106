@@ -11,6 +11,7 @@ export default function ReportAiTagButton({
 }) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [panelLeft, setPanelLeft] = useState(0);
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -47,9 +48,18 @@ export default function ReportAiTagButton({
           event.preventDefault();
           event.stopPropagation();
           setSubmitted(false);
+          // Place the panel under the button, nudged so it stays 16px inside the screen.
+          const anchor = ref.current?.getBoundingClientRect();
+          if (anchor) {
+            const width = Math.min(280, window.innerWidth - 32);
+            const preferred = anchor.right - width;
+            const clamped = Math.min(Math.max(preferred, 16), window.innerWidth - 16 - width);
+            setPanelLeft(clamped - anchor.left);
+          }
           setOpen((value) => !value);
         }}
-        className={`text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] ${
+        aria-expanded={open}
+        className={`inline-flex min-h-9 items-center text-left text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] ${
           compact ? "text-[11px] uppercase tracking-[0.22em]" : "text-xs"
         }`}
       >
@@ -57,7 +67,10 @@ export default function ReportAiTagButton({
       </button>
 
       {open && (
-        <div className="theme-panel absolute right-0 top-full z-40 mt-2 w-[280px] rounded-[20px] border border-[var(--border-color)] p-4 shadow-2xl">
+        <div
+          className="theme-panel absolute top-full z-40 mt-2 w-[min(280px,calc(100vw-2rem))] rounded-[20px] border border-[var(--border-color)] p-4 shadow-2xl"
+          style={{ left: panelLeft }}
+        >
           <p className="theme-heading text-sm font-semibold">Admin queue placeholder</p>
           <p className="theme-meta mt-2 text-xs leading-5">
             Flagging {subject} will send a UI-only trust report to the future moderation queue.

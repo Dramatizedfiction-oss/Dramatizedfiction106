@@ -92,6 +92,14 @@ export function MenuIcon(props: IconProps) {
   );
 }
 
+export function CloseIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M6 6l12 12M18 6 6 18" />
+    </Svg>
+  );
+}
+
 export function ChevronRightIcon(props: IconProps) {
   return (
     <Svg {...props}>
@@ -200,6 +208,40 @@ export function SendIcon(props: IconProps) {
     <Svg {...props}>
       <path d="M21 3 10 14" />
       <path d="m21 3-7 18-4-7-7-4 18-7z" />
+    </Svg>
+  );
+}
+
+export function PenIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z" />
+      <path d="m13.5 6.5 4 4" />
+    </Svg>
+  );
+}
+
+export function CrownIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8z" />
+    </Svg>
+  );
+}
+
+export function ShieldIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 3 4.5 6v5.5c0 4.5 3.2 8.2 7.5 9.5 4.3-1.3 7.5-5 7.5-9.5V6L12 3z" />
+    </Svg>
+  );
+}
+
+export function LogOutIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
+      <path d="M10 8l-4 4 4 4M6 12h10" />
     </Svg>
   );
 }

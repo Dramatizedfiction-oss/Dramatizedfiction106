@@ -42,7 +42,7 @@ export default function EpisodeCarousel({ episodes, viewer = null }: EpisodeCaro
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="eyebrow">Episodes</p>
-          <h2 className="font-heading theme-heading mt-2 text-3xl font-semibold">
+          <h2 className="font-heading theme-heading mt-2 text-balance text-2xl font-semibold md:text-3xl">
             Start with the first scene or jump back in
           </h2>
         </div>
@@ -85,7 +85,7 @@ export default function EpisodeCarousel({ episodes, viewer = null }: EpisodeCaro
         {episodes.map((episode) => (
           <div
             key={episode.id}
-            className="min-w-[82vw] snap-start sm:min-w-[420px] lg:min-w-[calc((100%-2rem)/3)] lg:flex-1"
+            className="min-w-[80%] snap-start sm:min-w-[420px] lg:min-w-[calc((100%-2rem)/3)] lg:flex-1"
           >
             <EpisodeCard episode={episode} viewer={viewer} />
           </div>

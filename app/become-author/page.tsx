@@ -27,13 +27,13 @@ export default async function BecomeAuthorPage() {
   }
 
   return (
-    <main className="overflow-hidden px-4 py-6 md:px-6 lg:px-8">
-      <section className="relative overflow-hidden rounded-[32px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 md:p-8">
+    <main className="overflow-hidden md:px-6 md:py-6 lg:px-8">
+      <section className="relative overflow-hidden rounded-[32px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 sm:p-6 md:p-8">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_45%_at_18%_0%,rgba(124,58,237,0.22),transparent_68%),radial-gradient(ellipse_35%_30%_at_90%_15%,rgba(59,130,246,0.16),transparent_70%)]" />
         <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_380px] lg:items-center">
           <div>
             <p className="eyebrow">Creator Mode</p>
-            <h1 className="font-heading theme-heading mt-4 text-5xl font-semibold leading-tight md:text-7xl">
+            <h1 className="font-heading theme-heading mt-4 text-balance text-4xl font-semibold leading-tight sm:text-5xl md:text-7xl">
               Build Stories. Grow Your Audience.
             </h1>
             <p className="theme-meta mt-5 max-w-3xl text-base leading-7 md:text-lg">
@@ -49,7 +49,8 @@ export default async function BecomeAuthorPage() {
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-[var(--border-color)] bg-[var(--bg-primary)] p-4 shadow-glow">
+          {/* Decorative preview; on phones it would fill a whole screen before the form. */}
+          <div className="hidden rounded-[28px] border border-[var(--border-color)] bg-[var(--bg-primary)] p-4 shadow-glow sm:block">
             <div className="aspect-[4/5] rounded-[24px] bg-[linear-gradient(140deg,#6d28d9_0%,#3b0764_48%,#0b0a10_100%)] p-5">
               <div className="flex h-full flex-col justify-between rounded-[20px] border border-white/15 bg-black/25 p-5">
                 <div>
@@ -74,7 +75,7 @@ export default async function BecomeAuthorPage() {
         <RoleCard title="Writer" items={writerItems} featured />
       </section>
 
-      <section className="mt-8 rounded-[28px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 md:p-7">
+      <section className="mt-8 rounded-[28px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 sm:p-6 md:p-7">
         <p className="eyebrow">Creator Philosophy</p>
           <h2 className="font-heading theme-heading mt-3 text-3xl font-semibold md:text-4xl">
             Writer identity matters here.
@@ -119,7 +120,7 @@ function RoleCard({
 }) {
   return (
     <article
-      className={`rounded-[28px] border p-6 ${
+      className={`rounded-[28px] border p-5 sm:p-6 ${
         featured
           ? "border-[var(--accent)] bg-[var(--accent-soft)]"
           : "border-[var(--border-color)] bg-[var(--bg-secondary)]"

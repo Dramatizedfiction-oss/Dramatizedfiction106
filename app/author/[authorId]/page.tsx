@@ -145,9 +145,9 @@ export default async function AuthorProfilePage({
   }));
 
   return (
-    <main className="overflow-hidden px-4 py-6 md:px-6 lg:px-8">
+    <main className="overflow-hidden md:px-6 md:py-6 lg:px-8">
       <section className="overflow-hidden rounded-[32px] border border-[var(--border-color)] bg-[var(--bg-secondary)]">
-        <div className="relative h-48 md:h-72">
+        <div className="relative h-36 sm:h-48 md:h-72">
           {author.bannerImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -160,10 +160,11 @@ export default async function AuthorProfilePage({
           )}
         </div>
 
-        <div className="relative px-6 pb-8 md:px-8">
-          <div className="-mt-14 flex flex-col gap-6 md:-mt-16 md:flex-row md:items-end md:justify-between">
-            <div className="flex items-end gap-4">
-              <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 border-[var(--bg-secondary)] bg-[var(--bg-primary)] text-3xl font-semibold text-[var(--text-primary)] md:h-32 md:w-32">
+        <div className="relative px-5 pb-8 sm:px-6 md:px-8">
+          <div className="-mt-12 flex flex-col gap-6 md:-mt-16 md:flex-row md:items-end md:justify-between">
+            {/* Phones: the avatar overlaps the banner and the name sits below it. */}
+            <div className="flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-end sm:gap-4">
+              <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-[var(--bg-secondary)] bg-[var(--bg-primary)] text-3xl font-semibold text-[var(--text-primary)] sm:h-28 sm:w-28 md:h-32 md:w-32">
                 {author.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -176,9 +177,9 @@ export default async function AuthorProfilePage({
                 )}
               </div>
 
-              <div className="pb-2">
+              <div className="min-w-0 pb-2">
                 <p className="eyebrow">Author Profile</p>
-                <h1 className="font-heading theme-heading mt-2 text-4xl font-semibold md:text-5xl">
+                <h1 className="font-heading theme-heading mt-2 break-words text-3xl font-semibold sm:text-4xl md:text-5xl">
                   {displayName}
                 </h1>
                 <div className="mt-3 flex flex-wrap items-center gap-3">

@@ -29,9 +29,9 @@ function EpisodeRow({ episode, showSeries }: { episode: StudioEpisodeRow; showSe
     <li className="flex items-center gap-2 pr-2 transition hover:bg-[var(--panel-hover)]">
       <Link
         href={`/writer-studio/episodes/${episode.id}`}
-        className="flex min-w-0 flex-1 items-center gap-4 px-4 py-4"
+        className="flex min-w-0 flex-1 items-center gap-3 px-3 py-4 sm:gap-4 sm:px-4"
       >
-        <span className="w-8 shrink-0 text-center font-mono-df text-xs text-[var(--studio-muted)]">
+        <span className="w-6 shrink-0 text-center font-mono-df text-xs text-[var(--studio-muted)] sm:w-8">
           {episode.episodeNumber}
         </span>
         <span className="min-w-0 flex-1">

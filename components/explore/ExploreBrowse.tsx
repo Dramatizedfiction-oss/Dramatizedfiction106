@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import ExploreRow from "@/components/explore/ExploreRow";
 import { SearchIcon } from "@/components/icons";
@@ -15,15 +15,23 @@ export type ExploreStory = CoverSeries & {
 export default function ExploreBrowse({
   stories,
   initialQuery = "",
+  autoFocusSearch = false,
   showBecomeAuthorCta = false,
 }: {
   stories: ExploreStory[];
   initialQuery?: string;
+  autoFocusSearch?: boolean;
   showBecomeAuthorCta?: boolean;
 }) {
   const [search, setSearch] = useState(initialQuery);
   const [activeGenre, setActiveGenre] = useState("all");
   const [sortBy, setSortBy] = useState<"trending" | "newest">("trending");
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // Arriving from the header's search button: put the cursor in the box.
+  useEffect(() => {
+    if (autoFocusSearch) searchRef.current?.focus();
+  }, [autoFocusSearch]);
 
   const filtered = useMemo(() => {
     let list = stories;
@@ -60,33 +68,48 @@ export default function ExploreBrowse({
 
   return (
     <div className="min-h-screen">
+      {/* Search takes the free width; the single-choice genre filter and the
+          sort are compact dropdowns. Phones: search on its own row. The bar
+          sits under the mobile header (h-14), and at the top on desktop. */}
       <div
-        className="sticky top-0 z-30 flex items-center gap-3 border-b border-[var(--border-color)] py-3 pl-16 pr-4 md:pl-8 md:pr-8"
-        style={{ background: "var(--header-bg)", backdropFilter: "blur(16px)" }}
+        className="sticky top-14 z-30 flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-[var(--border-color)] px-4 py-3 md:top-0 md:px-8 sm:flex-nowrap"
+        style={{ background: "var(--header-bg)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" }}
       >
-        <div className="relative max-w-md flex-1">
-          <SearchIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+        <div className="relative w-full min-w-0 sm:w-auto sm:flex-1">
+          <SearchIcon size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
           <input
+            type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
+            ref={searchRef}
             placeholder="Search series, authors, genres..."
-            className="ui-input w-full rounded-lg py-2 pl-9 pr-4 font-mono-df text-sm"
+            aria-label="Search series, authors and genres"
+            className="ui-input w-full rounded-lg py-2 pl-9 pr-3 font-mono-df text-sm"
           />
         </div>
-        <div className="hidden items-center gap-1 overflow-x-auto scrollbar-hide lg:flex">
-          <GenreChip label="All" active={activeGenre === "all"} onClick={() => setActiveGenre("all")} />
-          {GENRES.map((genre) => (
-            <GenreChip
-              key={genre}
-              label={genre}
-              active={activeGenre === genre}
-              onClick={() => setActiveGenre(activeGenre === genre ? "all" : genre)}
-            />
-          ))}
-        </div>
-        <div className="flex gap-1">
-          <GenreChip label="Trending" active={sortBy === "trending"} onClick={() => setSortBy("trending")} />
-          <GenreChip label="Newest" active={sortBy === "newest"} onClick={() => setSortBy("newest")} />
+        <div className="flex w-full items-center gap-2 sm:w-auto sm:shrink-0">
+          <select
+            value={activeGenre}
+            onChange={(event) => setActiveGenre(event.target.value)}
+            aria-label="Filter by genre"
+            className="ui-input min-h-9 min-w-0 flex-1 rounded-lg py-2 pl-3 pr-2 font-mono-df text-sm sm:w-40 sm:flex-none"
+          >
+            <option value="all">All genres</option>
+            {GENRES.map((genre) => (
+              <option key={genre} value={genre}>
+                {genreLabel(genre)}
+              </option>
+            ))}
+          </select>
+          <select
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value === "newest" ? "newest" : "trending")}
+            aria-label="Sort"
+            className="ui-input min-h-9 min-w-0 flex-1 rounded-lg py-2 pl-3 pr-2 font-mono-df text-sm sm:w-36 sm:flex-none"
+          >
+            <option value="trending">Trending</option>
+            <option value="newest">Newest</option>
+          </select>
         </div>
       </div>
 
@@ -131,24 +154,7 @@ export default function ExploreBrowse({
   );
 }
 
-function GenreChip({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`whitespace-nowrap rounded-full px-3 py-1.5 font-mono-df text-xs capitalize transition-all ${
-        active ? "border border-transparent bg-[var(--accent-solid)] text-[var(--accent-fg)]" : "border border-[var(--border-color)] bg-[var(--surface-raised)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
-      }`}
-    >
-      {label}
-    </button>
-  );
+/** "sci-fi" -> "Sci-Fi" (matches how the old genre chips were capitalized). */
+function genreLabel(genre: string) {
+  return genre.replace(/(^|-)(\w)/g, (_, sep: string, letter: string) => sep + letter.toUpperCase());
 }

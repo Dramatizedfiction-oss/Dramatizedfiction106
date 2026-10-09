@@ -20,11 +20,11 @@ export default async function CEOAnalyticsPage() {
     ]);
 
   return (
-    <main className="p-8 space-y-10">
+    <main className="space-y-10 px-4 py-6 md:p-8">
       <h1 className="theme-heading text-3xl font-bold">Platform Analytics</h1>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 gap-3 md:gap-6 lg:grid-cols-4">
         <StatCard
           title="Total Reads"
           value={totalReads._sum.readerCount || 0}
@@ -38,7 +38,7 @@ export default async function CEOAnalyticsPage() {
       <section>
         <h2 className="theme-heading mb-4 text-2xl font-semibold">Trending Series</h2>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
           {trending.map((s) => (
             <SeriesCard key={s.id} series={s} />
           ))}
@@ -56,9 +56,9 @@ function StatCard({
   value: number | string;
 }) {
   return (
-    <div className="theme-panel rounded-lg border p-6">
-      <h3 className="theme-meta text-sm font-semibold uppercase tracking-[0.16em]">{title}</h3>
-      <p className="theme-heading mt-2 text-3xl font-bold">
+    <div className="theme-panel rounded-lg border p-4 md:p-6">
+      <h3 className="theme-meta text-xs font-semibold uppercase tracking-[0.16em] md:text-sm">{title}</h3>
+      <p className="theme-heading mt-2 text-2xl font-bold md:text-3xl">
         {typeof value === "number" ? value.toLocaleString() : value}
       </p>
     </div>

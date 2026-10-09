@@ -82,9 +82,9 @@ export default function CeoSettingsClient({ onboardingSlug }: { onboardingSlug: 
   return (
     <main className="px-4 py-6 md:px-6 lg:px-8">
       <div className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <section className="theme-panel rounded-[28px] border border-[var(--border-color)] p-6">
+        <section className="theme-panel rounded-[28px] border border-[var(--border-color)] p-5 sm:p-6">
           <p className="eyebrow">Platform Settings</p>
-          <h1 className="font-heading theme-heading mt-3 text-4xl font-semibold">
+          <h1 className="font-heading theme-heading mt-3 text-3xl font-semibold sm:text-4xl">
             Command Center controls
           </h1>
 
@@ -144,9 +144,9 @@ export default function CeoSettingsClient({ onboardingSlug }: { onboardingSlug: 
           </div>
         </section>
 
-        <section className="theme-panel rounded-[28px] border border-[var(--border-color)] p-6">
+        <section className="theme-panel rounded-[28px] border border-[var(--border-color)] p-5 sm:p-6">
           <p className="eyebrow">Writer Onboarding CMS</p>
-          <h2 className="font-heading theme-heading mt-3 text-4xl font-semibold">
+          <h2 className="font-heading theme-heading mt-3 text-3xl font-semibold sm:text-4xl">
             Shared onboarding article
           </h2>
           <p className="theme-meta mt-3 text-sm">

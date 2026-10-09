@@ -49,11 +49,11 @@ export default function AuthorWorksCarousel({
   }
 
   return (
-    <section className="glass-panel rounded-[28px] border border-[var(--border-color)] p-6">
+    <section className="glass-panel rounded-[28px] border border-[var(--border-color)] p-5 sm:p-6">
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="eyebrow">{eyebrow}</p>
-          <h2 className="font-heading theme-heading mt-3 text-3xl font-semibold">
+          <h2 className="font-heading theme-heading mt-3 text-2xl font-semibold sm:text-3xl">
             {title}
           </h2>
         </div>
@@ -79,7 +79,7 @@ export default function AuthorWorksCarousel({
       {items.length > 0 ? (
         <div
           ref={scrollRef}
-          className="scrollbar-hide mt-6 flex gap-4 overflow-x-auto pb-2"
+          className="scrollbar-hide mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2"
         >
           {items.map((item) => {
             const monetization: MonetizedSeries = {
@@ -96,7 +96,7 @@ export default function AuthorWorksCarousel({
               <Link
                 key={item.id}
                 href={item.href}
-                className="glass-panel min-w-[270px] max-w-[320px] rounded-[24px] border border-[var(--border-color)] p-4 transition hover:-translate-y-0.5 hover:opacity-95"
+                className="glass-panel w-[80%] shrink-0 snap-start sm:w-auto sm:min-w-[270px] sm:max-w-[320px] rounded-[24px] border border-[var(--border-color)] p-4 transition hover:-translate-y-0.5 hover:opacity-95"
               >
                 <div className="theme-panel aspect-[4/5] rounded-[18px] border border-[var(--border-color)]">
                   {item.coverImage ? (
@@ -125,7 +125,7 @@ export default function AuthorWorksCarousel({
                   <h3 className="font-heading theme-heading mt-3 text-2xl font-semibold">
                     {item.title}
                   </h3>
-                  <p className="theme-meta mt-3 text-sm leading-6">
+                  <p className="theme-meta mt-3 line-clamp-4 text-sm leading-6">
                     {item.description || "This work is listed on the author shelf and will fill out with more detail as metadata grows."}
                   </p>
                 </div>

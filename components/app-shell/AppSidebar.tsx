@@ -2,22 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import GlobalSearch, {
-  type SearchAuthor,
-  type SearchStory,
-} from "@/components/app-shell/GlobalSearch";
+import { useState, type ReactNode } from "react";
+import ProfileMenu from "@/components/app-shell/ProfileMenu";
 import {
   BookOpenIcon,
+  ChevronRightIcon,
+  CloseIcon,
   CompassIcon,
+  CrownIcon,
   FeatherIcon,
   HomeIcon,
   MoonIcon,
+  PenIcon,
   SettingsIcon,
+  ShieldIcon,
   SunIcon,
   TrendingUpIcon,
   UserIcon,
-  ChevronRightIcon,
 } from "@/components/icons";
 import type { StudioLink } from "@/lib/navigation";
 import { safeHexColor } from "@/lib/writer-studio/format";
@@ -31,11 +32,9 @@ export type AppSidebarSeries = {
 };
 
 type AppSidebarProps = {
-  user: { name?: string | null; image?: string | null; role?: string | null } | null;
+  user: { id?: string | null; name?: string | null; image?: string | null; role?: string | null } | null;
   studios: StudioLink[];
   trending: AppSidebarSeries[];
-  searchStories: SearchStory[];
-  searchAuthors: SearchAuthor[];
   expanded: boolean;
   isMobile?: boolean;
   theme: "dark" | "light";
@@ -50,15 +49,54 @@ type AppSidebarProps = {
   onSignOut: () => void;
 };
 
+function NavItem({
+  href,
+  label,
+  icon,
+  active,
+  accent = false,
+  showLabels,
+  onClose,
+}: {
+  href: string;
+  label: string;
+  icon: ReactNode;
+  active: boolean;
+  accent?: boolean;
+  showLabels: boolean;
+  onClose?: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClose}
+      aria-current={active ? "page" : undefined}
+      aria-label={showLabels ? undefined : label}
+      title={showLabels ? undefined : label}
+      className={`sidebar-link ${showLabels ? "" : "justify-center px-0"} ${
+        active ? "sidebar-link-active" : accent ? "text-[var(--accent)]" : ""
+      }`}
+    >
+      {icon}
+      {showLabels ? <span className="truncate">{label}</span> : null}
+    </Link>
+  );
+}
+
 // Gold / silver / bronze, tuned per theme in globals.css.
 const RANK_COLORS = ["var(--rank-1)", "var(--rank-2)", "var(--rank-3)"];
 
+/*
+ * The global navigation: the desktop rail (expanded or collapsed) and, with
+ * `isMobile`, the contents of the phone menu drawer. Layout top to bottom:
+ * brand + collapse control, main links, theme switch, trending, account.
+ * Role-based links are visibility only; each destination checks access on
+ * the server.
+ */
 export default function AppSidebar({
   user,
   studios,
   trending,
-  searchStories,
-  searchAuthors,
   expanded,
   isMobile = false,
   theme,
@@ -75,104 +113,142 @@ export default function AppSidebar({
   const pathname = usePathname();
   const [hoveredSeries, setHoveredSeries] = useState<string | null>(null);
   const showLabels = isMobile || expanded;
-
-  function navClass(active: boolean) {
-    return `sidebar-link ${active ? "sidebar-link-active" : ""}`;
-  }
+  const item = { showLabels, onClose };
+  const themeLabel = theme === "dark" ? "Light mode" : "Dark mode";
 
   return (
     <aside
-      className="relative flex h-full flex-shrink-0 flex-col overflow-hidden border-r border-[var(--border-color)]"
+      aria-label="Site navigation"
+      className={`relative flex h-full flex-shrink-0 flex-col border-r border-[var(--border-color)] ${
+        // The mobile drawer scrolls as a whole so the account controls stay
+        // reachable on short screens; the desktop rail clips.
+        isMobile ? "overflow-y-auto overscroll-contain" : "overflow-hidden"
+      }`}
       style={{
-        width: showLabels ? 240 : 64,
+        width: isMobile ? "100%" : showLabels ? 240 : 64,
         background: "var(--sidebar-bg)",
         transition: "width 280ms ease",
       }}
     >
-      {!isMobile ? (
-        <button
-          type="button"
-          onClick={onToggleExpanded}
-          className="absolute right-3 top-6 z-10 flex h-6 w-6 items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-          aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
-        >
-          <span style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)", display: "inline-flex", transition: "transform 280ms ease" }}>
-            <ChevronRightIcon size={14} />
+      {/* Brand and the expand/collapse (desktop) or close (mobile) control. */}
+      <div
+        className={
+          showLabels
+            ? `flex min-h-[72px] items-center gap-3 ${isMobile ? "py-3 pl-4 pr-2" : "pb-6 pl-4 pr-2 pt-5"}`
+            : "flex flex-col items-center gap-3 pb-5 pt-5"
+        }
+      >
+        <Link href="/" onClick={onClose} className="flex min-h-11 min-w-0 items-center gap-3" aria-label="Dramatized Fiction home">
+          <span
+            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-sm"
+            style={{ background: "linear-gradient(135deg, #7c3aed, #3b82f6)" }}
+          >
+            <BookOpenIcon size={14} className="text-white" />
           </span>
-        </button>
-      ) : null}
-
-      <div className="flex min-h-[72px] items-center gap-3 px-4 pb-8 pt-6">
-        <div
-          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-sm"
-          style={{ background: "linear-gradient(135deg, #7c3aed, #3b82f6)" }}
-        >
-          <BookOpenIcon size={14} className="text-white" />
-        </div>
-        {showLabels ? (
-          <span className="whitespace-nowrap font-mono-df text-xs uppercase tracking-widest text-[var(--text-secondary)]">
-            Dramatized
-          </span>
-        ) : null}
+          {showLabels ? (
+            <span className="whitespace-nowrap font-mono-df text-xs uppercase tracking-widest text-[var(--text-secondary)]">
+              Dramatized
+            </span>
+          ) : null}
+        </Link>
+        {isMobile ? (
+          onClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--text-secondary)] transition hover:bg-[var(--panel-hover)] hover:text-[var(--text-primary)]"
+              aria-label="Close menu"
+            >
+              <CloseIcon size={20} />
+            </button>
+          ) : null
+        ) : (
+          <button
+            type="button"
+            onClick={onToggleExpanded}
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--text-muted)] transition hover:bg-[var(--panel-hover)] hover:text-[var(--text-primary)] ${
+              showLabels ? "ml-auto" : ""
+            }`}
+            aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
+            aria-expanded={expanded}
+            title={expanded ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            <span
+              className="inline-flex"
+              style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 280ms ease" }}
+            >
+              <ChevronRightIcon size={16} />
+            </span>
+          </button>
+        )}
       </div>
 
-      <nav className="space-y-1 px-2">
-        <Link href="/" onClick={onClose} className={navClass(pathname === "/")}>
-          <HomeIcon size={16} className="flex-shrink-0" />
-          {showLabels ? <span>Home</span> : null}
-        </Link>
-        <Link href="/explore" onClick={onClose} className={navClass(pathname.startsWith("/explore"))}>
-          <CompassIcon size={16} className="flex-shrink-0" />
-          {showLabels ? <span>Explore</span> : null}
-        </Link>
+      <nav aria-label="Main" className="space-y-1 px-2">
+        <NavItem
+          {...item}
+          href="/"
+          label="Home"
+          icon={<HomeIcon size={16} className="flex-shrink-0" />}
+          active={pathname === "/"}
+        />
+        <NavItem
+          {...item}
+          href="/explore"
+          label="Explore"
+          icon={<CompassIcon size={16} className="flex-shrink-0" />}
+          active={pathname.startsWith("/explore")}
+        />
         {canWrite ? (
-          <Link
+          <NavItem
+            {...item}
             href="/writer-studio"
-            onClick={onClose}
-            className={navClass(pathname.startsWith("/writer-studio") || pathname.startsWith("/writer"))}
-          >
-            <span className="w-4 text-center text-xs">✍️</span>
-            {showLabels ? <span>Writer Studio</span> : null}
-          </Link>
+            label="Writer Studio"
+            icon={<PenIcon size={16} className="flex-shrink-0" />}
+            active={pathname.startsWith("/writer-studio") || pathname.startsWith("/writer")}
+          />
         ) : user ? (
-          <Link
+          <NavItem
+            {...item}
             href="/become-author"
-            onClick={onClose}
-            className={`sidebar-link ${pathname === "/become-author" ? "sidebar-link-active" : "text-[var(--accent)] hover:bg-[var(--accent-soft)]"}`}
-          >
-            <FeatherIcon size={16} className="flex-shrink-0" />
-            {showLabels ? <span>Become Author</span> : null}
-          </Link>
+            label="Become Author"
+            icon={<FeatherIcon size={16} className="flex-shrink-0" />}
+            active={pathname === "/become-author"}
+            accent
+          />
         ) : null}
         {canAccessCEO ? (
-          <Link
+          <NavItem
+            {...item}
             href="/ceo-studio"
-            onClick={onClose}
-            className={navClass(pathname.startsWith("/ceo"))}
-          >
-            <span className="w-4 text-center text-xs">👑</span>
-            {showLabels ? <span>CEO Studio</span> : null}
-          </Link>
+            label="CEO Studio"
+            icon={<CrownIcon size={16} className="flex-shrink-0" />}
+            active={pathname.startsWith("/ceo")}
+          />
         ) : null}
         {canManage ? (
-          <Link
+          <NavItem
+            {...item}
             href="/command-center"
-            onClick={onClose}
-            className={navClass(pathname.startsWith("/command-center"))}
-          >
-            <span className="w-4 text-center text-xs">⌘</span>
-            {showLabels ? <span>Command Center</span> : null}
-          </Link>
+            label="Command Center"
+            icon={<ShieldIcon size={16} className="flex-shrink-0" />}
+            active={pathname.startsWith("/command-center")}
+          />
         ) : null}
+
+        {/* Quick theme switch (an explicit choice; Settings also offers "System"). */}
+        <button
+          type="button"
+          onClick={onToggleTheme}
+          aria-label={showLabels ? undefined : themeLabel}
+          title={showLabels ? undefined : themeLabel}
+          className={`sidebar-link w-full ${showLabels ? "" : "justify-center px-0"}`}
+        >
+          {theme === "dark" ? <SunIcon size={16} className="flex-shrink-0" /> : <MoonIcon size={16} className="flex-shrink-0" />}
+          {showLabels ? <span>{themeLabel}</span> : null}
+        </button>
       </nav>
 
-      {showLabels ? (
-        <div className="px-3 pb-2 pt-4">
-          <GlobalSearch stories={searchStories} authors={searchAuthors} />
-        </div>
-      ) : null}
-
-      <div className="mb-3 mt-6 flex items-center gap-2 px-4">
+      <div className={`mb-2 mt-6 flex items-center gap-2 ${showLabels ? "px-4" : "justify-center"}`}>
         {!showLabels ? (
           <TrendingUpIcon size={14} className="flex-shrink-0 text-[var(--text-muted)]" />
         ) : (
@@ -185,7 +261,7 @@ export default function AppSidebar({
         )}
       </div>
 
-      <div className="flex-1 space-y-1 overflow-y-auto px-2 pb-4">
+      <div className={`flex-1 space-y-1 px-2 pb-4 ${isMobile ? "" : "overflow-y-auto"}`}>
         {trending.map((series, idx) => {
           const accent = safeHexColor(series.themeColor);
           const rankColor = RANK_COLORS[idx] || RANK_COLORS[2];
@@ -199,7 +275,12 @@ export default function AppSidebar({
               onClick={onClose}
               onMouseEnter={() => setHoveredSeries(series.id)}
               onMouseLeave={() => setHoveredSeries(null)}
-              className="relative flex items-center gap-3 overflow-hidden rounded-md px-3 py-2.5"
+              aria-current={active ? "page" : undefined}
+              aria-label={showLabels ? undefined : `Trending #${idx + 1}: ${series.title}`}
+              title={showLabels ? undefined : series.title}
+              className={`relative flex items-center gap-3 overflow-hidden rounded-md py-2.5 ${
+                showLabels ? "px-3" : "justify-center px-0"
+              }`}
             >
               {hovered ? (
                 <span
@@ -237,16 +318,19 @@ export default function AppSidebar({
         ) : null}
       </div>
 
-      <div className="space-y-1 border-t border-[var(--border-color)] px-2 pb-4 pt-3">
+      {/* Account area. */}
+      <div className={`border-t border-[var(--border-color)] pb-4 pt-3 ${showLabels ? "px-3" : "px-2"}`}>
         {showLabels && studios.length > 0 ? (
-          <div className="px-2 pb-2">
-            <p className="mb-1 font-mono-df text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Studios</p>
+          <div className="pb-3">
+            <p className="mb-1 px-1 font-mono-df text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Studios</p>
             {studios.slice(0, 3).map((studio) => (
               <Link
                 key={studio.id}
                 href={`/writer-studio?studio=${studio.slug}`}
                 onClick={onClose}
-                className="block truncate rounded-md px-2 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                className={`block truncate rounded-md px-1 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] ${
+                  isMobile ? "py-3" : "py-1.5"
+                }`}
               >
                 {studio.name}
               </Link>
@@ -254,34 +338,58 @@ export default function AppSidebar({
           </div>
         ) : null}
 
-        <Link href="/settings" onClick={onClose} className={navClass(pathname === "/settings")}>
-          <SettingsIcon size={16} className="flex-shrink-0" />
-          {showLabels ? <span>Settings</span> : null}
-        </Link>
-
-        <button type="button" onClick={onToggleTheme} className="sidebar-link w-full">
-          {theme === "dark" ? <SunIcon size={16} className="flex-shrink-0" /> : <MoonIcon size={16} className="flex-shrink-0" />}
-          {showLabels ? <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span> : null}
-        </button>
-
-        {!user ? (
-          <Link href="/sign-in" onClick={onClose} className="sidebar-link">
-            <UserIcon size={16} className="flex-shrink-0" />
-            {showLabels ? <span>Sign In</span> : null}
-          </Link>
+        {user ? (
+          <div className={showLabels ? "" : "flex justify-center"}>
+            <ProfileMenu
+              user={user}
+              roleLabel={roleLabel}
+              hasPublicProfile={canWrite}
+              isSigningOut={isSigningOut}
+              onSignOut={onSignOut}
+              onNavigate={onClose}
+              variant={showLabels ? "card" : "rail"}
+            />
+          </div>
+        ) : showLabels ? (
+          <div className="space-y-2">
+            <Link href="/sign-in" onClick={onClose} className="story-button-primary w-full">
+              Sign in
+            </Link>
+            <div className="flex items-center justify-between gap-2 px-1">
+              <Link
+                href="/sign-up"
+                onClick={onClose}
+                className="py-2 text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+              >
+                Create account
+              </Link>
+              <Link
+                href="/settings"
+                onClick={onClose}
+                className="flex items-center gap-1.5 py-2 text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+              >
+                <SettingsIcon size={14} />
+                Settings
+              </Link>
+            </div>
+          </div>
         ) : (
-          <>
-            {showLabels ? (
-              <div className="rounded-md px-3 py-2">
-                <p className="truncate text-sm font-medium text-[var(--text-primary)]">{user.name || "Member"}</p>
-                <p className="font-mono-df text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">{roleLabel}</p>
-              </div>
-            ) : null}
-            <button type="button" onClick={onSignOut} disabled={isSigningOut} className="sidebar-link w-full">
-              <UserIcon size={16} className="flex-shrink-0" />
-              {showLabels ? <span>{isSigningOut ? "Signing Out" : "Sign Out"}</span> : null}
-            </button>
-          </>
+          <div className="space-y-1">
+            <NavItem
+              {...item}
+              href="/sign-in"
+              label="Sign in"
+              icon={<UserIcon size={16} className="flex-shrink-0" />}
+              active={pathname === "/sign-in"}
+            />
+            <NavItem
+              {...item}
+              href="/settings"
+              label="Settings"
+              icon={<SettingsIcon size={16} className="flex-shrink-0" />}
+              active={pathname === "/settings"}
+            />
+          </div>
         )}
       </div>
     </aside>

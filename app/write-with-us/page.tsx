@@ -22,7 +22,7 @@ export default async function WriterOnboardingPage() {
   const deepParagraphs = renderParagraphs(article.deepSectionContent);
 
   return (
-    <main className="overflow-hidden px-4 py-6 md:px-6 lg:px-8">
+    <main className="overflow-hidden md:px-6 md:py-6 lg:px-8">
       <section className="glass-panel rounded-[32px] border border-[var(--border-color)] p-6 md:p-8">
         <p className="eyebrow">Writer Onboarding</p>
         <h1 className="font-heading theme-heading mt-3 text-4xl font-semibold md:text-6xl">

@@ -1,9 +1,9 @@
 export default function AboutPage() {
   return (
-    <main className="p-8 md:p-10">
+    <main className="md:p-10">
       <div className="mx-auto max-w-4xl">
         <p className="eyebrow">About Platform</p>
-        <h1 className="font-heading theme-heading mt-3 text-5xl font-semibold">
+        <h1 className="font-heading theme-heading mt-3 text-4xl font-semibold md:text-5xl">
           A fiction platform with cinematic presence
         </h1>
         <p className="theme-meta mt-4 max-w-3xl">

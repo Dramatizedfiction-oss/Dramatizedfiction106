@@ -52,7 +52,7 @@ export default function WatchAdPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl space-y-6 px-6 py-12">
+    <main className="mx-auto max-w-5xl space-y-6 md:px-6 md:py-12">
       <div className="theme-panel rounded-[28px] border border-[var(--border-color)] p-6">
         <p className="eyebrow">Episode Transition</p>
         <h1 className="font-heading theme-heading mt-3 text-3xl font-semibold">

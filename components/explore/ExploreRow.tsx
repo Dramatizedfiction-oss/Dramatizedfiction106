@@ -49,10 +49,10 @@ export default function ExploreRow({
       </div>
       <div
         ref={rowRef}
-        className="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2"
+        className="scrollbar-hide -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto scroll-smooth px-4 pb-2 md:mx-0 md:scroll-px-0 md:px-0"
       >
         {series.map((item) => (
-          <CoverSeriesCard key={item.id} series={item} variant="wide" />
+          <CoverSeriesCard key={item.id} series={item} variant="wide" className="snap-start" />
         ))}
       </div>
     </section>

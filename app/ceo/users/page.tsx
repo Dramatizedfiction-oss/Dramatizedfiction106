@@ -12,7 +12,7 @@ export default async function CEOUsersPage() {
   });
 
   return (
-    <main className="p-8 space-y-6">
+    <main className="space-y-6 px-4 py-6 md:p-8">
       <h1 className="theme-heading text-3xl font-bold">User Management</h1>
 
       <div className="space-y-4">
@@ -30,7 +30,7 @@ export default async function CEOUsersPage() {
               className="theme-panel rounded-lg border p-4"
             >
               <p className="theme-heading font-semibold">{u.name || "Unnamed User"}</p>
-              <p className="theme-meta text-sm">{u.email}</p>
+              <p className="theme-meta break-all text-sm">{u.email}</p>
               <p className="mt-1 text-xs text-[var(--text-muted)]">Role: {u.role}</p>
             </div>
           )

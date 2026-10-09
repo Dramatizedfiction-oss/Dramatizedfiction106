@@ -8,7 +8,7 @@ export default async function CEODashboard() {
   const settings = await getPlatformSettings();
 
   return (
-    <main className="p-8 space-y-6">
+    <main className="space-y-6 px-4 py-6 md:p-8">
       <h1 className="theme-heading text-3xl font-bold">CEO Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

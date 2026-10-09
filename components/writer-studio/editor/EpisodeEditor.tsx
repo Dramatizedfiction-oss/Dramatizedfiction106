@@ -491,12 +491,12 @@ export default function EpisodeEditor({
                 placeholder="Untitled episode"
                 aria-label="Episode title"
                 maxLength={200}
-                className="font-heading theme-heading mt-3 w-full bg-transparent text-4xl font-semibold outline-none placeholder:text-[var(--studio-muted)] md:text-5xl"
+                className="font-heading theme-heading mt-3 w-full bg-transparent text-3xl font-semibold outline-none placeholder:text-[var(--studio-muted)] sm:text-4xl md:text-5xl"
               />
               <p className="theme-meta mt-2 text-sm">{episode.series.title}</p>
             </header>
 
-            <div className="reader-paper episode-editor px-6 py-8 md:px-12 md:py-12">
+            <div className="reader-paper episode-editor px-5 py-7 sm:px-6 sm:py-8 md:px-12 md:py-12">
               {editor ? (
                 <EditorContent editor={editor} />
               ) : (

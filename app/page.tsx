@@ -53,7 +53,7 @@ export default async function HomePage() {
   ]);
 
   return (
-    <div className="min-h-screen px-6 pb-0">
+    <div className="min-h-screen px-4 pb-0 sm:px-6">
       <div className="relative">
         <LiquidWordmark />
         {!session?.user ? (
@@ -68,9 +68,9 @@ export default async function HomePage() {
 
       <div className="my-2 border-t border-[var(--border-color)]" />
 
-      <div className="mx-auto max-w-5xl pt-8">
+      <div className="mx-auto max-w-5xl pt-4 md:pt-8">
         {featured.length > 0 ? (
-          <section className="mt-8">
+          <section className="mt-6 md:mt-8">
             <div className="mb-6 flex items-center gap-2">
               <SparklesIcon size={14} className="text-[var(--accent)]" />
               <h2 className="font-mono-df text-xs font-bold uppercase tracking-[0.3em] text-[var(--text-secondary)]">

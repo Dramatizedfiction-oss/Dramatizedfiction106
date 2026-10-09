@@ -8,7 +8,7 @@ export default async function StudioLayout({ children }: { children: React.React
   const profile = await getWriterProfile(user.id);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pb-20 pt-16 md:px-8 md:pt-8">
+    <div className="mx-auto w-full max-w-6xl px-4 pb-20 pt-6 md:px-8 md:pt-8">
       <StudioHeader
         userId={user.id}
         name={profile?.name || user.name || "Writer"}

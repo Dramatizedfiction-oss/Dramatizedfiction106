@@ -1,6 +1,6 @@
 export default function LiquidWordmark() {
   return (
-    <div className="relative flex select-none flex-col items-center justify-center pb-16 pt-24">
+    <div className="relative flex select-none flex-col items-center justify-center pb-10 pt-14 md:pb-16 md:pt-24">
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -29,7 +29,7 @@ export default function LiquidWordmark() {
       >
         Fiction
       </h1>
-      <p className="mt-6 font-mono-df text-sm font-bold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
+      <p className="mt-6 text-balance text-center font-mono-df text-xs font-bold uppercase tracking-[0.22em] text-[var(--text-secondary)] sm:text-sm sm:tracking-[0.3em]">
         Stories Performed in Text
       </p>
     </div>

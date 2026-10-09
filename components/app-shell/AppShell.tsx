@@ -1,32 +1,24 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import AppSidebar, { type AppSidebarSeries } from "@/components/app-shell/AppSidebar";
-import type { SearchAuthor, SearchStory } from "@/components/app-shell/GlobalSearch";
+import ProfileMenu from "@/components/app-shell/ProfileMenu";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { useTheme } from "@/components/providers/ThemeProvider";
-import { MenuIcon } from "@/components/icons";
+import { BookOpenIcon, MenuIcon, SearchIcon } from "@/components/icons";
 import type { AppShellUser, StudioLink } from "@/lib/navigation";
 import { getRoleLabel, hasRoleAccess, normalizeRole } from "@/lib/roles";
 
 type AppShellProps = {
   user: (AppShellUser & { name?: string | null; image?: string | null }) | null;
   studios: StudioLink[];
-  searchStories: SearchStory[];
-  searchAuthors: SearchAuthor[];
   trending: AppSidebarSeries[];
   children: React.ReactNode;
 };
 
-export default function AppShell({
-  user,
-  studios,
-  searchStories,
-  searchAuthors,
-  trending,
-  children,
-}: AppShellProps) {
+export default function AppShell({ user, studios, trending, children }: AppShellProps) {
   const { session, status, signOut } = useAuthSession();
   const router = useRouter();
   const pathname = usePathname();
@@ -56,9 +48,15 @@ export default function AppShell({
   }, [pathname]);
 
   useEffect(() => {
-    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    if (!mobileOpen) return;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
     return () => {
       document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKeyDown);
     };
   }, [mobileOpen]);
 
@@ -81,8 +79,6 @@ export default function AppShell({
       user={sessionUser}
       studios={studios}
       trending={trending}
-      searchStories={searchStories}
-      searchAuthors={searchAuthors}
       expanded={expanded}
       theme={theme}
       roleLabel={roleLabel}
@@ -97,39 +93,24 @@ export default function AppShell({
   );
 
   return (
-    <div className="app-canvas flex min-h-screen overflow-x-hidden">
+    // overflow-x-clip (never overflow-x-hidden) on this root and the content
+    // column: "hidden" turns the element into a scroll container, which makes
+    // the sticky rail below stick to it instead of the viewport, so the
+    // sidebar scrolled away and appeared to end partway down long pages.
+    <div className="app-canvas flex min-h-screen overflow-x-clip">
       {!isReaderRoute ? (
         <div className="hidden flex-shrink-0 md:block">
           <div className="sticky top-0 h-screen">{sidebar}</div>
         </div>
       ) : null}
 
-      {!isReaderRoute ? (
-        <button
-          type="button"
-          onClick={() => setMobileOpen(true)}
-          className="fixed z-40 flex h-9 w-9 items-center justify-center rounded-md border border-[var(--border-strong)] text-[var(--text-primary)] shadow-sm md:hidden"
-          style={{
-            top: "calc(env(safe-area-inset-top, 0px) + 1rem)",
-            left: "max(1rem, env(safe-area-inset-left))",
-            background: "var(--sidebar-bg)",
-            backdropFilter: "blur(8px)",
-          }}
-          aria-label="Open menu"
-        >
-          <MenuIcon size={18} />
-        </button>
-      ) : null}
-
       {mobileOpen && !isReaderRoute ? (
-        <div className="fixed inset-0 z-50 flex md:hidden">
-          <div className="relative h-full flex-shrink-0" style={{ width: 240 }}>
+        <div id="mobile-nav" role="dialog" aria-modal="true" aria-label="Menu" className="fixed inset-0 z-50 flex md:hidden">
+          <div className="relative h-full flex-shrink-0" style={{ width: "min(280px, 85vw)" }}>
             <AppSidebar
               user={sessionUser}
               studios={studios}
               trending={trending}
-              searchStories={searchStories}
-              searchAuthors={searchAuthors}
               expanded
               isMobile
               theme={theme}
@@ -148,7 +129,59 @@ export default function AppShell({
         </div>
       ) : null}
 
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col overflow-x-hidden">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col overflow-x-clip">
+        {!isReaderRoute ? (
+          <header
+            className="sticky top-0 z-40 flex h-14 items-center gap-1 border-b border-[var(--border-color)] px-2 md:hidden"
+            style={{ background: "var(--header-bg)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" }}
+          >
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--text-primary)] transition hover:bg-[var(--panel-hover)]"
+              aria-label="Open menu"
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-nav"
+            >
+              <MenuIcon size={20} />
+            </button>
+            <Link href="/" className="flex min-w-0 items-center gap-2 px-1 py-2" aria-label="Dramatized Fiction home">
+              <span
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm"
+                style={{ background: "linear-gradient(135deg, #7c3aed, #3b82f6)" }}
+              >
+                <BookOpenIcon size={13} className="text-white" />
+              </span>
+              <span className="truncate font-mono-df text-xs uppercase tracking-widest text-[var(--text-secondary)]">
+                Dramatized
+              </span>
+            </Link>
+            <div className="ml-auto flex shrink-0 items-center gap-1">
+              {/* Search lives on Explore; this opens it with the search box focused. */}
+              <Link
+                href="/explore?focus=search"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--text-primary)] transition hover:bg-[var(--panel-hover)]"
+                aria-label="Search stories"
+              >
+                <SearchIcon size={19} />
+              </Link>
+              {sessionUser ? (
+                <ProfileMenu
+                  user={sessionUser}
+                  roleLabel={roleLabel}
+                  hasPublicProfile={canWrite}
+                  isSigningOut={isSigningOut}
+                  onSignOut={handleSignOut}
+                  variant="header"
+                />
+              ) : (
+                <Link href="/sign-in" className="story-button-secondary px-4 py-2">
+                  Sign in
+                </Link>
+              )}
+            </div>
+          </header>
+        ) : null}
         <main className={isFlushRoute ? "flex-1" : "page-shell flex-1"}>{children}</main>
         {!isReaderRoute ? (
           <footer className="border-t border-[var(--border-color)] px-6 py-8">

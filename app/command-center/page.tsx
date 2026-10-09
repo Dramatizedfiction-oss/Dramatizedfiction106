@@ -6,7 +6,7 @@ export default async function CommandCenterPage() {
   requireRole(session, ["BOARD"]);
 
   return (
-    <main className="space-y-6 p-8">
+    <main className="space-y-6 md:p-8">
       <div>
         <p className="eyebrow">Board Access</p>
         <h1 className="theme-heading mt-3 text-3xl font-bold">Command Center</h1>
