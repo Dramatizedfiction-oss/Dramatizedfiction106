@@ -14,6 +14,8 @@ export const IMAGE_PURPOSES = {
   "episode-cover": { label: "Episode cover", maxWidth: 2400, maxHeight: 2400, needsTarget: true },
   "profile-image": { label: "Profile picture", maxWidth: 800, maxHeight: 800, needsTarget: false },
   "profile-banner": { label: "Profile banner", maxWidth: 2400, maxHeight: 1200, needsTarget: false },
+  // Administration's shared avatar library (BOARD and CEO only).
+  "platform-avatar": { label: "Platform avatar", maxWidth: 800, maxHeight: 800, needsTarget: false },
 } as const;
 
 export type ImagePurpose = keyof typeof IMAGE_PURPOSES;

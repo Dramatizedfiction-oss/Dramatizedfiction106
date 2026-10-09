@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { AuthRestriction } from "@/auth";
 import AppSidebar, { type AppSidebarSeries } from "@/components/app-shell/AppSidebar";
 import ProfileMenu from "@/components/app-shell/ProfileMenu";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
@@ -15,10 +16,12 @@ type AppShellProps = {
   user: (AppShellUser & { name?: string | null; image?: string | null }) | null;
   studios: StudioLink[];
   trending: AppSidebarSeries[];
+  /** Only CEO/Board ever see the shell while this is on; they get a reminder banner. */
+  renovationMode?: boolean;
   children: React.ReactNode;
 };
 
-export default function AppShell({ user, studios, trending, children }: AppShellProps) {
+export default function AppShell({ user, studios, trending, renovationMode = false, children }: AppShellProps) {
   const { session, status, signOut } = useAuthSession();
   const router = useRouter();
   const pathname = usePathname();
@@ -27,9 +30,12 @@ export default function AppShell({ user, studios, trending, children }: AppShell
   const [isSigningOut, setIsSigningOut] = useState(false);
   const { resolvedTheme: theme, setPreference } = useTheme();
   const sessionUser = status === "loading" ? session?.user ?? user ?? null : session?.user ?? null;
-  const canWrite = hasRoleAccess(sessionUser?.role, "WRITER");
-  const canManage = hasRoleAccess(sessionUser?.role, "BOARD");
-  const canAccessCEO = hasRoleAccess(sessionUser?.role, "CEO");
+  // Navigation visibility only; every destination checks access on the server.
+  // A restricted member keeps browsing but loses the studio and admin links.
+  const restriction = (sessionUser as { restriction?: AuthRestriction | null } | null)?.restriction ?? null;
+  const canWrite = hasRoleAccess(sessionUser?.role, "WRITER") && !restriction;
+  const canManage = hasRoleAccess(sessionUser?.role, "BOARD") && !restriction;
+  const canAccessCEO = hasRoleAccess(sessionUser?.role, "CEO") && !restriction;
   const roleLabel = getRoleLabel(normalizeRole(sessionUser?.role));
   // The reader and the Writer Studio focus screens (editor, preview, publish)
   // replace the global chrome with their own top bar.
@@ -41,7 +47,8 @@ export default function AppShell({ user, studios, trending, children }: AppShell
     pathname.startsWith("/episode") ||
     pathname.startsWith("/writer-studio") ||
     pathname.startsWith("/writer") ||
-    pathname.startsWith("/ceo");
+    pathname.startsWith("/ceo") ||
+    pathname.startsWith("/administration");
 
   useEffect(() => {
     setMobileOpen(false);
@@ -181,6 +188,22 @@ export default function AppShell({ user, studios, trending, children }: AppShell
               )}
             </div>
           </header>
+        ) : null}
+        {renovationMode && !isReaderRoute ? (
+          <p role="status" className="border-b border-[var(--border-color)] bg-[var(--accent-soft)] px-4 py-2 text-center text-xs text-[var(--text-primary)]">
+            Renovation Mode is on. Only the CEO and Board can see the site.{" "}
+            <Link href="/administration/renovation" className="font-semibold underline underline-offset-4">
+              Manage
+            </Link>
+          </p>
+        ) : null}
+        {restriction?.kind === "DISCIPLINE" && !isReaderRoute ? (
+          <p role="status" className="border-b border-[var(--border-color)] bg-[var(--panel-hover)] px-4 py-2 text-center text-xs text-[var(--text-primary)]">
+            Your account is temporarily restricted, so you can read but not post or publish.{" "}
+            <Link href="/account-restricted" className="font-semibold underline underline-offset-4">
+              Details
+            </Link>
+          </p>
         ) : null}
         <main className={isFlushRoute ? "flex-1" : "page-shell flex-1"}>{children}</main>
         {!isReaderRoute ? (

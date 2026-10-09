@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireApiUser } from "@/lib/auth/guards";
 import { promoteUserToWriter } from "@/lib/author-onboarding";
 import { decideImageField, deleteReplacedImage } from "@/lib/uploads/image-storage";
 
@@ -14,14 +14,10 @@ function cleanOptionalText(value: unknown) {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "You must be signed in to become a writer." },
-        { status: 401 },
-      );
-    }
+    // Shared guard: signed in, not restricted, platform open.
+    const guard = await requireApiUser();
+    if (!guard.ok) return guard.response;
+    const session = { user: guard.user };
 
     const body = (await request.json().catch(() => null)) as
       | {

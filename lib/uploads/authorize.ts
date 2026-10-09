@@ -11,9 +11,7 @@ import type { ImagePurpose } from "./image-purposes";
  *
  *   series-cover / episode-cover  WRITER+ and author of that series/episode
  *   profile-image / profile-banner  any signed-in user, for their own account
- *
- * Application-wide images (none exist yet) would use requireApiRole("BOARD"),
- * which admits BOARD and CEO.
+ *   platform-avatar                 BOARD and CEO (Administration's avatar library)
  */
 export async function authorizeImageUpload(
   purpose: ImagePurpose,
@@ -35,5 +33,7 @@ export async function authorizeImageUpload(
     case "profile-image":
     case "profile-banner":
       return requireApiUser();
+    case "platform-avatar":
+      return requireApiRole("BOARD");
   }
 }

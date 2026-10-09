@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 
-const PHASE_UNLOCK_CODE = "0424";
+/*
+ * The single platform Settings row. Phase 2/3 flags are only changed by the
+ * CEO Studio activation flow (lib/ceo/phase-activation.ts); renovation and
+ * avatar defaults only through Administration. There is no unlock code: the
+ * old hard-coded code was removed in favor of the CEO password (CEO_PASSWORD).
+ */
 
 export type PlatformSettings = {
   siteName: string;
@@ -8,6 +13,12 @@ export type PlatformSettings = {
   enablePayments: boolean;
   phaseTwoUnlocked: boolean;
   phaseThreeUnlocked: boolean;
+  phaseTwoActivatedAt: Date | null;
+  phaseThreeActivatedAt: Date | null;
+  renovationMode: boolean;
+  renovationChangedAt: Date | null;
+  defaultReaderAvatarId: string | null;
+  defaultWriterAvatarId: string | null;
 };
 
 const DEFAULT_SETTINGS: PlatformSettings = {
@@ -16,6 +27,12 @@ const DEFAULT_SETTINGS: PlatformSettings = {
   enablePayments: false,
   phaseTwoUnlocked: false,
   phaseThreeUnlocked: false,
+  phaseTwoActivatedAt: null,
+  phaseThreeActivatedAt: null,
+  renovationMode: false,
+  renovationChangedAt: null,
+  defaultReaderAvatarId: null,
+  defaultWriterAvatarId: null,
 };
 
 const settingsSelect = {
@@ -24,26 +41,29 @@ const settingsSelect = {
   enablePayments: true,
   phaseTwoUnlocked: true,
   phaseThreeUnlocked: true,
+  phaseTwoActivatedAt: true,
+  phaseThreeActivatedAt: true,
+  renovationMode: true,
+  renovationChangedAt: true,
+  defaultReaderAvatarId: true,
+  defaultWriterAvatarId: true,
 } as const;
 
 /**
  * Read-only: safe during rendering. A missing row reads as the defaults
- * (every phase locked/off) without being created.
+ * (every phase locked/off, renovation off) without being created.
  */
 export async function getPlatformSettings(): Promise<PlatformSettings> {
-  const existing = await prisma.settings.findFirst({ select: settingsSelect });
+  const existing = await prisma.settings.findFirst({ orderBy: { id: "asc" }, select: settingsSelect });
   return existing ?? DEFAULT_SETTINGS;
 }
 
-/** For the CEO settings write path only: returns the row, creating it if missing. */
-export async function ensurePlatformSettings() {
-  const existing = await prisma.settings.findFirst();
-
-  if (existing) {
-    return existing;
-  }
-
-  return prisma.settings.create({ data: DEFAULT_SETTINGS });
+/** For write paths only: returns the row's id, creating the row if missing. */
+export async function ensurePlatformSettingsId(): Promise<string> {
+  const existing = await prisma.settings.findFirst({ orderBy: { id: "asc" }, select: { id: true } });
+  if (existing) return existing.id;
+  const created = await prisma.settings.create({ data: {}, select: { id: true } });
+  return created.id;
 }
 
 export async function isPhaseTwoActive() {
@@ -56,6 +76,7 @@ export async function isPhaseThreeActive() {
   return settings.phaseThreeUnlocked && settings.enableAds;
 }
 
-export function isValidPhaseUnlockCode(code: string | null | undefined) {
-  return code === PHASE_UNLOCK_CODE;
+export async function isRenovationMode() {
+  const settings = await getPlatformSettings();
+  return settings.renovationMode;
 }

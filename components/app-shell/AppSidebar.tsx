@@ -228,10 +228,10 @@ export default function AppSidebar({
         {canManage ? (
           <NavItem
             {...item}
-            href="/command-center"
-            label="Command Center"
+            href="/administration"
+            label="Administration"
             icon={<ShieldIcon size={16} className="flex-shrink-0" />}
-            active={pathname.startsWith("/command-center")}
+            active={pathname.startsWith("/administration")}
           />
         ) : null}
 

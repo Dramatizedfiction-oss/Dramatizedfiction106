@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { PROTECTED_ROUTE_RULES } from "@/lib/auth-route-guards";
+import { PATHNAME_HEADER, PROTECTED_ROUTE_RULES } from "@/lib/auth-route-guards";
 
 const SESSION_COOKIE_NAMES = [
   "df.session-token",
@@ -22,25 +22,31 @@ export default function middleware(request: NextRequest) {
     return NextResponse.redirect(writerStudioUrl);
   }
 
-  const rule = PROTECTED_ROUTE_RULES.find((entry) => pathname.startsWith(entry.prefix));
-
-  if (!rule) {
-    return NextResponse.next();
-  }
-
-  const hasSessionCookie = SESSION_COOKIE_NAMES.some((cookieName) =>
-    Boolean(cookies.get(cookieName)?.value),
+  // Cookie presence only: real role/restriction checks happen on the server
+  // in each page and route (lib/utils.ts, lib/auth/guards.ts).
+  const rule = PROTECTED_ROUTE_RULES.find(
+    (entry) => pathname === entry.prefix || pathname.startsWith(`${entry.prefix}/`),
   );
 
-  if (!hasSessionCookie) {
-    const signInUrl = new URL("/sign-in", nextUrl);
-    signInUrl.searchParams.set("callbackUrl", nextUrl.pathname + nextUrl.search);
-    return NextResponse.redirect(signInUrl);
+  if (rule) {
+    const hasSessionCookie = SESSION_COOKIE_NAMES.some((cookieName) =>
+      Boolean(cookies.get(cookieName)?.value),
+    );
+
+    if (!hasSessionCookie) {
+      const signInUrl = new URL("/sign-in", nextUrl);
+      signInUrl.searchParams.set("callbackUrl", nextUrl.pathname + nextUrl.search);
+      return NextResponse.redirect(signInUrl);
+    }
   }
 
-  return NextResponse.next();
+  // Overwrite (never trust) any incoming value of this header.
+  const headers = new Headers(request.headers);
+  headers.set(PATHNAME_HEADER, pathname);
+  return NextResponse.next({ request: { headers } });
 }
 
 export const config = {
-  matcher: ["/writer/:path*", "/writer-studio/:path*", "/command-center/:path*", "/ceo/:path*", "/ceo-studio/:path*"],
+  // Every page and API route; static files and Next.js internals are skipped.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|avatars/|logo-934.png).*)"],
 };

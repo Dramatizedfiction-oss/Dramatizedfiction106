@@ -40,6 +40,12 @@ model User {
   studioMemberships        StudioMembership[]
   subscriptions            Subscription[]
   stats                    UserStats?
+  restrictions             MemberRestriction[] @relation("RestrictedMember")
+  restrictionsImposed      MemberRestriction[] @relation("RestrictionImposer")
+  restrictionsLifted       MemberRestriction[] @relation("RestrictionLifter")
+  auditActions             AdminAuditLog[]     @relation("AuditActor")
+  auditEntries             AdminAuditLog[]     @relation("AuditTarget")
+  platformAvatarsAdded     PlatformAvatar[]
 }
 
 model AuthorProfile {
@@ -168,13 +174,76 @@ model UserStats {
 }
 
 model Settings {
-  id                 String   @id @default(cuid())
-  siteName           String   @default("Dramatized Fiction")
-  enableAds          Boolean  @default(false)
-  enablePayments     Boolean  @default(false)
-  updatedAt          DateTime @updatedAt
-  phaseThreeUnlocked Boolean  @default(false)
-  phaseTwoUnlocked   Boolean  @default(false)
+  id                    String          @id @default(cuid())
+  siteName              String          @default("Dramatized Fiction")
+  enableAds             Boolean         @default(false)
+  enablePayments        Boolean         @default(false)
+  updatedAt             DateTime        @updatedAt
+  phaseThreeUnlocked    Boolean         @default(false)
+  phaseTwoUnlocked      Boolean         @default(false)
+  // When each phase was activated from CEO Studio (null = never).
+  phaseTwoActivatedAt   DateTime?
+  phaseThreeActivatedAt DateTime?
+  // Renovation Mode: the public sees the renovation page; CEO and Board keep access.
+  renovationMode        Boolean         @default(false)
+  renovationChangedAt   DateTime?
+  // Platform default profile pictures (null = the built-in defaults in public/avatars).
+  defaultReaderAvatarId String?
+  defaultWriterAvatarId String?
+  defaultReaderAvatar   PlatformAvatar? @relation("DefaultReaderAvatar", fields: [defaultReaderAvatarId], references: [id], onDelete: SetNull)
+  defaultWriterAvatar   PlatformAvatar? @relation("DefaultWriterAvatar", fields: [defaultWriterAvatarId], references: [id], onDelete: SetNull)
+}
+
+// A permanent ban (endsAt null) or a one-month discipline action. Active while
+// liftedAt is null and (for discipline) endsAt is in the future, so discipline
+// ends on its own without a scheduled job. Rows are kept as history.
+model MemberRestriction {
+  id          String          @id @default(cuid())
+  userId      String
+  kind        RestrictionKind
+  // Private administrative note; never shown to the member.
+  reason      String
+  imposedById String?
+  imposedAt   DateTime        @default(now())
+  endsAt      DateTime?
+  liftedById  String?
+  liftedAt    DateTime?
+  liftNote    String?
+  user        User            @relation("RestrictedMember", fields: [userId], references: [id], onDelete: Cascade)
+  imposedBy   User?           @relation("RestrictionImposer", fields: [imposedById], references: [id], onDelete: SetNull)
+  liftedBy    User?           @relation("RestrictionLifter", fields: [liftedById], references: [id], onDelete: SetNull)
+
+  @@index([userId, liftedAt])
+}
+
+// Who did what to whom, for sensitive administrative actions. Never stores
+// passwords or other secrets.
+model AdminAuditLog {
+  id           String   @id @default(cuid())
+  action       String
+  actorId      String?
+  targetUserId String?
+  details      Json?
+  createdAt    DateTime @default(now())
+  actor        User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  targetUser   User?    @relation("AuditTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  @@index([action, createdAt])
+  @@index([actorId, action, createdAt])
+  @@index([targetUserId, createdAt])
+}
+
+// Shared avatars uploaded by Administration; one may be the Reader default and
+// one the Writer default (Settings). Members' own pictures stay on User.image.
+model PlatformAvatar {
+  id                String     @id @default(cuid())
+  label             String
+  url               String     @unique
+  createdAt         DateTime   @default(now())
+  createdById       String?
+  createdBy         User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  defaultForReaders Settings[] @relation("DefaultReaderAvatar")
+  defaultForWriters Settings[] @relation("DefaultWriterAvatar")
 }
 
 model AuthorPayout {
@@ -256,6 +325,11 @@ enum Role {
   WRITER
   BOARD
   CEO
+}
+
+enum RestrictionKind {
+  BAN
+  DISCIPLINE
 }
 
 enum WriterStatus {

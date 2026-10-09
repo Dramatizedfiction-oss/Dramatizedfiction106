@@ -8,7 +8,7 @@ import { getWriterProfile } from "@/lib/writer-studio/queries";
 import { requireStudioUser } from "@/lib/writer-studio/session";
 
 // Read-only view of the platform phases. Activation lives in the CEO tools
-// (PATCH /api/settings); nothing here writes settings.
+// (CEO Studio, POST /api/ceo/phases/[phase]/activate); nothing here writes settings.
 export default async function GrowRoadmapPage() {
   const user = await requireStudioUser();
   const [profile, phaseTwo, phaseThree] = await Promise.all([

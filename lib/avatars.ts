@@ -4,16 +4,24 @@ import { hasRoleAccess } from "@/lib/roles";
  * Profile pictures. Client-safe.
  *
  * User.image holds only a picture the user uploaded (or legacy custom URL);
- * null means "no custom picture". The platform defaults below are chosen at
- * display time and are never written to the database, so:
+ * null means "no custom picture". Defaults are chosen at display time and are
+ * never written to the database, so:
  *   - an uploaded picture always wins over a default;
  *   - a role change only changes which default is shown, never a custom picture;
- *   - removing a custom picture falls back to the right default automatically.
- * To change the default artwork, replace these files (or these paths).
+ *   - removing a custom picture falls back to the right default automatically;
+ *   - changing a default in Administration never touches anyone's own picture.
+ *
+ * DEFAULT_AVATARS point at /api/avatars/default/*, which redirects to the
+ * default chosen in Administration > Avatars, or to the built-in file below.
  */
-export const DEFAULT_AVATARS = {
+export const BUILT_IN_AVATARS = {
   reader: "/avatars/reader-default.svg",
   writer: "/avatars/writer-default.svg",
+} as const;
+
+export const DEFAULT_AVATARS = {
+  reader: "/api/avatars/default/reader",
+  writer: "/api/avatars/default/writer",
 } as const;
 
 export type AvatarUser = {

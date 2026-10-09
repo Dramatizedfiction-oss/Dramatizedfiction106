@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getCmsArticle, isKnownCmsSlug } from "@/lib/cms";
 import { prisma } from "@/lib/prisma";
 import { parseJsonBody, serverError } from "@/lib/api/writer-studio-request";
-import { apiError, requireApiRole } from "@/lib/auth/guards";
+import { apiError, requireApiRole, requirePlatformOpen } from "@/lib/auth/guards";
 
 const articleSchema = z.object({
   title: z.string().trim().min(1).max(300),
@@ -11,11 +11,14 @@ const articleSchema = z.object({
   deepSectionContent: z.string().trim().min(1),
 });
 
-// Public, read-only.
+// Public, read-only (closed during renovation except for CEO/Board).
 export async function GET(
   _req: Request,
   { params }: { params: { slug: string } },
 ) {
+  const open = await requirePlatformOpen();
+  if (!open.ok) return open.response;
+
   const article = await getCmsArticle(params.slug);
 
   if (!article) {

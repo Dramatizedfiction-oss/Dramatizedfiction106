@@ -25,7 +25,14 @@ const nextConfig = {
         source: "/writer-studio/:page(editor|characters|media|scheduling|settings|wip-projects|notifications)",
         destination: "/writer-studio",
         permanent: false
-      }
+      },
+      // Administration replaced Command Center and the old /ceo pages; CEO
+      // Studio now lives at /ceo-studio. The destinations check access.
+      { source: "/command-center/:path*", destination: "/administration", permanent: false },
+      { source: "/ceo", destination: "/ceo-studio", permanent: false },
+      { source: "/ceo/users", destination: "/administration/members", permanent: false },
+      { source: "/ceo/analytics", destination: "/administration/analytics", permanent: false },
+      { source: "/ceo/settings", destination: "/administration/content", permanent: false }
     ];
   }
 };

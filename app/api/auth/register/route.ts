@@ -2,8 +2,13 @@ import { NextResponse } from "next/server";
 import { createSession, persistSession } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth-utils";
+import { requirePlatformOpen } from "@/lib/auth/guards";
 
 export async function POST(request: Request) {
+  // No new accounts while the platform is closed for renovation.
+  const open = await requirePlatformOpen();
+  if (!open.ok) return open.response;
+
   const body = (await request.json().catch(() => null)) as
     | {
         name?: string;

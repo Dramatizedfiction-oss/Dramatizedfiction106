@@ -9,29 +9,34 @@ Dramatized Fiction — a serialized fiction reading/publishing platform (readers
 ## Commands
 
 ```bash
-npm run dev              # next dev on :3000
-npm run build            # next build (also the only type/compile check — there is no test suite)
-npm run lint             # next lint — no ESLint config is committed, so the first run prompts interactively
-npx prisma generate      # runs automatically on postinstall
-npx prisma db push       # how the schema has actually been applied (see Database below)
-npx prisma migrate dev   # npm run prisma:migrate
+npm run dev                # next dev on :3000 (uses .env.local over .env, so the development DB when configured)
+npm run build              # next build
+npm run lint               # next lint — no ESLint config is committed, so the first run prompts interactively
+npm test                   # unit tests: node --test (Node 24 strips TS; tests/setup resolves "@/")
+npm run test:integration   # DB + HTTP tests, development database only (needs `npm run dev` running)
+npm run db:dev:verify      # prove .env.local's DATABASE_URL is not production; changes nothing
+npm run db:dev:check       # read-only: connect, list tables/row counts and migration history
+npm run db:dev:status      # prisma migrate status against the development DB
+npm run db:dev:migrate     # prisma migrate deploy against the development DB
+npx prisma generate        # runs automatically on postinstall
 ```
 
-There are no tests. Both `package-lock.json` and `pnpm-lock.yaml` are committed; npm is what README documents.
+**Never run Prisma CLI commands directly** (`npx prisma migrate …`, `db push`): the CLI reads `.env`, which points at **production**. Use the `db:dev:*` scripts (`scripts/db-dev.mjs`): they read `.env.local`, refuse to run if it names the same database as `.env`, and block destructive commands (`migrate reset`, `migrate dev`, `db push`, `--force-reset`, `--accept-data-loss`). Both `package-lock.json` and `pnpm-lock.yaml` are committed; npm is what README documents.
 
 On this machine `git` is not on PATH; GitHub Desktop's bundled git works: `$env:LOCALAPPDATA\GitHubDesktop\app-*\resources\app\git\cmd\git.exe`.
 
-Environment variables: see `.env.example`. `.env` is gitignored (it was previously committed; credentials have since been rotated — never re-add it). `next-auth`, `@auth/prisma-adapter`, `@neondatabase/neon-js`, `nodemailer` and the `NEXTAUTH_*`/`DEV_CEO_*` env vars are installed/present but unused by current code.
+Environment variables: see `.env.example`. `.env` (production) and `.env.local` (development DB, `CEO_PASSWORD`) are gitignored via `.env.*` — never commit either. `CEO_PASSWORD` is server-only (never `NEXT_PUBLIC_`); if missing or under 12 characters, every CEO-password action fails closed. `next-auth`, `@auth/prisma-adapter`, `@neondatabase/neon-js`, `nodemailer` and the `NEXTAUTH_*`/`DEV_CEO_*` env vars are installed/present but unused by current code (`DEV_CEO_*` should be deleted).
 
 ## Architecture
 
 **Auth is custom, not NextAuth.** `auth.ts` (repo root) implements DB-backed sessions: random token in the `Session` table, httpOnly cookie `df.session-token` (`__Secure-df.session-token` in production), 30-day expiry. `auth()` hits the DB on every call (no request cache; layout and page each call it). Passwords are scrypt `salt:hash` (`lib/auth-utils.ts`). Routes: `app/api/auth/{register,login,logout,me,validate}`. Client state comes from `components/providers/AuthSessionProvider.tsx` (seeded by the root layout, refreshed via `/api/auth/me`).
 
-**Roles** are hierarchical `READER < WRITER < BOARD < CEO` (`lib/auth/roles.ts`, re-exported by `lib/roles.ts`); `hasRoleAccess(role, "WRITER")` is true for BOARD/CEO too. Legacy DB values AUTHOR/ADMIN normalize to WRITER/BOARD. READER→WRITER is instant self-service via `/become-author` → `POST /api/become-author` → `lib/author-onboarding.ts`. BOARD/CEO are only assignable by editing the DB.
+**Roles** are hierarchical `READER < WRITER < BOARD < CEO` (`lib/auth/roles.ts`, re-exported by `lib/roles.ts`); `hasRoleAccess(role, "WRITER")` is true for BOARD/CEO too. Legacy DB values AUTHOR/ADMIN normalize to WRITER/BOARD. READER→WRITER is instant self-service via `/become-author` → `POST /api/become-author` → `lib/author-onboarding.ts`. BOARD/CEO are assigned by a CEO in Administration → Members (CEO session + `CEO_PASSWORD`, `lib/admin/roles-service.ts`): max 6 Board, never fewer than 1 CEO, both enforced under an advisory lock.
 
 **Where authorization actually happens:**
-- `middleware.ts` only checks that a session cookie *exists* (it ignores `minimumRole` in `lib/auth-route-guards.ts`) and redirects legacy `/writer/*` → `/writer-studio/*` (so everything under `app/writer/` is unreachable dead code).
-- Real checks are server-side: `requireRole` / `requireWriterStudioAccess` in `lib/utils.ts`, called in pages, the `app/writer-studio/layout.tsx`, and API routes. `requireRole` uses `redirect()`, so in API routes failures become a 307 to an HTML page rather than 401/403.
+- `middleware.ts` only checks that a session cookie *exists* for protected prefixes (it ignores `minimumRole` in `lib/auth-route-guards.ts`), redirects legacy `/writer/*` → `/writer-studio/*`, and sets the `x-df-pathname` request header (overwriting any incoming value) for the root layout.
+- Real checks are server-side. Pages: `requireRole`, `requireWriterStudioAccess`, `requireAdministrationPage`, `requireCEOPage` in `lib/utils.ts` (redirect on failure). APIs: `requireApiUser` / `requireApiRole` / `requireApiCEO` / `requirePlatformOpen` in `lib/auth/guards.ts` (JSON 401/403/503).
+- `auth()` also loads the member's active restriction (ban / discipline, `MemberRestriction`). `requireApiUser` refuses restricted members (403 `ACCOUNT_RESTRICTED`) and, during Renovation Mode, anyone below Board (503 `RENOVATION`); the page guards send restricted members to `/account-restricted`. The root layout renders the renovation page or the suspension notice instead of the app when those apply. Only `/api/auth/{me,validate}` may call `auth()` directly in an API route (a unit test enforces this).
 - Ownership (`authorId === session.user.id`) is only enforced in `app/api/writer-studio/*`. The older `app/api/series/*` and `app/api/episodes/*` routes lack ownership checks and their GETs return drafts/locked bodies — the UI does not call them; prefer the writer-studio routes and don't build on the legacy ones.
 
 **Data flow.** No service layer: server components query `prisma` (`lib/prisma.ts` singleton) directly, and client components mutate via `fetch` to `app/api/*` route handlers (no server actions). The root `app/layout.tsx` runs on every request: `auth()`, published-series/author queries for the sidebar search and trending list, and `ensureUserStudioAccess` (`lib/studios.ts`), which upserts AuthorProfile/Studio/StudioMembership rows for writers. The episode reader page (`app/episode/[episodeId]/page.tsx`) increments `readerCount`/`series.reads` and writes `ReadEvent` + `RevenueEvent` rows during render.
@@ -40,13 +45,28 @@ Environment variables: see `.env.example`. `.env` is gitignored (it was previous
 
 **AI usage labels** (the only "AI" feature — there is no AI integration). Prisma enum `AI_FREE | AI_CORRECTED | AI_HEAVY | AI_WRITTEN`; the UI uses the spaced form (`"AI HEAVY"`). Convert with `serializeAiUsageTag` / `deserializeAiUsageTag` in `lib/ai-usage.ts` — `serializeAiUsageTag` only recognises the spaced form and falls back to AI_FREE for anything else, so always deserialize DB values before they reach a form.
 
-**Monetization / phases — dormant, do not activate.** A single `Settings` row (`lib/phases.ts`, `getPlatformSettings`) holds `phaseTwoUnlocked`/`enablePayments` (Phase 2: Stripe) and `phaseThreeUnlocked`/`enableAds` (Phase 3: ads). `isPhaseTwoActive()` / `isPhaseThreeActive()` gate `app/api/payments/*` and `app/api/ads/impression`. CEO toggles them in `/ceo/settings` → `PATCH /api/settings`; unlocking is one-way. Access logic in `lib/monetization.ts` always treats the viewer as having no purchases/subscription; components in `components/monetization/` are disabled previews. No checkout, subscription, or payout flow exists. Episode `locked: true` therefore makes an episode unreadable by everyone. Transition-ad pacing is client-side (`lib/ad-transition.ts`, sessionStorage) and does not gate content server-side.
+**Monetization / phases — dormant, do not activate.** A single `Settings` row (`lib/phases.ts`, `getPlatformSettings`) holds `phaseTwoUnlocked`/`enablePayments` (Phase 2: Stripe) and `phaseThreeUnlocked`/`enableAds` (Phase 3: ads). `isPhaseTwoActive()` / `isPhaseThreeActive()` gate `app/api/payments/*` and `app/api/ads/impression`. They change only through CEO Studio (`/ceo-studio/phases/[2|3]` → `POST /api/ceo/phases/[phase]/activate`: CEO session + `CEO_PASSWORD` + every requirement in `lib/ceo/phase-readiness.ts`). Both phases are blocked today by the `PHASE_IMPLEMENTATION` flags (no checkout, paid access, payouts, ad provider, ad accounting) — flip one only when that piece is really built. Activation is one-way. Access logic in `lib/monetization.ts` always treats the viewer as having no purchases/subscription; components in `components/monetization/` are disabled previews. No checkout, subscription, or payout flow exists. Episode `locked: true` therefore makes an episode unreadable by everyone. Transition-ad pacing is client-side (`lib/ad-transition.ts`, sessionStorage) and does not gate content server-side.
 
-**Other surfaces:** `/ceo/*` (CEO: dashboard, settings, users list, analytics; `app/ceo/revenue/route.ts` is a route handler), `/command-center` (BOARD placeholder), `/write-with-us` (onboarding copy from `CmsArticle` via `lib/cms.ts`), `/goal` (monthly ReadEvent meter). Follow-author is localStorage-only; comments, ratings, library, and reading progress do not exist.
+**Administration and CEO Studio** (the only two admin areas). `/administration` (BOARD + CEO): members (search, bans, one-month discipline, Board/CEO roles for the CEO), analytics (`lib/admin/analytics.ts`, real counts only; page views are not tracked), avatar library + Reader/Writer defaults (served via `/api/avatars/default/[kind]`), Renovation Mode (CEO toggles), onboarding content. `/ceo-studio` (CEO only): Phase 2/3 activation. Rules are pure functions in `lib/admin/policy.ts`; services in `lib/admin/*-service.ts`; sensitive actions write `AdminAuditLog`. `/command-center` and the old `/ceo/{users,analytics,settings}` pages redirect (next.config.js); `app/ceo/revenue/route.ts` is still a CEO-only route handler.
+
+**Other surfaces:** `/write-with-us` (onboarding copy from `CmsArticle` via `lib/cms.ts`), `/goal` (monthly ReadEvent meter). Follow-author is localStorage-only; comments, ratings, library, and reading progress do not exist.
 
 ## Database
 
-`prisma/schema.prisma` is the source of truth, but only one migration exists (`prisma/migrations/…_app_roles_writer_flow`, the READER/WRITER/BOARD/CEO enum rename). Everything else was applied with `db push`, and production has drifted from the schema before (e.g. a missing `Series.aiUsageTag` column). Create a migration baseline before introducing schema changes, and never flip the live `Settings` phase flags. Models `UserStats`, `AuthorPayout`, `Subscription`, `Book`, `Account`, `VerificationToken` are unused; `Studio`/`StudioMembership` are populated but barely consumed.
+`prisma/schema.prisma` is the source of truth. Migrations: `0_baseline` (the full schema as of 2026-10-09, generated from the datamodel), `20260525213000_app_roles_writer_flow` (Role enum rename; runs harmlessly after the baseline on a fresh DB), `20261009120000_administration` (additive: `MemberRestriction`, `AdminAuditLog`, `PlatformAvatar`, new `Settings` columns). Production was built with `db push` and has drifted before (e.g. a missing `Series.aiUsageTag` column), so before migrating production: diff it against the schema, then `migrate resolve --applied` the first two migrations and `migrate deploy` the rest — never run the baseline against it. Develop against the development DB only (`db:dev:*` scripts; see the protocol below), and never flip the live `Settings` phase flags. Models `UserStats`, `AuthorPayout`, `Subscription`, `Book`, `Account`, `VerificationToken` are unused; `Studio`/`StudioMembership` are populated but barely consumed.
+
+## Database safety protocol (follow every session, before any database work)
+
+Two databases exist. `.env` → **production** (`ep-holy-sunset-…`). `.env.local` → **development** (`ep-withered-leaf-…`, a Neon copy of production that contains real member data: treat it as sensitive). All schema changes, migrations and integration tests happen on development only.
+
+1. **Verify the target first:** `npm run db:dev:verify`. It must print a development host different from production. If it refuses, the target is unclear, or `.env.local` is missing: **stop and ask the user**. Never guess, and never "fix" by pointing at production.
+2. **Health check (read-only):** `npm run db:dev:check` (connection, tables, row counts, migration history).
+3. **Schema changes:** edit `prisma/schema.prisma`, then generate the SQL without touching any database: `npx prisma migrate diff --from-schema-datamodel <previous schema copy> --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/<timestamp>_<name>/migration.sql` (write it with `cmd /c` redirection so the file is plain UTF-8). Prefer additive changes; explain anything destructive and get explicit approval. Show the user the SQL before applying it.
+4. **Drift check before migrating** (read-only): `node scripts/db-dev.mjs migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel <expected schema> --script` must print "This is an empty migration".
+5. **Apply to development only:** `npm run db:dev:migrate`, then `npm run db:dev:status`.
+6. **Test:** `npm test`, then with `npm run dev` running, `npm run test:integration` (development only; test records are tagged and removed).
+7. **Never:** run `npx prisma migrate …`, `db push`, `migrate reset` or `--accept-data-loss` directly (the CLI reads `.env` = production); connect to, migrate or modify production; print, log or paste connection strings or `CEO_PASSWORD`; commit `.env` or `.env.local`; flip the live `Settings` phase flags.
+8. **Production** is migrated only when the user explicitly asks, after a drift diff against production: mark already-present migrations with `migrate resolve --applied`, then `migrate deploy` only the new ones, and deploy code only after the migration succeeds.
 
 ## Styling
 
@@ -61,20 +81,18 @@ Tailwind plus CSS-variable tokens in `app/globals.css` (`--bg-primary`, `--text-
 **Roles** (`READER → WRITER → BOARD → CEO`; CEO is the highest authority).
 - Only server-side checks grant access; the UI is never a security boundary.
 - Only approved/authorized writers may publish. Today promotion is self-service and there is no approval step; that is a gap to close, not a pattern to extend.
-- Board handles author approval and any other admin duties explicitly granted to it, but never CEO-only Inner Sanctum access.
-- Board is capped at 6 members, and only the CEO promotes or demotes Board members.
+- Board handles author approval and any other admin duties explicitly granted to it, but never CEO Studio access.
+- Board is capped at 6 members, and only the CEO promotes or demotes Board members (with the CEO password).
 - Do not invent permissions that are not defined here.
 
-**Command Center.** The eventual CEO admin experience is the "Command Center". It should be mature and cinematic, not a toy dashboard. It has two areas:
-- General controls: site/content management, newsletter and writer communication, author approvals, analytics, payments/tax tools once monetization is active, and platform configuration.
-- CEO-only Inner Sanctum: Phase/Level activation, Board promotion/demotion, and other CEO-exclusive controls.
-
-Today `/ceo/*` holds the CEO tools and `/command-center` is a BOARD placeholder, so expect consolidation.
+**Administration and CEO Studio.** There are exactly two admin areas; never add a third (no Command Center, no Inner Sanctum), duplicate dashboards or overlapping destinations.
+- Administration (`/administration`, CEO + Board): members and moderation, Board/CEO role management (CEO-only actions inside it), site-wide analytics, avatar library, Renovation Mode (CEO toggles), content, and future general tools (author approvals, writer communication, payments/tax once monetization is active).
+- CEO Studio (`/ceo-studio`, CEO only): high-impact decisions, currently Phase 2/3 activation. No member directory, Board management or analytics there.
 
 **Phases / Levels.** Phase 2 (monetization) and Phase 3 (ads) are NOT active. Never activate them, flip their flags, or bypass or weaken backend phase gates unless explicitly instructed. Preserve the existing gated infrastructure. Intended visibility:
 - Readers: Level 1 only. No Level 2 monetization UI and no Level 3 ad UI.
 - Writers: Level 1, plus optional tasteful grayed-out Level 2 previews. Nothing functional.
-- CEO: eventually activates levels from the Inner Sanctum.
+- CEO: activates levels from CEO Studio, only once every readiness requirement is met.
 - Future levels stay hidden until intentionally designed.
 
 Current code shows monetization preview cards to readers (series/episode pages, `/watch-ad`); these should be hidden for readers.
@@ -137,7 +155,7 @@ Prefer incremental improvement to rewrites, and preserve working functionality u
 14. Library/search/discovery
 15. Writer Studio
 16. Rich editor and reading-time improvements
-17. Command Center
+17. Administration + CEO Studio
 18. Phase/Level controls
 19. Monetization
 20. Advertising

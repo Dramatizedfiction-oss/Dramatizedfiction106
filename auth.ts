@@ -1,5 +1,6 @@
 import { randomBytes } from "crypto";
 import { cookies } from "next/headers";
+import { activeRestriction } from "@/lib/admin/policy";
 import { prisma } from "@/lib/prisma";
 import { normalizeRole, type AppRole } from "@/lib/roles";
 
@@ -9,6 +10,13 @@ const SESSION_COOKIE_NAME =
     : "df.session-token";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
+/** An active ban or discipline action. The private reason is never included. */
+export type AuthRestriction = {
+  kind: "BAN" | "DISCIPLINE";
+  /** ISO time a discipline action ends; null for a ban. */
+  endsAt: string | null;
+};
+
 export type AuthUser = {
   id: string;
   name: string | null;
@@ -16,6 +24,7 @@ export type AuthUser = {
   image: string | null;
   bio?: string | null;
   role: AppRole;
+  restriction: AuthRestriction | null;
 };
 
 export type AuthSession = {
@@ -41,11 +50,12 @@ export async function auth(): Promise<AuthSession | null> {
     return null;
   }
 
+  const now = new Date();
   const session = await prisma.session.findFirst({
     where: {
       sessionToken,
       expires: {
-        gt: new Date(),
+        gt: now,
       },
     },
     include: {
@@ -57,6 +67,15 @@ export async function auth(): Promise<AuthSession | null> {
           image: true,
           bio: true,
           role: true,
+          // Active restrictions only (lib/admin/policy.ts activeRestriction
+          // picks a ban over a discipline action).
+          restrictions: {
+            where: {
+              liftedAt: null,
+              OR: [{ kind: "BAN" }, { kind: "DISCIPLINE", endsAt: { gt: now } }],
+            },
+            select: { id: true, kind: true, imposedAt: true, endsAt: true, liftedAt: true },
+          },
         },
       },
     },
@@ -70,6 +89,8 @@ export async function auth(): Promise<AuthSession | null> {
     return null;
   }
 
+  const restriction = activeRestriction(session.user.restrictions, now);
+
   return {
     user: {
       id: session.user.id,
@@ -78,6 +99,9 @@ export async function auth(): Promise<AuthSession | null> {
       image: session.user.image,
       bio: session.user.bio,
       role: normalizeRole(session.user.role),
+      restriction: restriction
+        ? { kind: restriction.kind, endsAt: restriction.endsAt ? restriction.endsAt.toISOString() : null }
+        : null,
     },
     expires: session.expires.toISOString(),
   };

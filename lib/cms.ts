@@ -8,7 +8,7 @@ const defaultArticles = {
     quickSectionContent:
       "Dramatized Fiction is built for serialized storytellers who want their work to feel premium, alive, and easy to follow. Writers can publish series, release episodes, and build an audience inside a story-first platform.",
     deepSectionContent:
-      "Writers who join Dramatized Fiction are stepping into a platform designed around long-form worlds, episode flow, and reader retention. This deeper section can explain expectations, editorial standards, release rhythm, and what support the platform offers as the Command Center evolves.",
+      "Writers who join Dramatized Fiction are stepping into a platform designed around long-form worlds, episode flow, and reader retention. This deeper section can explain expectations, editorial standards, release rhythm, and what support the platform offers as it grows.",
   },
 } as const;
 

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { apiError, requirePlatformOpen } from "@/lib/auth/guards";
 import { isPhaseThreeActive } from "@/lib/phases";
 
 
@@ -10,7 +10,11 @@ export async function POST(req: Request) {
     return Response.json({ error: "Phase 3 is inactive" }, { status: 403 });
   }
 
-  const session = await auth();
+  // Closed during renovation; restricted members can't record impressions.
+  const open = await requirePlatformOpen();
+  if (!open.ok) return open.response;
+  if (open.user?.restriction) return apiError("ACCOUNT_RESTRICTED");
+
   const { episodeId } = await req.json();
 
   if (!episodeId) {
@@ -20,7 +24,7 @@ export async function POST(req: Request) {
   // Log ad impression
   await prisma.adImpression.create({
     data: {
-      userId: session?.user?.id ?? null,
+      userId: open.user?.id ?? null,
       episodeId
     }
   });
@@ -30,7 +34,7 @@ export async function POST(req: Request) {
     data: {
       type: "AD_WATCH",
       amount: 1, // placeholder, CEO can adjust later
-      userId: session?.user?.id ?? null,
+      userId: open.user?.id ?? null,
       episodeId
     }
   });

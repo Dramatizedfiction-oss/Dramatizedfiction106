@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { Episode, Series } from "@prisma/client";
 import { auth, type AuthUser } from "@/auth";
+import { canBypassRenovation } from "@/lib/admin/policy";
+import { isRenovationMode } from "@/lib/phases";
 import { prisma } from "@/lib/prisma";
 import { hasRoleAccess, isCEO, type AppRole } from "@/lib/roles";
 
@@ -29,7 +31,7 @@ import { hasRoleAccess, isCEO, type AppRole } from "@/lib/roles";
  * the database on every call so role changes apply on the next request.
  */
 
-export type ApiErrorCode = "UNAUTHENTICATED" | "FORBIDDEN" | "NOT_FOUND";
+export type ApiErrorCode = "UNAUTHENTICATED" | "FORBIDDEN" | "NOT_FOUND" | "ACCOUNT_RESTRICTED" | "RENOVATION";
 
 export type GuardResult<T> =
   | ({ ok: true } & T)
@@ -39,12 +41,16 @@ const DEFAULT_MESSAGES: Record<ApiErrorCode, string> = {
   UNAUTHENTICATED: "You must be signed in.",
   FORBIDDEN: "You do not have permission to do that.",
   NOT_FOUND: "Not found.",
+  ACCOUNT_RESTRICTED: "Your account is restricted, so this action isn't available.",
+  RENOVATION: "Dramatized Fiction is temporarily closed for renovation. Please check back soon.",
 };
 
 const STATUS_BY_CODE: Record<ApiErrorCode, number> = {
   UNAUTHENTICATED: 401,
   FORBIDDEN: 403,
   NOT_FOUND: 404,
+  ACCOUNT_RESTRICTED: 403,
+  RENOVATION: 503,
 };
 
 export function apiError(code: ApiErrorCode, message = DEFAULT_MESSAGES[code]) {
@@ -57,6 +63,14 @@ export async function getSessionUser(): Promise<AuthUser | null> {
   return session?.user ?? null;
 }
 
+/**
+ * Every signed-in API action goes through here (requireApiRole and
+ * requireApiCEO build on it), so two platform-wide rules are enforced once:
+ *   - a member with an active ban or discipline action can't act (403);
+ *   - during Renovation Mode only CEO and Board can act (503).
+ * Session endpoints (/api/auth/me, logout, login) don't use this guard, so a
+ * restricted member can still see their status and sign out.
+ */
 export async function requireApiUser(): Promise<GuardResult<{ user: AuthUser }>> {
   const user = await getSessionUser();
 
@@ -64,6 +78,27 @@ export async function requireApiUser(): Promise<GuardResult<{ user: AuthUser }>>
     return { ok: false, response: apiError("UNAUTHENTICATED") };
   }
 
+  if (user.restriction) {
+    return { ok: false, response: apiError("ACCOUNT_RESTRICTED") };
+  }
+
+  if (!canBypassRenovation(user.role) && (await isRenovationMode())) {
+    return { ok: false, response: apiError("RENOVATION") };
+  }
+
+  return { ok: true, user };
+}
+
+/**
+ * For public routes that don't require sign-in (register, ad impressions,
+ * public content): refused during Renovation Mode unless the caller is CEO or
+ * Board. Returns the session user when there is one.
+ */
+export async function requirePlatformOpen(): Promise<GuardResult<{ user: AuthUser | null }>> {
+  const user = await getSessionUser();
+  if (!canBypassRenovation(user?.role) && (await isRenovationMode())) {
+    return { ok: false, response: apiError("RENOVATION") };
+  }
   return { ok: true, user };
 }
 
