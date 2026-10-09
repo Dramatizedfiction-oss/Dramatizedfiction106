@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } from "react";
-import { LogOutIcon, MailIcon, SettingsIcon, UserIcon } from "@/components/icons";
+import { BookOpenIcon, LogOutIcon, MailIcon, SettingsIcon, UserIcon } from "@/components/icons";
 import UserAvatar from "@/components/UserAvatar";
 
 export type ProfileMenuUser = {
@@ -38,7 +38,7 @@ export default function ProfileMenu({
 }: {
   user: ProfileMenuUser;
   roleLabel: string;
-  /** Writers have a public author page; readers don't have a profile page yet. */
+  /** Writers have a public author page; everyone has a private reader page at /reader. */
   hasPublicProfile: boolean;
   isSigningOut: boolean;
   onSignOut: () => void;
@@ -176,13 +176,24 @@ export default function ProfileMenu({
           ) : null}
 
           <div className="space-y-0.5 pt-1">
+            {/* Writers' "Profile" is their public author page; everyone's private
+                reader page (/reader) is "Profile" for readers, "Reading profile" for writers. */}
             {hasPublicProfile && user.id ? (
-              <Link href={`/author/${user.id}`} onClick={choose} className="sidebar-link">
+              <>
+                <Link href={`/author/${user.id}`} onClick={choose} className="sidebar-link">
+                  <UserIcon size={16} className="shrink-0" />
+                  <span>Profile</span>
+                </Link>
+                <Link href="/reader" onClick={choose} className="sidebar-link">
+                  <BookOpenIcon size={16} className="shrink-0" />
+                  <span>Reading profile</span>
+                </Link>
+              </>
+            ) : (
+              <Link href="/reader" onClick={choose} className="sidebar-link">
                 <UserIcon size={16} className="shrink-0" />
                 <span>Profile</span>
               </Link>
-            ) : (
-              <UnavailableItem icon={<UserIcon size={16} className="shrink-0" />} label="Profile" />
             )}
             <Link href="/settings" onClick={choose} className="sidebar-link">
               <SettingsIcon size={16} className="shrink-0" />

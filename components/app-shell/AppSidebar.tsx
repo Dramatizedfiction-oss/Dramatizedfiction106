@@ -95,7 +95,7 @@ const RANK_COLORS = ["var(--rank-1)", "var(--rank-2)", "var(--rank-3)"];
  */
 export default function AppSidebar({
   user,
-  studios,
+  // `studios` is still passed in (see AppSidebarProps) but no longer displayed.
   trending,
   expanded,
   isMobile = false,
@@ -320,24 +320,6 @@ export default function AppSidebar({
 
       {/* Account area. */}
       <div className={`border-t border-[var(--border-color)] pb-4 pt-3 ${showLabels ? "px-3" : "px-2"}`}>
-        {showLabels && studios.length > 0 ? (
-          <div className="pb-3">
-            <p className="mb-1 px-1 font-mono-df text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Studios</p>
-            {studios.slice(0, 3).map((studio) => (
-              <Link
-                key={studio.id}
-                href={`/writer-studio?studio=${studio.slug}`}
-                onClick={onClose}
-                className={`block truncate rounded-md px-1 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] ${
-                  isMobile ? "py-3" : "py-1.5"
-                }`}
-              >
-                {studio.name}
-              </Link>
-            ))}
-          </div>
-        ) : null}
-
         {user ? (
           <div className={showLabels ? "" : "flex justify-center"}>
             <ProfileMenu
