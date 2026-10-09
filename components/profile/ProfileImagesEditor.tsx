@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import ImageUploadField from "@/components/uploads/ImageUploadField";
 import Sheet from "@/components/writer-studio/ui/Sheet";
 
@@ -14,11 +15,15 @@ import Sheet from "@/components/writer-studio/ui/Sheet";
 export default function ProfileImagesEditor({
   image,
   bannerImage,
+  defaultImage,
 }: {
   image: string | null;
   bannerImage: string | null;
+  /** The role default shown when there's no custom picture (lib/avatars). */
+  defaultImage: string;
 }) {
   const router = useRouter();
+  const { refreshSession } = useAuthSession();
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState({ image: image ?? "", bannerImage: bannerImage ?? "" });
   const [status, setStatus] = useState<{ kind: "idle" | "saving" | "saved" | "error"; message?: string }>({
@@ -46,6 +51,8 @@ export default function ProfileImagesEditor({
 
     setStatus({ kind: "saved" });
     router.refresh();
+    // The sidebar and header avatars read the client session.
+    if (field === "image") void refreshSession();
   }
 
   return (
@@ -67,6 +74,7 @@ export default function ProfileImagesEditor({
             purpose="profile-image"
             shape="avatar"
             value={values.image}
+            fallbackSrc={defaultImage}
             onChange={(url) => void save("image", url)}
             hint="A square photo works best. Changes save right away."
           />

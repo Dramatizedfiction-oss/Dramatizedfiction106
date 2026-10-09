@@ -5,6 +5,9 @@ import AuthorTierBadge from "@/components/AuthorTierBadge";
 import AuthorWorksCarousel from "@/components/AuthorWorksCarousel";
 import FollowAuthorButton from "@/components/follow/FollowAuthorButton";
 import ProfileImagesEditor from "@/components/profile/ProfileImagesEditor";
+import UserAvatar from "@/components/UserAvatar";
+import { defaultAvatarFor } from "@/lib/avatars";
+import { safeProfileLink } from "@/lib/profile";
 import { deriveAuthorTier, derivePostingConsistency } from "@/lib/author-tier";
 import { PUBLIC_EPISODE_WHERE, PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
 import { createViewerMonetizationState } from "@/lib/monetization";
@@ -20,12 +23,14 @@ export default async function AuthorProfilePage({
   const session = await auth();
   const author = await prisma.user.findUnique({
     where: { id: params.authorId },
-    // Public profile fields only (never email, password hash, role, Stripe ids).
+    // Public profile fields only (never email, password hash, Stripe ids).
+    // `role` is read only to pick the default picture; it is never displayed.
     select: {
       id: true,
       name: true,
       bio: true,
       image: true,
+      role: true,
       bannerImage: true,
       twitterUrl: true,
       instagramUrl: true,
@@ -87,12 +92,13 @@ export default async function AuthorProfilePage({
     author.bio?.trim() ||
     "This author is building stories on Dramatized Fiction. More identity details can be added over time without leaving the page feeling empty.";
 
+  // Only http(s) addresses become links.
   const socialLinks = [
-    { label: "Twitter", href: author.twitterUrl },
-    { label: "Instagram", href: author.instagramUrl },
-    { label: "YouTube", href: author.youtubeUrl },
-    { label: "Website", href: author.websiteUrl },
-    { label: "Discord", href: author.discordUrl },
+    { label: "Twitter", href: safeProfileLink(author.twitterUrl) },
+    { label: "Instagram", href: safeProfileLink(author.instagramUrl) },
+    { label: "YouTube", href: safeProfileLink(author.youtubeUrl) },
+    { label: "Website", href: safeProfileLink(author.websiteUrl) },
+    { label: "Discord", href: safeProfileLink(author.discordUrl) },
   ].filter((item) => Boolean(item.href));
 
   const completedBooks = author.books.filter((book) =>
@@ -164,18 +170,12 @@ export default async function AuthorProfilePage({
           <div className="-mt-12 flex flex-col gap-6 md:-mt-16 md:flex-row md:items-end md:justify-between">
             {/* Phones: the avatar overlaps the banner and the name sits below it. */}
             <div className="flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-end sm:gap-4">
-              <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-[var(--bg-secondary)] bg-[var(--bg-primary)] text-3xl font-semibold text-[var(--text-primary)] sm:h-28 sm:w-28 md:h-32 md:w-32">
-                {author.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={author.image}
-                    alt={displayName}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  displayName.slice(0, 2).toUpperCase()
-                )}
-              </div>
+              <UserAvatar
+                user={{ image: author.image, role: author.role }}
+                size="xl"
+                label={displayName}
+                className="border-4 border-[var(--bg-secondary)]"
+              />
 
               <div className="min-w-0 pb-2">
                 <p className="eyebrow">Author Profile</p>
@@ -186,7 +186,11 @@ export default async function AuthorProfilePage({
                   <AuthorTierBadge tier={authorTier} />
                   <FollowAuthorButton authorId={author.id} authorName={displayName} />
                   {session?.user?.id === author.id ? (
-                    <ProfileImagesEditor image={author.image} bannerImage={author.bannerImage} />
+                    <ProfileImagesEditor
+                      image={author.image}
+                      bannerImage={author.bannerImage}
+                      defaultImage={defaultAvatarFor(author.role)}
+                    />
                   ) : null}
                 </div>
               </div>

@@ -1,0 +1,36 @@
+import { hasRoleAccess } from "@/lib/roles";
+
+/*
+ * Profile pictures. Client-safe.
+ *
+ * User.image holds only a picture the user uploaded (or legacy custom URL);
+ * null means "no custom picture". The platform defaults below are chosen at
+ * display time and are never written to the database, so:
+ *   - an uploaded picture always wins over a default;
+ *   - a role change only changes which default is shown, never a custom picture;
+ *   - removing a custom picture falls back to the right default automatically.
+ * To change the default artwork, replace these files (or these paths).
+ */
+export const DEFAULT_AVATARS = {
+  reader: "/avatars/reader-default.svg",
+  writer: "/avatars/writer-default.svg",
+} as const;
+
+export type AvatarUser = {
+  image?: string | null;
+  role?: string | null;
+};
+
+/** WRITER, BOARD and CEO get the writer default; everyone else the reader default. */
+export function defaultAvatarFor(role: string | null | undefined) {
+  return hasRoleAccess(role, "WRITER") ? DEFAULT_AVATARS.writer : DEFAULT_AVATARS.reader;
+}
+
+export function hasCustomAvatar(user: AvatarUser) {
+  return Boolean(user.image?.trim());
+}
+
+/** The picture to show: the custom one if set, otherwise the role default. */
+export function avatarSrc(user: AvatarUser) {
+  return hasCustomAvatar(user) ? user.image!.trim() : defaultAvatarFor(user.role);
+}

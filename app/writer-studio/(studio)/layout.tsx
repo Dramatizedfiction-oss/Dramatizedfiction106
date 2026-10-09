@@ -12,6 +12,7 @@ export default async function StudioLayout({ children }: { children: React.React
       <StudioHeader
         userId={user.id}
         name={profile?.name || user.name || "Writer"}
+        image={profile?.image ?? null}
         writerStatus={profile?.writerStatus ?? null}
       />
       <StudioNav />

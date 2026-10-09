@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { requireRole } from "@/lib/utils";
+import UserAvatar from "@/components/UserAvatar";
 
 export default async function CEOUsersPage() {
   const session = await auth();
@@ -8,7 +9,7 @@ export default async function CEOUsersPage() {
 
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },
-    select: { id: true, name: true, email: true, role: true }
+    select: { id: true, name: true, email: true, role: true, image: true }
   });
 
   return (
@@ -23,15 +24,19 @@ export default async function CEOUsersPage() {
               name: string | null;
               email: string | null;
               role: string;
+              image: string | null;
             }
           ) => (
             <div
               key={u.id}
-              className="theme-panel rounded-lg border p-4"
+              className="theme-panel flex items-start gap-3 rounded-lg border p-4"
             >
-              <p className="theme-heading font-semibold">{u.name || "Unnamed User"}</p>
-              <p className="theme-meta break-all text-sm">{u.email}</p>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">Role: {u.role}</p>
+              <UserAvatar user={u} size="md" />
+              <div className="min-w-0">
+                <p className="theme-heading font-semibold">{u.name || "Unnamed User"}</p>
+                <p className="theme-meta break-all text-sm">{u.email}</p>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">Role: {u.role}</p>
+              </div>
             </div>
           )
         )}

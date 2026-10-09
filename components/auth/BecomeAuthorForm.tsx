@@ -8,8 +8,11 @@ import ImageUploadField from "@/components/uploads/ImageUploadField";
 
 export default function BecomeAuthorForm({
   defaultDisplayName,
+  currentAvatar,
 }: {
   defaultDisplayName: string;
+  /** What the writer will be shown with if they don't upload: their picture, or the writer default. */
+  currentAvatar: string;
 }) {
   const router = useRouter();
   const { refreshSession } = useAuthSession();
@@ -97,7 +100,8 @@ export default function BecomeAuthorForm({
           shape="avatar"
           value={profileImage}
           onChange={setProfileImage}
-          hint="A square photo works best. JPEG, PNG or WebP."
+          fallbackSrc={currentAvatar}
+          hint="A square photo works best. JPEG, PNG or WebP. Leave it to keep the picture shown."
         />
 
         <label className="block">

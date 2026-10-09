@@ -3,30 +3,14 @@
 import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { LogOutIcon, MailIcon, SettingsIcon, UserIcon } from "@/components/icons";
+import UserAvatar from "@/components/UserAvatar";
 
 export type ProfileMenuUser = {
   id?: string | null;
   name?: string | null;
   image?: string | null;
+  role?: string | null;
 };
-
-/** The signed-in user's picture, or their initial when there is none. */
-export function UserAvatar({ user, size = 32 }: { user: ProfileMenuUser; size?: number }) {
-  return (
-    <span
-      className="flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--border-strong)] bg-[var(--surface-raised)] font-semibold text-[var(--text-primary)]"
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.4) }}
-      aria-hidden
-    >
-      {user.image ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={user.image} alt="" className="h-full w-full object-cover" />
-      ) : (
-        (user.name || "?").trim().slice(0, 1).toUpperCase()
-      )}
-    </span>
-  );
-}
 
 type Variant =
   /** Sidebar bottom, labels shown: a profile card; the menu opens above it. */
@@ -141,7 +125,7 @@ export default function ProfileMenu({
         aria-controls={open ? panelId : undefined}
         className="flex w-full items-center gap-3 rounded-xl border border-[var(--border-color)] bg-[var(--panel-bg)] px-3 py-2.5 text-left transition hover:border-[var(--border-strong)] hover:bg-[var(--panel-hover)]"
       >
-        <UserAvatar user={user} size={38} />
+        <UserAvatar user={user} size="md" />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold text-[var(--text-primary)]">{name}</span>
           <span className="mt-0.5 block truncate font-mono-df text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
@@ -164,7 +148,7 @@ export default function ProfileMenu({
         title={name}
         className="flex h-11 w-11 items-center justify-center rounded-full transition hover:bg-[var(--panel-hover)]"
       >
-        <UserAvatar user={user} size={32} />
+        <UserAvatar user={user} size="sm" />
       </button>
     );
 
@@ -181,7 +165,7 @@ export default function ProfileMenu({
         >
           {variant !== "card" ? (
             <div className="flex items-center gap-3 border-b border-[var(--border-color)] px-2 pb-3 pt-1">
-              <UserAvatar user={user} size={36} />
+              <UserAvatar user={user} size="md" />
               <span className="min-w-0">
                 <span className="block truncate text-sm font-semibold text-[var(--text-primary)]">{name}</span>
                 <span className="block truncate font-mono-df text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">

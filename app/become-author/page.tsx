@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import BecomeAuthorForm from "@/components/auth/BecomeAuthorForm";
+import { avatarSrc } from "@/lib/avatars";
 import { isWriter } from "@/lib/roles";
 
 const readerItems = ["Read stories", "Follow creators", "Save content", "Comment and interact"];
@@ -86,7 +87,10 @@ export default async function BecomeAuthorPage() {
       </section>
 
       <section id="quick-setup" className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <BecomeAuthorForm defaultDisplayName={session.user.name || "New Writer"} />
+        <BecomeAuthorForm
+          defaultDisplayName={session.user.name || "New Writer"}
+          currentAvatar={avatarSrc({ image: session.user.image, role: "WRITER" })}
+        />
         <aside className="theme-panel rounded-[28px] border border-[var(--border-color)] p-5">
           <p className="eyebrow">Unlocks</p>
           <div className="mt-4 space-y-3">

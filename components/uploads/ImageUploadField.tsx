@@ -27,6 +27,7 @@ export default function ImageUploadField({
   shape = "cover",
   hint,
   disabled = false,
+  fallbackSrc,
 }: {
   label: string;
   purpose: ImagePurpose;
@@ -36,6 +37,8 @@ export default function ImageUploadField({
   shape?: keyof typeof SHAPES;
   hint?: string;
   disabled?: boolean;
+  /** Shown when there is no image, e.g. the default profile picture. Never saved. */
+  fallbackSrc?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const statusId = useId();
@@ -70,6 +73,9 @@ export default function ImageUploadField({
           {value ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={value} alt={`Current ${label.toLowerCase()}`} className="absolute inset-0 h-full w-full object-cover" />
+          ) : fallbackSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={fallbackSrc} alt={`Default ${label.toLowerCase()}`} className="absolute inset-0 h-full w-full object-cover" />
           ) : (
             <span className="absolute inset-0 flex items-center justify-center px-2 text-center text-xs text-[var(--studio-muted)]">
               No image
@@ -103,7 +109,7 @@ export default function ImageUploadField({
                 disabled={disabled || uploading}
                 className="story-button-secondary px-4 py-2 disabled:opacity-50"
               >
-                Remove
+                {fallbackSrc ? "Use default" : "Remove"}
               </button>
             ) : null}
           </div>

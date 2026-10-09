@@ -41,6 +41,9 @@ export default function ThemePreferenceControl() {
           ? `Following your device: currently ${resolvedTheme}.`
           : `Using ${preference} mode on this device.`}
       </p>
+      <p className="mt-1 text-xs text-[var(--text-muted)]">
+        The Light/Dark switch in the menu changes this too. Choose System to follow your device again.
+      </p>
     </div>
   );
 }
