@@ -813,3 +813,321 @@
   50% { transform: translateX(40%); opacity: 0.6; }
   100% { transform: translateX(-40%); opacity: 0.3; }
 }
+
+/*
+ * AI tag banner (components/AiTagBanner.tsx). Every value comes from
+ * lib/ai-tag-banner.config.ts as a --aib-* custom property; edit that file,
+ * not this block. Only transform and opacity animate. :where() keeps the
+ * base rule at zero specificity so Tailwind classes (flex, w-max, margins)
+ * passed by the caller can position it.
+ */
+:where(.ai-banner) {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  height: var(--aib-h);
+  padding: var(--aib-pad-top) var(--aib-pad-x) var(--aib-pad-bottom);
+  font-family: var(--aib-font);
+  font-size: var(--aib-fs);
+  font-weight: var(--aib-fw);
+  letter-spacing: var(--aib-ls);
+  text-transform: var(--aib-case);
+  line-height: 1;
+  white-space: nowrap;
+  background: var(--aib-bg-light);
+  color: var(--aib-fg-light);
+  clip-path: var(--aib-clip);
+  transform-origin: top center;
+  animation: ai-banner-unfurl var(--aib-dur) var(--aib-ease) var(--aib-delay) both;
+}
+
+.dark .ai-banner {
+  background: var(--aib-bg-dark);
+  color: var(--aib-fg-dark);
+}
+
+/* The fold it hangs from, plus a soft shadow under it. */
+.ai-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: var(--aib-fold);
+  background: var(--aib-fold-light);
+}
+
+.dark .ai-banner::before {
+  background: var(--aib-fold-dark);
+}
+
+.ai-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, var(--aib-sheen)), transparent 55%);
+}
+
+.ai-banner__label {
+  position: relative;
+  z-index: 1;
+  /* Optical centering: compensate the trailing letter-spacing. */
+  margin-right: calc(var(--aib-ls) * -1);
+  animation: ai-banner-label calc(var(--aib-dur) * 0.6) ease-out calc(var(--aib-delay) + var(--aib-dur) * 0.35) both;
+}
+
+.ai-banner[data-animate="false"],
+.ai-banner[data-animate="false"] .ai-banner__label {
+  animation: none;
+}
+
+@keyframes ai-banner-unfurl {
+  0% { transform: scaleY(0.08); opacity: 0; }
+  35% { opacity: 1; }
+  100% { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes ai-banner-label {
+  0% { transform: translateY(-3px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-banner,
+  .ai-banner__label {
+    animation: none;
+  }
+}
+
+/*
+ * Explore filter styles (components/explore/FilterOptionLabel.tsx). Values come
+ * from lib/filter-styles.config.ts as --fx-* properties (-l light, -d dark);
+ * data-fx-* attributes switch the effects on. Edit the config, not this block.
+ */
+.fx {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  max-width: 100%;
+  font-family: var(--fx-font);
+  font-weight: var(--fx-weight);
+  font-style: var(--fx-style);
+  font-stretch: var(--fx-stretch);
+  font-synthesis: var(--fx-synthesis);
+  font-variant-caps: var(--fx-variant);
+  text-transform: var(--fx-case);
+  letter-spacing: var(--fx-tracking);
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--fx-text-l);
+  text-shadow: var(--fx-shadow-l);
+  transform: rotate(var(--fx-tilt));
+}
+
+.dark .fx {
+  color: var(--fx-text-d);
+  text-shadow: var(--fx-shadow-d);
+}
+
+.fx-glyph {
+  display: inline-flex;
+  font-style: normal;
+  text-shadow: none;
+  color: var(--fx-accent-l);
+}
+
+.dark .fx-glyph {
+  color: var(--fx-accent-d);
+}
+
+/* Gradient letters. A little right padding keeps italic overhang from being clipped. */
+.fx[data-fx-gradient] .fx-text {
+  padding-right: 0.12em;
+  background-image: linear-gradient(90deg, var(--fx-grad-l));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+}
+
+.dark .fx[data-fx-gradient] .fx-text {
+  background-image: linear-gradient(90deg, var(--fx-grad-d));
+}
+
+/* Labels with their own fill (Sci-Fi, Thriller, Historical, Cozy). */
+.fx[data-fx-block] {
+  padding: 0.28em 0.6em;
+  border-radius: 4px;
+  background: var(--fx-bg-l);
+  border: var(--fx-border-w) solid var(--fx-border-l);
+}
+
+.dark .fx[data-fx-block] {
+  background: var(--fx-bg-d);
+  border-color: var(--fx-border-d);
+}
+
+/* Notched corner: the outer box is the border color, ::before the inner fill. */
+.fx[data-fx-notch] {
+  --fx-notch: 8px;
+  border: 0;
+  border-radius: 0;
+  padding: calc(0.28em + var(--fx-border-w)) calc(0.65em + var(--fx-border-w));
+  background: var(--fx-border-l);
+  clip-path: polygon(0 0, calc(100% - var(--fx-notch)) 0, 100% var(--fx-notch), 100% 100%, 0 100%);
+}
+
+.fx[data-fx-notch]::before {
+  content: "";
+  position: absolute;
+  inset: var(--fx-border-w);
+  z-index: -1;
+  background: var(--fx-bg-l);
+  clip-path: polygon(0 0, calc(100% - var(--fx-notch) + 1px) 0, 100% calc(var(--fx-notch) - 1px), 100% 100%, 0 100%);
+}
+
+.dark .fx[data-fx-notch] {
+  background: var(--fx-border-d);
+}
+
+.dark .fx[data-fx-notch]::before {
+  background: var(--fx-bg-d);
+}
+
+/* Decorations */
+.fx[data-fx-decoration="line"] .fx-text {
+  text-decoration: underline;
+  text-decoration-color: var(--fx-accent-l);
+  text-decoration-thickness: var(--fx-line);
+  text-underline-offset: 0.3em;
+}
+
+.dark .fx[data-fx-decoration="line"] .fx-text {
+  text-decoration-color: var(--fx-accent-d);
+}
+
+.fx[data-fx-decoration="double-rule"] {
+  padding: 0.15em 0.15em;
+  border-top: 3px double var(--fx-accent-l);
+  border-bottom: 3px double var(--fx-accent-l);
+}
+
+.dark .fx[data-fx-decoration="double-rule"] {
+  border-color: var(--fx-accent-d);
+}
+
+.fx[data-fx-decoration="hazard"] {
+  margin-bottom: 4px;
+}
+
+.fx[data-fx-decoration="hazard"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 3px;
+  background: repeating-linear-gradient(-45deg, var(--fx-accent-l) 0 3px, var(--fx-bg-l) 3px 6px);
+}
+
+.dark .fx[data-fx-decoration="hazard"]::after {
+  background: repeating-linear-gradient(-45deg, var(--fx-accent-d) 0 3px, var(--fx-bg-d) 3px 6px);
+}
+
+/* Effects */
+/* 150% wide shows about two-thirds of the gradient at once; moving it -300%
+   shifts exactly one tile (1.5x the width), so the loop is seamless. */
+.fx[data-fx-effect="shimmer"] .fx-text {
+  background-size: 150% 100%;
+  animation: fx-shimmer var(--fx-dur) linear infinite;
+}
+
+.fx[data-fx-effect="flicker"] .fx-text {
+  animation: fx-flicker var(--fx-dur) steps(1, end) infinite;
+}
+
+.fx[data-fx-effect="glow-pulse"]::before {
+  content: "";
+  position: absolute;
+  inset: -0.4em -0.6em;
+  z-index: -1;
+  border-radius: 999px;
+  background: radial-gradient(closest-side, var(--fx-glow-l), transparent);
+  animation: fx-glow var(--fx-dur) ease-in-out infinite alternate;
+}
+
+.dark .fx[data-fx-effect="glow-pulse"]::before {
+  background: radial-gradient(closest-side, var(--fx-glow-d), transparent);
+}
+
+:is([role="option"], button):hover .fx[data-fx-hover="bounce"] {
+  animation: fx-bounce 520ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.fx-glyph-pop {
+  animation: fx-pop 560ms cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+
+@keyframes fx-shimmer {
+  to { background-position: -300% 0; }
+}
+
+@keyframes fx-flicker {
+  0%, 90%, 93%, 96%, 100% { opacity: 1; }
+  91% { opacity: 0.72; }
+  94.5% { opacity: 0.84; }
+}
+
+@keyframes fx-glow {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+
+@keyframes fx-bounce {
+  0%, 100% { transform: rotate(var(--fx-tilt)) translateY(0); }
+  40% { transform: rotate(calc(var(--fx-tilt) * 2)) translateY(-3px); }
+  70% { transform: rotate(var(--fx-tilt)) translateY(1px); }
+}
+
+@keyframes fx-pop {
+  0% { transform: scale(0.3) rotate(-40deg); opacity: 0; }
+  60% { transform: scale(1.4) rotate(10deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* Phone bottom sheet for the drop-downs. */
+.fx-sheet {
+  /* "backwards", not "both": a held animation would override the drag transform. */
+  animation: fx-sheet-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1) backwards;
+  transition: transform 180ms ease-out;
+}
+
+.fx-sheet-backdrop {
+  animation: fx-fade-in 200ms ease-out both;
+}
+
+@keyframes fx-sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes fx-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx,
+  .fx *,
+  .fx::before,
+  .fx::after,
+  .fx-sheet,
+  .fx-sheet-backdrop,
+  :is([role="option"], button):hover .fx[data-fx-hover="bounce"] {
+    animation: none !important;
+  }
+}

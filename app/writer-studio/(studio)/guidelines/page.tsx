@@ -1,3 +1,4 @@
+import AiTagBanner from "@/components/AiTagBanner";
 import { AI_USAGE_OPTIONS, aiUsageDescription } from "@/lib/ai-usage";
 import { WRITER_ONBOARDING_SLUG, getCmsArticle } from "@/lib/cms";
 import { requireStudioUser } from "@/lib/writer-studio/session";
@@ -48,8 +49,11 @@ export default async function StudioGuidelinesPage() {
           <dl className="mt-5 space-y-4">
             {AI_USAGE_OPTIONS.map((option) => (
               <div key={option}>
-                <dt className="theme-heading text-sm font-semibold">{option}</dt>
-                <dd className="theme-meta mt-1 text-sm">{aiUsageDescription(option)}</dd>
+                {/* Shows writers exactly the banner readers will see. */}
+                <dt className="flex">
+                  <AiTagBanner tag={option} />
+                </dt>
+                <dd className="theme-meta mt-1.5 text-sm">{aiUsageDescription(option)}</dd>
               </div>
             ))}
           </dl>

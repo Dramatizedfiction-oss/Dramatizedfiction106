@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import AiUsageBadge from "@/components/AiUsageBadge";
+import AiTagBanner from "@/components/AiTagBanner";
 import EpisodeList from "@/components/writer-studio/episodes/EpisodeList";
 import NewEpisodeButton from "@/components/writer-studio/series/NewEpisodeButton";
 import SeriesDetailsSheet from "@/components/writer-studio/series/SeriesDetailsSheet";
@@ -34,14 +34,17 @@ export default async function SeriesHubPage({
       </Link>
 
       <section className="flex flex-col gap-6 rounded-3xl border border-[var(--studio-border)] bg-[var(--studio-surface)] p-5 sm:flex-row md:p-6">
-        <div
-          className="relative h-44 w-32 shrink-0 overflow-hidden rounded-xl"
-          style={{ background: `linear-gradient(160deg, ${accent}, ${accent}33)` }}
-        >
-          {cover ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
-          ) : null}
+        <div className="flex w-32 shrink-0 flex-col items-center self-start">
+          <div
+            className="relative h-44 w-32 overflow-hidden rounded-xl"
+            style={{ background: `linear-gradient(160deg, ${accent}, ${accent}33)` }}
+          >
+            {cover ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            ) : null}
+          </div>
+          <AiTagBanner tag={series.aiUsageTag} />
         </div>
 
         <div className="min-w-0 flex-1">
@@ -49,7 +52,6 @@ export default async function SeriesHubPage({
             <span className={`studio-status ${live ? "studio-status-live" : "studio-status-draft"}`}>
               {live ? "Live" : "Not published yet"}
             </span>
-            <AiUsageBadge tag={series.aiUsageTag} compact />
             <span className="text-xs capitalize text-[var(--studio-muted)]">{series.genre}</span>
           </div>
           <h2 className="font-heading theme-heading mt-3 text-3xl font-semibold">{series.title}</h2>

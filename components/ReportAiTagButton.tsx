@@ -5,9 +5,12 @@ import { useEffect, useRef, useState } from "react";
 export default function ReportAiTagButton({
   subject,
   compact = false,
+  underline = false,
 }: {
   subject: string;
   compact?: boolean;
+  /** Underline the trigger so it reads as a link (series page). */
+  underline?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -61,6 +64,10 @@ export default function ReportAiTagButton({
         aria-expanded={open}
         className={`inline-flex min-h-9 items-center text-left text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] ${
           compact ? "text-[11px] uppercase tracking-[0.22em]" : "text-xs"
+        } ${
+          underline
+            ? "min-h-11 underline decoration-1 underline-offset-4 hover:decoration-2 focus-visible:decoration-2"
+            : ""
         }`}
       >
         Report incorrect AI tag

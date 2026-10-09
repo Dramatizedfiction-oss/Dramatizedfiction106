@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import AiUsageBadge from "@/components/AiUsageBadge";
+import AiTagBanner from "@/components/AiTagBanner";
 import AuthorTierBadge from "@/components/AuthorTierBadge";
 import EpisodeCarousel from "@/components/EpisodeCarousel";
 import FollowAuthorButton from "@/components/follow/FollowAuthorButton";
 import ReportAiTagButton from "@/components/ReportAiTagButton";
+import SeasonSelector from "@/components/series/SeasonSelector";
 import { deriveAuthorTier, derivePostingConsistency } from "@/lib/author-tier";
+import { DEFAULT_SERIES_ACCENT, readableTextOn, seriesAccentHex } from "@/lib/series-color";
 import { createViewerMonetizationState } from "@/lib/monetization";
 import { PUBLIC_SERIES_WHERE, publicEpisodePreview } from "@/lib/content-visibility";
 import { prisma } from "@/lib/prisma";
@@ -60,34 +62,56 @@ export default async function SeriesPage({
     completionRate: Math.min(0.96, 0.45 + Math.min(series.episodes.length, 12) * 0.03),
   });
 
+  // The writer's theme color (Writer Studio → series details). Without a valid
+  // one, the genre chip uses the site accent and Start Reading keeps its default.
+  const accent = seriesAccentHex(series.themeColor);
+  const chipColor = accent ?? DEFAULT_SERIES_ACCENT;
+  // The thin border keeps very light or very dark colors visible against either theme.
+  const edge = "0 0 0 1px var(--border-strong)";
+
   return (
     <main className="editorial-page overflow-hidden">
       <section className="reader-paper p-5 sm:p-6 md:p-8">
         <div className="grid gap-6 md:gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
-          {/* Phones: a contained poster so the title and Start Reading stay near the top. */}
-          <div className="mx-auto w-full max-w-[160px] overflow-hidden rounded-[22px] border border-[var(--border-color)] bg-[var(--bg-primary)] sm:max-w-[260px] md:rounded-[28px] lg:max-w-none">
-            {series.coverImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={series.coverImage}
-                alt={series.title}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="theme-meta flex aspect-[4/5] items-center justify-center px-8 text-center text-xs uppercase tracking-[0.32em]">
-                Series Cover
-              </div>
-            )}
+          {/* Phones: a contained poster so the title and Start Reading stay near the top.
+              The AI tag banner hangs from its bottom edge. */}
+          <div className="flex flex-col items-center">
+            <div className="mx-auto min-h-0 w-full max-w-[160px] flex-1 overflow-hidden rounded-[22px] border border-[var(--border-color)] bg-[var(--bg-primary)] sm:max-w-[260px] md:rounded-[28px] lg:max-w-none">
+              {series.coverImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={series.coverImage}
+                  alt={series.title}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="theme-meta flex aspect-[4/5] items-center justify-center px-8 text-center text-xs uppercase tracking-[0.32em]">
+                  Series Cover
+                </div>
+              )}
+            </div>
+            <AiTagBanner tag={series.aiUsageTag} className="-mt-px" />
           </div>
 
           <div className="flex flex-col justify-center">
-            <p className="editorial-kicker">{series.genre || "Serialized fiction"}</p>
+            <p
+              className="inline-flex self-start rounded-full px-3 py-1 font-mono-df text-[0.67rem] font-bold uppercase tracking-[0.22em]"
+              style={{ backgroundColor: chipColor, color: readableTextOn(chipColor), boxShadow: edge }}
+            >
+              {series.genre || "Serialized fiction"}
+            </p>
             <h1 className="editorial-title theme-heading mt-3 text-balance text-4xl font-semibold md:text-6xl">
               {series.title}
             </h1>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <p className="theme-meta text-sm md:text-base">
-                Written by {series.author.name || "Anonymous Author"}
+                Written by{" "}
+                <Link
+                  href={`/author/${series.authorId}`}
+                  className="inline-flex min-h-11 items-center font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 transition hover:decoration-2 focus-visible:decoration-2"
+                >
+                  {series.author.name || "Anonymous Author"}
+                </Link>
               </p>
               <AuthorTierBadge tier={authorTier} />
               <FollowAuthorButton
@@ -96,8 +120,7 @@ export default async function SeriesPage({
               />
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <AiUsageBadge tag={series.aiUsageTag} />
-              <ReportAiTagButton subject={series.title} />
+              <ReportAiTagButton subject={series.title} underline />
             </div>
             {/* Below desktop the description follows the actions, so Start Reading is reachable sooner. */}
             <p className="theme-body order-last mt-6 max-w-3xl text-base leading-7 md:text-lg lg:order-none">
@@ -105,18 +128,22 @@ export default async function SeriesPage({
             </p>
 
             <div className="mt-6 flex flex-wrap items-center gap-3 lg:mt-8">
-              <select
-                className="ui-input rounded-full px-4 py-3 text-sm"
-                aria-label="Choose season"
-                defaultValue="Season 1"
-              >
-                <option>Season 1</option>
-              </select>
+              {/* Placeholder: seasons are not in the data model yet. */}
+              <SeasonSelector />
 
               {series.episodes[0] && (
                 <Link
                   href={`/episode/${series.episodes[0].id}`}
-                  className="story-button-primary flex-1 sm:flex-none"
+                  className="story-button-primary min-h-11 w-full sm:w-auto"
+                  style={
+                    accent
+                      ? {
+                          background: accent,
+                          color: readableTextOn(accent),
+                          boxShadow: `${edge}, 0 10px 26px ${accent}4d`,
+                        }
+                      : undefined
+                  }
                 >
                   Start Reading
                 </Link>

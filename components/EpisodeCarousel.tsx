@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import EpisodeCard from "@/components/EpisodeCard";
+import SeasonSelector from "@/components/series/SeasonSelector";
 import type { MonetizedEpisode, MonetizedUser } from "@/lib/monetization";
 
 type EpisodeCarouselEpisode = {
@@ -23,7 +24,6 @@ type EpisodeCarouselProps = {
 
 export default function EpisodeCarousel({ episodes, viewer = null }: EpisodeCarouselProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const [activeSeason, setActiveSeason] = useState("Season 1");
 
   function scroll(direction: "left" | "right") {
     if (!scrollRef.current) {
@@ -48,14 +48,8 @@ export default function EpisodeCarousel({ episodes, viewer = null }: EpisodeCaro
         </div>
 
         <div className="flex items-center gap-3">
-          <select
-            value={activeSeason}
-            onChange={(event) => setActiveSeason(event.target.value)}
-            className="rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none"
-            aria-label="Choose season"
-          >
-            <option>Season 1</option>
-          </select>
+          {/* Placeholder: seasons are not in the data model yet. */}
+          <SeasonSelector />
 
           <div className="hidden items-center gap-2 md:flex">
             <button

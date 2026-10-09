@@ -1,5 +1,5 @@
 import Link from "next/link";
-import AiUsageBadge from "@/components/AiUsageBadge";
+import AiTagBanner from "@/components/AiTagBanner";
 import AuthorTierBadge from "@/components/AuthorTierBadge";
 import ContentAccessBadge from "@/components/monetization/ContentAccessBadge";
 import ReportAiTagButton from "@/components/ReportAiTagButton";
@@ -93,6 +93,7 @@ export default function StoryCard({
           </div>
         )}
       </div>
+      <AiTagBanner tag={story.aiUsageTag} className="-mt-px ml-4 flex w-max" />
 
       <div className="px-1 pb-1 pt-4">
         <div className="flex items-center justify-between gap-3">
@@ -100,10 +101,7 @@ export default function StoryCard({
             <p className="eyebrow">By {authorName}</p>
             {story.author?.tier ? <AuthorTierBadge tier={story.author.tier} compact /> : null}
           </div>
-          <div className="flex items-center gap-2">
-            <ContentAccessBadge accessStatus={accessStatus} />
-            <AiUsageBadge tag={story.aiUsageTag} compact />
-          </div>
+          <ContentAccessBadge accessStatus={accessStatus} />
         </div>
         <h2 className="font-heading theme-heading mt-2 text-xl font-semibold md:text-2xl">
           {title}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import AiUsageBadge from "@/components/AiUsageBadge";
+import AiTagBanner from "@/components/AiTagBanner";
 import { EyeIcon } from "@/components/icons";
 import EpisodeStatusBadge from "@/components/writer-studio/episodes/EpisodeStatusBadge";
 import { formatRelative, plural } from "@/lib/writer-studio/format";
@@ -37,14 +37,15 @@ function EpisodeRow({ episode, showSeries }: { episode: StudioEpisodeRow; showSe
         <span className="min-w-0 flex-1">
           <span className="theme-heading block truncate text-sm font-semibold">{episode.title}</span>
           <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--studio-muted)]">
+            {/* Hidden on phones (as before) so rows stay one line of meta. */}
+            <span className="hidden sm:flex">
+              <AiTagBanner tag={episode.aiUsageTag} />
+            </span>
             {showSeries ? <span className="truncate">{episode.series.title}</span> : null}
             <span>Edited {formatRelative(episode.updatedAt)}</span>
             <span>{episode.readTime} min</span>
             {live ? <span>{plural(episode.readerCount, "reader")}</span> : null}
           </span>
-        </span>
-        <span className="hidden shrink-0 items-center gap-2 sm:flex">
-          <AiUsageBadge tag={episode.aiUsageTag} compact />
         </span>
         <EpisodeStatusBadge status={episode.status} />
       </Link>

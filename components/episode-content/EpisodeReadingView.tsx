@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import AiUsageBadge from "@/components/AiUsageBadge";
+import AiTagBanner from "@/components/AiTagBanner";
 
 /*
  * The reader-facing presentation of one episode: a centered reading column
@@ -68,10 +68,13 @@ export default function EpisodeReadingView({
           {readTime} min read
         </p>
 
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-          <AiUsageBadge tag={aiUsageTag} compact />
-          {headerActions}
-        </div>
+        <AiTagBanner tag={aiUsageTag} className="mx-auto mt-2 flex w-max" />
+
+        {headerActions ? (
+          <div className="mt-1 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            {headerActions}
+          </div>
+        ) : null}
 
         {contentWarning ? (
           <p className="reader-meta mx-auto mt-4 max-w-md text-[0.8125rem]">

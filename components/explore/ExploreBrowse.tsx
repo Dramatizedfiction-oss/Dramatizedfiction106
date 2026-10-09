@@ -3,9 +3,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import ExploreRow from "@/components/explore/ExploreRow";
+import StyledDropdown, { type StyledOption } from "@/components/explore/StyledDropdown";
 import { SearchIcon } from "@/components/icons";
 import type { CoverSeries } from "@/components/home/CoverSeriesCard";
+import { genreStyle, sortStyle } from "@/lib/filter-styles";
 import { GENRES } from "@/lib/genres";
+
+// Same options and order as before: "All genres" then lib/genres.ts; Trending, Newest.
+const GENRE_OPTIONS: StyledOption[] = ["all", ...GENRES].map((value) => ({
+  value,
+  style: genreStyle(value),
+}));
+const SORT_OPTIONS: StyledOption[] = ["trending", "newest"].map((value) => ({
+  value,
+  style: sortStyle(value),
+}));
 
 export type ExploreStory = CoverSeries & {
   description?: string | null;
@@ -87,29 +99,23 @@ export default function ExploreBrowse({
             className="ui-input w-full rounded-lg py-2 pl-9 pr-3 font-mono-df text-sm"
           />
         </div>
+        {/* Compact styled drop-downs (lib/filter-styles.config.ts); on wide
+            screens they size to their content so the search box gets the room. */}
         <div className="flex w-full items-center gap-2 sm:w-auto sm:shrink-0">
-          <select
+          <StyledDropdown
+            label="Genre"
+            options={GENRE_OPTIONS}
             value={activeGenre}
-            onChange={(event) => setActiveGenre(event.target.value)}
-            aria-label="Filter by genre"
-            className="ui-input min-h-9 min-w-0 flex-1 rounded-lg py-2 pl-3 pr-2 font-mono-df text-sm sm:w-40 sm:flex-none"
-          >
-            <option value="all">All genres</option>
-            {GENRES.map((genre) => (
-              <option key={genre} value={genre}>
-                {genreLabel(genre)}
-              </option>
-            ))}
-          </select>
-          <select
+            onChange={setActiveGenre}
+            className="flex-1 sm:flex-none"
+          />
+          <StyledDropdown
+            label="Sort"
+            options={SORT_OPTIONS}
             value={sortBy}
-            onChange={(event) => setSortBy(event.target.value === "newest" ? "newest" : "trending")}
-            aria-label="Sort"
-            className="ui-input min-h-9 min-w-0 flex-1 rounded-lg py-2 pl-3 pr-2 font-mono-df text-sm sm:w-36 sm:flex-none"
-          >
-            <option value="trending">Trending</option>
-            <option value="newest">Newest</option>
-          </select>
+            onChange={(value) => setSortBy(value === "newest" ? "newest" : "trending")}
+            className="flex-1 sm:flex-none"
+          />
         </div>
       </div>
 
@@ -152,9 +158,4 @@ export default function ExploreBrowse({
       </div>
     </div>
   );
-}
-
-/** "sci-fi" -> "Sci-Fi" (matches how the old genre chips were capitalized). */
-function genreLabel(genre: string) {
-  return genre.replace(/(^|-)(\w)/g, (_, sep: string, letter: string) => sep + letter.toUpperCase());
 }

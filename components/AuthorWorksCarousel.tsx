@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRef } from "react";
 
-import AiUsageBadge from "@/components/AiUsageBadge";
+import AiTagBanner from "@/components/AiTagBanner";
 import ContentAccessBadge from "@/components/monetization/ContentAccessBadge";
 import {
   canUserAccessContent,
@@ -112,16 +112,18 @@ export default function AuthorWorksCarousel({
                     </div>
                   )}
                 </div>
+                <AiTagBanner tag={item.aiUsageTag} className="-mt-px ml-4 flex w-max" />
 
                 <div className="mt-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="eyebrow">{item.badge}</p>
                     <span className="theme-meta text-xs">{item.meta}</span>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <ContentAccessBadge accessStatus={accessStatus} />
-                    <AiUsageBadge tag={item.aiUsageTag} compact />
-                  </div>
+                  {accessStatus !== "free" ? (
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <ContentAccessBadge accessStatus={accessStatus} />
+                    </div>
+                  ) : null}
                   <h3 className="font-heading theme-heading mt-3 text-2xl font-semibold">
                     {item.title}
                   </h3>

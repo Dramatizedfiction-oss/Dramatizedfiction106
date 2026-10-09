@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import AiUsageBadge from "@/components/AiUsageBadge";
+import AiTagBanner from "@/components/AiTagBanner";
 import AuthorTierBadge from "@/components/AuthorTierBadge";
 import AuthorWorksCarousel from "@/components/AuthorWorksCarousel";
 import FollowAuthorButton from "@/components/follow/FollowAuthorButton";
@@ -254,12 +254,12 @@ export default async function AuthorProfilePage({
                     href={`/series/${series.id}`}
                     className="theme-panel-hover flex items-center justify-between rounded-[20px] border border-[var(--border-color)] px-4 py-3"
                   >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="theme-heading font-medium">{series.title}</p>
-                        <AiUsageBadge tag={series.aiUsageTag} compact />
+                    <div className="min-w-0">
+                      <p className="theme-heading font-medium">{series.title}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <AiTagBanner tag={series.aiUsageTag} />
+                        <p className="theme-meta text-sm">{series.genre}</p>
                       </div>
-                      <p className="theme-meta mt-1 text-sm">{series.genre}</p>
                     </div>
                     <span className="theme-meta text-xs">
                       {series.episodes.length} episode{series.episodes.length === 1 ? "" : "s"}
@@ -276,13 +276,13 @@ export default async function AuthorProfilePage({
                     href={`/episode/${episode.id}`}
                     className="theme-panel-hover block rounded-[20px] border border-[var(--border-color)] px-4 py-3"
                   >
-                    <div className="flex items-center gap-2">
-                      <p className="theme-heading font-medium">{episode.title}</p>
-                      <AiUsageBadge tag={episode.aiUsageTag} compact />
+                    <p className="theme-heading font-medium">{episode.title}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <AiTagBanner tag={episode.aiUsageTag} />
+                      <p className="theme-meta text-sm">
+                        {episode.series.title} | Episode {episode.episodeNumber}
+                      </p>
                     </div>
-                    <p className="theme-meta mt-1 text-sm">
-                      {episode.series.title} | Episode {episode.episodeNumber}
-                    </p>
                   </Link>
                 ))}
               </div>

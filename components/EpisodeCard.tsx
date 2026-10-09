@@ -1,5 +1,5 @@
 import Link from "next/link";
-import AiUsageBadge from "@/components/AiUsageBadge";
+import AiTagBanner from "@/components/AiTagBanner";
 import ContentAccessBadge from "@/components/monetization/ContentAccessBadge";
 import ReportAiTagButton from "@/components/ReportAiTagButton";
 import {
@@ -57,10 +57,12 @@ export default function EpisodeCard({ episode, viewer = null }: EpisodeCardProps
             Season {seasonNumber} | Episode {episodeNumber}
           </p>
           <h3 className="theme-heading mt-3 text-xl font-semibold">{title}</h3>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <ContentAccessBadge accessStatus={accessStatus} />
-            <AiUsageBadge tag={episode.aiUsageTag} compact />
-          </div>
+          <AiTagBanner tag={episode.aiUsageTag} className="mt-2 flex w-max" />
+          {accessStatus !== "free" ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <ContentAccessBadge accessStatus={accessStatus} />
+            </div>
+          ) : null}
         </div>
 
         <span
