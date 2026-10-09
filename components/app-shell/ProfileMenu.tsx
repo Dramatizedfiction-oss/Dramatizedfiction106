@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } from "react";
-import { BookOpenIcon, LogOutIcon, MailIcon, SettingsIcon, UserIcon } from "@/components/icons";
+import { LogOutIcon, MailIcon, SettingsIcon, UserIcon } from "@/components/icons";
 import UserAvatar from "@/components/UserAvatar";
 
 export type ProfileMenuUser = {
@@ -30,7 +30,6 @@ const PANEL_WIDTH = 248;
 export default function ProfileMenu({
   user,
   roleLabel,
-  hasPublicProfile,
   isSigningOut,
   onSignOut,
   onNavigate,
@@ -38,8 +37,6 @@ export default function ProfileMenu({
 }: {
   user: ProfileMenuUser;
   roleLabel: string;
-  /** Writers have a public author page; everyone has a private reader page at /reader. */
-  hasPublicProfile: boolean;
   isSigningOut: boolean;
   onSignOut: () => void;
   /** Called after choosing a destination (e.g. to close the mobile drawer). */
@@ -176,25 +173,12 @@ export default function ProfileMenu({
           ) : null}
 
           <div className="space-y-0.5 pt-1">
-            {/* Writers' "Profile" is their public author page; everyone's private
-                reader page (/reader) is "Profile" for readers, "Reading profile" for writers. */}
-            {hasPublicProfile && user.id ? (
-              <>
-                <Link href={`/author/${user.id}`} onClick={choose} className="sidebar-link">
-                  <UserIcon size={16} className="shrink-0" />
-                  <span>Profile</span>
-                </Link>
-                <Link href="/reader" onClick={choose} className="sidebar-link">
-                  <BookOpenIcon size={16} className="shrink-0" />
-                  <span>Reading profile</span>
-                </Link>
-              </>
-            ) : (
-              <Link href="/reader" onClick={choose} className="sidebar-link">
-                <UserIcon size={16} className="shrink-0" />
-                <span>Profile</span>
-              </Link>
-            )}
+            {/* Everyone's "Profile" is their reading profile (/reader). A writer's
+                public author page is reached from Writer Studio ("Public profile"). */}
+            <Link href="/reader" onClick={choose} className="sidebar-link">
+              <UserIcon size={16} className="shrink-0" />
+              <span>Profile</span>
+            </Link>
             <Link href="/settings" onClick={choose} className="sidebar-link">
               <SettingsIcon size={16} className="shrink-0" />
               <span>Settings</span>

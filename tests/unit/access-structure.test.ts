@@ -71,6 +71,27 @@ describe("Administration and CEO Studio access", () => {
   });
 });
 
+describe("series follows", () => {
+  test("every follow / library route signs the caller in with requireApiUser and takes no user id", () => {
+    const routes = files("app/api/me/follows", /^route\.ts$/);
+    assert.ok(routes.length >= 2);
+    for (const route of routes) {
+      const source = read(route);
+      for (const handler of source.match(/export async function \w+/g) ?? []) {
+        const body = source.slice(source.indexOf(handler));
+        assert.match(body, /await requireApiUser\(\)[\s\S]*?if \(!guard\.ok\) return guard\.response/, `${route} ${handler}`);
+      }
+      assert.doesNotMatch(source, /params\.userId|body\.userId|searchParams/, route);
+    }
+  });
+
+  test("nothing writes Series.followers by hand (the database trigger owns it)", () => {
+    for (const file of [...files("app", /\.(ts|tsx)$/), ...files("lib", /\.ts$/)]) {
+      assert.doesNotMatch(read(file), /followers\s*:\s*\{\s*(increment|decrement)|data:\s*\{[^}]*\bfollowers\s*:/, file);
+    }
+  });
+});
+
 describe("secrets", () => {
   test("the CEO password is read only on the server, never through NEXT_PUBLIC_", () => {
     for (const file of [...files("app", /\.(ts|tsx)$/), ...files("components", /\.(ts|tsx)$/), ...files("lib", /\.(ts|tsx)$/)]) {

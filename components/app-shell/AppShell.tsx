@@ -176,7 +176,6 @@ export default function AppShell({ user, studios, trending, renovationMode = fal
                 <ProfileMenu
                   user={sessionUser}
                   roleLabel={roleLabel}
-                  hasPublicProfile={canWrite}
                   isSigningOut={isSigningOut}
                   onSignOut={handleSignOut}
                   variant="header"

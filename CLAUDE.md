@@ -9,23 +9,23 @@ Dramatized Fiction — a serialized fiction reading/publishing platform (readers
 ## Commands
 
 ```bash
-npm run dev                # next dev on :3000 (uses .env.local over .env, so the development DB when configured)
+npm run dev                # next dev on :3000 (uses .env.local over .env, so the scratch-copy DB)
 npm run build              # next build
 npm run lint               # next lint — no ESLint config is committed, so the first run prompts interactively
 npm test                   # unit tests: node --test (Node 24 strips TS; tests/setup resolves "@/")
-npm run test:integration   # DB + HTTP tests, development database only (needs `npm run dev` running)
-npm run db:dev:verify      # prove .env.local's DATABASE_URL is not production; changes nothing
-npm run db:dev:check       # read-only: connect, list tables/row counts and migration history
-npm run db:dev:status      # prisma migrate status against the development DB
-npm run db:dev:migrate     # prisma migrate deploy against the development DB
+npm run test:integration   # DB + HTTP tests on the .env.local scratch copy only (needs `npm run dev` running)
+npm run db:dev:verify      # prove .env.local's DATABASE_URL is not the main DB; changes nothing
+npm run db:dev:check       # read-only: connect, list tables/row counts and migration history (scratch copy)
+npm run db:dev:status      # prisma migrate status against the scratch copy
+npm run db:dev:migrate     # prisma migrate deploy against the scratch copy
 npx prisma generate        # runs automatically on postinstall
 ```
 
-**Never run Prisma CLI commands directly** (`npx prisma migrate …`, `db push`): the CLI reads `.env`, which points at **production**. Use the `db:dev:*` scripts (`scripts/db-dev.mjs`): they read `.env.local`, refuse to run if it names the same database as `.env`, and block destructive commands (`migrate reset`, `migrate dev`, `db push`, `--force-reset`, `--accept-data-loss`). Both `package-lock.json` and `pnpm-lock.yaml` are committed; npm is what README documents.
+The Prisma CLI (`npx prisma …`) reads `.env`, the **main** database, which is where schema changes go (see "Working rule" below). The `db:dev:*` scripts (`scripts/db-dev.mjs`) target the `.env.local` scratch copy, refuse to run if it names the same database as `.env`, and block destructive commands (`migrate reset`, `migrate dev`, `db push`, `--force-reset`, `--accept-data-loss`). Both `package-lock.json` and `pnpm-lock.yaml` are committed; npm is what README documents.
 
 On this machine `git` is not on PATH; GitHub Desktop's bundled git works: `$env:LOCALAPPDATA\GitHubDesktop\app-*\resources\app\git\cmd\git.exe`.
 
-Environment variables: see `.env.example`. `.env` (production) and `.env.local` (development DB, `CEO_PASSWORD`) are gitignored via `.env.*` — never commit either. `CEO_PASSWORD` is server-only (never `NEXT_PUBLIC_`); if missing or under 12 characters, every CEO-password action fails closed. `next-auth`, `@auth/prisma-adapter`, `@neondatabase/neon-js`, `nodemailer` and the `NEXTAUTH_*`/`DEV_CEO_*` env vars are installed/present but unused by current code (`DEV_CEO_*` should be deleted).
+Environment variables: see `.env.example`. `.env` (main DB) and `.env.local` (scratch-copy DB, `CEO_PASSWORD`) are gitignored via `.env.*` — never commit either. `CEO_PASSWORD` is server-only (never `NEXT_PUBLIC_`); if missing or under 12 characters, every CEO-password action fails closed. `next-auth`, `@auth/prisma-adapter`, `@neondatabase/neon-js`, `nodemailer` and the `NEXTAUTH_*`/`DEV_CEO_*` env vars are installed/present but unused by current code (`DEV_CEO_*` should be deleted).
 
 ## Architecture
 
@@ -49,28 +49,26 @@ Environment variables: see `.env.example`. `.env` (production) and `.env.local` 
 
 **Administration and CEO Studio** (the only two admin areas). `/administration` (BOARD + CEO): members (search, bans, one-month discipline, Board/CEO roles for the CEO), analytics (`lib/admin/analytics.ts`, real counts only; page views are not tracked), avatar library + Reader/Writer defaults (served via `/api/avatars/default/[kind]`), Renovation Mode (CEO toggles), onboarding content. `/ceo-studio` (CEO only): Phase 2/3 activation. Rules are pure functions in `lib/admin/policy.ts`; services in `lib/admin/*-service.ts`; sensitive actions write `AdminAuditLog`. `/command-center` and the old `/ceo/{users,analytics,settings}` pages redirect (next.config.js); `app/ceo/revenue/route.ts` is still a CEO-only route handler.
 
-**Other surfaces:** `/write-with-us` (onboarding copy from `CmsArticle` via `lib/cms.ts`), `/goal` (monthly ReadEvent meter). Follow-author is localStorage-only; comments, ratings, library, and reading progress do not exist.
+**Other surfaces:** `/write-with-us` (onboarding copy from `CmsArticle` via `lib/cms.ts`), `/goal` (monthly ReadEvent meter). **Follows are two separate things.** Following a *series* is real: `SeriesFollow` rows via `PUT`/`DELETE /api/me/follows/[seriesId]` (`lib/series-follows.ts`, `components/follow/FollowSeriesButton.tsx` on the series page), and the member's Library is `GET /api/me/follows` / the Library tab of `/reader` (published series only; unpublished ones are hidden, not unfollowed). `Series.followers` equals the row count, maintained by the `SeriesFollow_count` database trigger; never write it in code. Following an *author* is still localStorage-only (`FollowAuthorButton`, author pages only). `/reader` is every member's private reading profile ("Profile" in the account menu, writers included); a writer's public author page is linked from Writer Studio. Comments, ratings, bookmarks, hearts and reading progress do not exist.
 
 ## Database
 
-`prisma/schema.prisma` is the source of truth. Migrations: `0_baseline` (the full schema as of 2026-10-09, generated from the datamodel), `20260525213000_app_roles_writer_flow` (Role enum rename; runs harmlessly after the baseline on a fresh DB), `20261009120000_administration` (additive: `MemberRestriction`, `AdminAuditLog`, `PlatformAvatar`, new `Settings` columns). Production was built with `db push` and has drifted before (e.g. a missing `Series.aiUsageTag` column), so before migrating production: diff it against the schema, then `migrate resolve --applied` the first two migrations and `migrate deploy` the rest — never run the baseline against it. Develop against the development DB only (`db:dev:*` scripts; see the protocol below), and never flip the live `Settings` phase flags. Models `UserStats`, `AuthorPayout`, `Subscription`, `Book`, `Account`, `VerificationToken` are unused; `Studio`/`StudioMembership` are populated but barely consumed.
+`prisma/schema.prisma` is the source of truth. Migrations: `0_baseline` (the full schema as of 2026-10-09, generated from the datamodel), `20260525213000_app_roles_writer_flow` (Role enum rename; runs harmlessly after the baseline on a fresh DB), `20261009120000_administration` (additive: `MemberRestriction`, `AdminAuditLog`, `PlatformAvatar`, new `Settings` columns), `20261010090000_series_follows` (`SeriesFollow` table, a one-time reset of `Series.followers` to 0, and the `SeriesFollow_count` trigger that keeps that column equal to the row count; Prisma doesn't model triggers, so `migrate diff` won't show it). The main database was baselined on 2026-10-09 (the first two migrations marked applied, the rest deployed) and matched the schema exactly afterwards, so new migrations apply with plain `migrate deploy`; never run the baseline against it. Never flip the live `Settings` phase flags. Models `UserStats`, `AuthorPayout`, `Subscription`, `Book`, `Account`, `VerificationToken` are unused; `Studio`/`StudioMembership` are populated but barely consumed.
 
-## Pre-launch mode (user decision, 2026-10-09)
+## Working rule: this is a test site — change `main` directly (user decision, 2026-10-09)
 
-The site is not live yet, so the user has chosen to work **directly on the main (production, `.env`) database** and deploy straight to `main`; the development database is parked until launch. This overrides the "development only" rules below for now. Still required on production: drift-diff before migrating, show the user the migration SQL before applying it, additive changes by default, explicit approval for anything destructive (`migrate reset`, `db push --accept-data-loss`, dropping columns/tables), never print connection strings or `CEO_PASSWORD`, never flip the `Settings` phase flags. Restore the protocol below once the site goes live.
+The site is **not live**; all data is test data. Until the user says the site is going live (far in the future), **every change the user asks for goes straight to `main`**: commit to the `main` branch, and apply schema changes to the **main database** (`.env`, `ep-holy-sunset-…`) directly. No separate "production approval" step and no development-first gate. Do not reintroduce a dev-only workflow unless the user asks for it at launch.
 
-## Database safety protocol (follow every session, before any database work)
+`.env.local` (`ep-withered-leaf-…`) is a **scratch copy** only: `npm run dev` and `npm run test:integration` use it (the integration runner refuses to run against `.env`'s database, by design, so test users are never created on main). Keep it migrated in step with main so local previews and tests work.
 
-Two databases exist. `.env` → **production** (`ep-holy-sunset-…`). `.env.local` → **development** (`ep-withered-leaf-…`, a Neon copy of production that contains real member data: treat it as sensitive). All schema changes, migrations and integration tests happen on development only.
+## Database protocol (every schema change)
 
-1. **Verify the target first:** `npm run db:dev:verify`. It must print a development host different from production. If it refuses, the target is unclear, or `.env.local` is missing: **stop and ask the user**. Never guess, and never "fix" by pointing at production.
-2. **Health check (read-only):** `npm run db:dev:check` (connection, tables, row counts, migration history).
-3. **Schema changes:** edit `prisma/schema.prisma`, then generate the SQL without touching any database: `npx prisma migrate diff --from-schema-datamodel <previous schema copy> --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/<timestamp>_<name>/migration.sql` (write it with `cmd /c` redirection so the file is plain UTF-8). Prefer additive changes; explain anything destructive and get explicit approval. Show the user the SQL before applying it.
-4. **Drift check before migrating** (read-only): `node scripts/db-dev.mjs migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel <expected schema> --script` must print "This is an empty migration".
-5. **Apply to development only:** `npm run db:dev:migrate`, then `npm run db:dev:status`.
-6. **Test:** `npm test`, then with `npm run dev` running, `npm run test:integration` (development only; test records are tagged and removed).
-7. **Never:** run `npx prisma migrate …`, `db push`, `migrate reset` or `--accept-data-loss` directly (the CLI reads `.env` = production); connect to, migrate or modify production; print, log or paste connection strings or `CEO_PASSWORD`; commit `.env` or `.env.local`; flip the live `Settings` phase flags.
-8. **Production** is migrated only when the user explicitly asks, after a drift diff against production: mark already-present migrations with `migrate resolve --applied`, then `migrate deploy` only the new ones, and deploy code only after the migration succeeds.
+1. **Schema change:** edit `prisma/schema.prisma`, then generate the SQL without touching any database: `npx prisma migrate diff --from-schema-datamodel <previous schema copy> --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/<timestamp>_<name>/migration.sql` (write it with `cmd /c` redirection so the file is plain UTF-8). Prefer additive changes; explain anything destructive. Show the user the SQL.
+2. **Drift check on main** (read-only): `npx prisma migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel <schema before this change> --script` must print "This is an empty migration"; `npx prisma migrate status` shows only the new migration pending.
+3. **Apply to main:** `npx prisma migrate deploy`, then `npx prisma migrate status`.
+4. **Keep the scratch copy in step:** `npm run db:dev:migrate`.
+5. **Test:** `npm test`, then with `npm run dev` running, `npm run test:integration` (scratch copy; test records are tagged and removed).
+6. **Never:** `db push`, `migrate dev`, `migrate reset` or `--accept-data-loss` without explicit user approval; print, log or paste connection strings or `CEO_PASSWORD`; commit `.env` or `.env.local`; flip the live `Settings` phase flags.
 
 ## Styling
 

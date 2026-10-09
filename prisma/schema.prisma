@@ -46,6 +46,7 @@ model User {
   auditActions             AdminAuditLog[]     @relation("AuditActor")
   auditEntries             AdminAuditLog[]     @relation("AuditTarget")
   platformAvatarsAdded     PlatformAvatar[]
+  seriesFollows            SeriesFollow[]
 }
 
 model AuthorProfile {
@@ -134,6 +135,23 @@ model Series {
   aiUsageTag  AiUsageTag
   episodes    Episode[]
   author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  follows     SeriesFollow[]
+}
+
+/// A member following a series (separate from following an author). Their
+/// Library is these rows, published series only. Series.followers is kept equal
+/// to this table's row count by a database trigger (migration
+/// 20261010090000_series_follows, "SeriesFollow_count"); never update it by hand.
+model SeriesFollow {
+  userId    String
+  seriesId  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  series    Series   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+
+  @@id([userId, seriesId])
+  @@index([userId, createdAt])
+  @@index([seriesId])
 }
 
 model Episode {

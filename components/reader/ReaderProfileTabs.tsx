@@ -3,9 +3,9 @@
 import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 
 /*
- * Library / Bookmarks / Activity on the reader page. Presentation only: no
- * section reads or writes data yet (follow-series, bookmarks and activity are
- * separate, later pieces of work). WAI-ARIA tabs with automatic activation.
+ * Library / Bookmarks / Activity on the reader page. WAI-ARIA tabs with
+ * automatic activation. A section's content comes from `panels` (rendered on
+ * the server, e.g. the Library); sections without one show "Coming soon".
  */
 
 type Section = {
@@ -40,7 +40,11 @@ const SECTIONS: Section[] = [
   },
 ];
 
-export default function ReaderProfileTabs() {
+export default function ReaderProfileTabs({
+  panels = {},
+}: {
+  panels?: Partial<Record<Section["id"], ReactNode>>;
+}) {
   const id = useId();
   const [active, setActive] = useState(0);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -102,20 +106,32 @@ export default function ReaderProfileTabs() {
         })}
       </div>
 
-      <div
-        id={`${id}-panel-${section.id}`}
-        role="tabpanel"
-        aria-labelledby={`${id}-tab-${section.id}`}
-        tabIndex={0}
-        className="theme-panel mt-5 rounded-[24px] border border-dashed border-[var(--border-color)] px-5 py-10 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--series-accent))] sm:px-8 sm:py-14"
-      >
-        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[hsl(var(--series-accent))]">
-          {section.icon}
-        </span>
-        <p className="eyebrow mt-4">Coming soon</p>
-        <h2 className="font-heading theme-heading mt-2 text-balance text-2xl font-semibold">{section.title}</h2>
-        <p className="theme-meta mx-auto mt-3 max-w-md text-sm leading-6">{section.body}</p>
-      </div>
+      {panels[section.id] ? (
+        <div
+          id={`${id}-panel-${section.id}`}
+          role="tabpanel"
+          aria-labelledby={`${id}-tab-${section.id}`}
+          tabIndex={0}
+          className="mt-5 rounded-[24px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--series-accent))]"
+        >
+          {panels[section.id]}
+        </div>
+      ) : (
+        <div
+          id={`${id}-panel-${section.id}`}
+          role="tabpanel"
+          aria-labelledby={`${id}-tab-${section.id}`}
+          tabIndex={0}
+          className="theme-panel mt-5 rounded-[24px] border border-dashed border-[var(--border-color)] px-5 py-10 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--series-accent))] sm:px-8 sm:py-14"
+        >
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[hsl(var(--series-accent))]">
+            {section.icon}
+          </span>
+          <p className="eyebrow mt-4">Coming soon</p>
+          <h2 className="font-heading theme-heading mt-2 text-balance text-2xl font-semibold">{section.title}</h2>
+          <p className="theme-meta mx-auto mt-3 max-w-md text-sm leading-6">{section.body}</p>
+        </div>
+      )}
     </section>
   );
 }

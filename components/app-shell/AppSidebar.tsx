@@ -325,7 +325,6 @@ export default function AppSidebar({
             <ProfileMenu
               user={user}
               roleLabel={roleLabel}
-              hasPublicProfile={canWrite}
               isSigningOut={isSigningOut}
               onSignOut={onSignOut}
               onNavigate={onClose}

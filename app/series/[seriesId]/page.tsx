@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import AiTagBanner from "@/components/AiTagBanner";
 import AuthorTierBadge from "@/components/AuthorTierBadge";
 import EpisodeCarousel from "@/components/EpisodeCarousel";
-import FollowAuthorButton from "@/components/follow/FollowAuthorButton";
+import FollowSeriesButton from "@/components/follow/FollowSeriesButton";
 import ReportAiTagButton from "@/components/ReportAiTagButton";
 import SeasonSelector from "@/components/series/SeasonSelector";
 import { deriveAuthorTier, derivePostingConsistency } from "@/lib/author-tier";
@@ -11,6 +11,7 @@ import { DEFAULT_SERIES_ACCENT, readableTextOn, seriesAccentHex } from "@/lib/se
 import { createViewerMonetizationState } from "@/lib/monetization";
 import { PUBLIC_SERIES_WHERE, publicEpisodePreview } from "@/lib/content-visibility";
 import { prisma } from "@/lib/prisma";
+import { isFollowingSeries } from "@/lib/series-follows";
 
 export default async function SeriesPage({
   params,
@@ -51,6 +52,7 @@ export default async function SeriesPage({
   }
 
   const viewer = createViewerMonetizationState(session?.user?.id);
+  const viewerFollows = session?.user?.id ? await isFollowingSeries(session.user.id, series.id) : false;
   const authorTier = deriveAuthorTier({
     totalReads: series.reads,
     engagementRate: Math.min(0.95, (series.followers / Math.max(series.reads, 1)) * 4),
@@ -114,9 +116,15 @@ export default async function SeriesPage({
                 </Link>
               </p>
               <AuthorTierBadge tier={authorTier} />
-              <FollowAuthorButton
-                authorId={series.authorId}
-                authorName={series.author.name || "Anonymous Author"}
+            </div>
+            {/* Follows the SERIES (Library). Following the author is on the author's page. */}
+            <div className="mt-3">
+              <FollowSeriesButton
+                seriesId={series.id}
+                seriesTitle={series.title}
+                initialFollowing={viewerFollows}
+                initialCount={series.followers}
+                signedIn={Boolean(session?.user?.id)}
               />
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">
