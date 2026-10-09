@@ -26,6 +26,10 @@ model User {
   youtubeUrl               String?
   writerPolicyAcknowledged Boolean        @default(false)
   writerStatus             WriterStatus   @default(BEGINNER)
+  /// Who sees the content of this member's reading profile (/reader/[id]):
+  /// Library and later sections. The header (picture, banner, name, bio) is
+  /// always visible to anyone with the link. Author pages are always public.
+  readingProfileVisibility ProfileVisibility @default(PRIVATE)
   passwordHash             String?
   accounts                 Account[]
   adImpressions            AdImpression[]
@@ -343,6 +347,11 @@ enum Role {
   WRITER
   BOARD
   CEO
+}
+
+enum ProfileVisibility {
+  PRIVATE
+  PUBLIC
 }
 
 enum RestrictionKind {

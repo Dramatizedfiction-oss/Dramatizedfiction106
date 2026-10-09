@@ -1,38 +1,23 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import ProfileSettings from "@/components/settings/ProfileSettings";
 import ThemePreferenceControl from "@/components/settings/ThemePreferenceControl";
 import UserAvatar from "@/components/UserAvatar";
-import { defaultAvatarFor } from "@/lib/avatars";
 import { prisma } from "@/lib/prisma";
 import { getRoleLabel, hasRoleAccess, normalizeRole } from "@/lib/roles";
 import { writerStatusLabel } from "@/lib/writer-studio/status";
 
 /*
- * Settings: Profile and Account for signed-in users, Appearance for everyone.
- * Only settings that work today are shown. Role and writer status are
- * displayed read-only; nothing here can change them.
+ * Settings: app settings and preferences only (Appearance for everyone,
+ * Account details for signed-in users). Everything about a member's profile
+ * (name, bio, pictures, links, visibility) is edited in the profile editor:
+ * the pen on their profile page (/reader, or their author page).
  */
 export default async function SettingsPage() {
   const session = await auth();
   const user = session?.user
     ? await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          image: true,
-          bannerImage: true,
-          bio: true,
-          role: true,
-          writerStatus: true,
-          websiteUrl: true,
-          twitterUrl: true,
-          instagramUrl: true,
-          youtubeUrl: true,
-          discordUrl: true,
-        },
+        select: { id: true, email: true, image: true, role: true, writerStatus: true },
       })
     : null;
   const isWriter = hasRoleAccess(user?.role, "WRITER");
@@ -42,38 +27,6 @@ export default async function SettingsPage() {
       <div className="mx-auto max-w-3xl">
         <p className="eyebrow">Settings</p>
         <h1 className="font-heading theme-heading mt-3 text-4xl font-semibold md:text-5xl">Settings</h1>
-
-        {user ? (
-          <Section title="Profile" description={isWriter ? "How you appear to readers." : "How you appear on Dramatized Fiction."}>
-            <ProfileSettings
-              isWriter={isWriter}
-              defaultAvatar={defaultAvatarFor(user.role)}
-              initial={{
-                userId: user.id,
-                name: user.name ?? "",
-                bio: user.bio ?? "",
-                image: user.image ?? "",
-                bannerImage: user.bannerImage ?? "",
-                websiteUrl: user.websiteUrl ?? "",
-                twitterUrl: user.twitterUrl ?? "",
-                instagramUrl: user.instagramUrl ?? "",
-                youtubeUrl: user.youtubeUrl ?? "",
-                discordUrl: user.discordUrl ?? "",
-              }}
-            />
-          </Section>
-        ) : (
-          <Section title="Your account" description="Sign in to change your profile picture and name.">
-            <div className="flex flex-wrap gap-3">
-              <Link href="/sign-in?callbackUrl=/settings" className="story-button-primary">
-                Sign in
-              </Link>
-              <Link href="/sign-up" className="story-button-secondary">
-                Create account
-              </Link>
-            </div>
-          </Section>
-        )}
 
         <Section title="Appearance" description="Choose how Dramatized Fiction looks on this device.">
           <ThemePreferenceControl />
@@ -93,9 +46,21 @@ export default async function SettingsPage() {
                 }
               />
               {isWriter ? <Row label="Writer status" value={writerStatusLabel(user.writerStatus)} /> : null}
+              <Row
+                label="Profile"
+                value={
+                  <Link
+                    href="/reader"
+                    className="inline-flex min-h-11 items-center underline decoration-1 underline-offset-4 hover:decoration-2"
+                  >
+                    Edit on your profile page
+                  </Link>
+                }
+              />
             </dl>
             <p className="theme-meta mt-4 text-xs leading-5">
-              Account type and writer status are managed by Dramatized Fiction.
+              Account type and writer status are managed by Dramatized Fiction. Your name, picture, bio and who can see your
+              profile are edited with the pen on your profile page.
               {isWriter ? null : (
                 <>
                   {" "}
@@ -108,7 +73,18 @@ export default async function SettingsPage() {
               )}
             </p>
           </Section>
-        ) : null}
+        ) : (
+          <Section title="Your account" description="Sign in to manage your account and profile.">
+            <div className="flex flex-wrap gap-3">
+              <Link href="/sign-in?callbackUrl=/settings" className="story-button-primary">
+                Sign in
+              </Link>
+              <Link href="/sign-up" className="story-button-secondary">
+                Create account
+              </Link>
+            </div>
+          </Section>
+        )}
       </div>
     </main>
   );

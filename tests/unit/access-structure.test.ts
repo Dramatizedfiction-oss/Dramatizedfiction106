@@ -85,6 +85,18 @@ describe("series follows", () => {
     }
   });
 
+  test("profile editor routes act only as the signed-in member", () => {
+    for (const route of ["app/api/me/profile/route.ts", "app/api/me/profile-images/route.ts", "app/api/avatars/library/route.ts"]) {
+      const source = read(route);
+      assert.match(source, /await requireApiUser\(\)[\s\S]*?if \(!guard\.ok\) return guard\.response/, route);
+      assert.doesNotMatch(source, /params\.userId|body\.data\.userId|searchParams/, route);
+    }
+    // The profile picture is chosen from the library, and library images are never deleted as "replaced".
+    const images = read("app/api/me/profile-images/route.ts");
+    assert.match(images, /isLibraryAvatarUrl\(/);
+    assert.match(images, /isLibraryImagePath\(current\.image\)/);
+  });
+
   test("nothing writes Series.followers by hand (the database trigger owns it)", () => {
     for (const file of [...files("app", /\.(ts|tsx)$/), ...files("lib", /\.ts$/)]) {
       assert.doesNotMatch(read(file), /followers\s*:\s*\{\s*(increment|decrement)|data:\s*\{[^}]*\bfollowers\s*:/, file);

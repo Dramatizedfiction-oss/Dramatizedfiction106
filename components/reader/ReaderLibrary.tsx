@@ -2,15 +2,24 @@ import Link from "next/link";
 import type { LibraryEntry } from "@/lib/series-follows";
 import { safeHexColor, safeImageUrl } from "@/lib/writer-studio/format";
 
-/** The Library tab: series the member follows, as tappable rows (cover, title, author, episodes). */
-export default function ReaderLibrary({ entries }: { entries: LibraryEntry[] }) {
+/**
+ * The Library: series the member follows, as tappable rows (cover, title,
+ * author, episodes). `visitor` switches the wording for someone else's public profile.
+ */
+export default function ReaderLibrary({ entries, visitor = false }: { entries: LibraryEntry[]; visitor?: boolean }) {
   if (entries.length === 0) {
     return (
       <div className="theme-panel rounded-[24px] border border-dashed border-[var(--border-color)] px-5 py-10 text-center sm:px-8 sm:py-14">
         <p className="eyebrow">Library</p>
         <h2 className="font-heading theme-heading mt-2 text-balance text-2xl font-semibold">Nothing here yet</h2>
         <p className="theme-meta mx-auto mt-3 max-w-md text-sm leading-6">
-          Tap <span className="font-semibold text-[var(--text-primary)]">Follow Series</span> on any series and it will be saved here.
+          {visitor ? (
+            "This reader hasn't followed any series yet."
+          ) : (
+            <>
+              Tap <span className="font-semibold text-[var(--text-primary)]">Follow Series</span> on any series and it will be saved here.
+            </>
+          )}
         </p>
         <Link href="/explore" className="story-button-primary mt-6 min-h-11">
           Explore series
@@ -23,7 +32,7 @@ export default function ReaderLibrary({ entries }: { entries: LibraryEntry[] }) 
     <div>
       <h2 className="sr-only">Library</h2>
       <p className="theme-meta text-sm">
-        {entries.length} {entries.length === 1 ? "series" : "series"} you follow
+        {entries.length} series {visitor ? "followed" : "you follow"}
       </p>
       <ul className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {entries.map((entry) => {

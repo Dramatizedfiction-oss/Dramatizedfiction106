@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import UserAvatar from "@/components/UserAvatar";
 
 export type ReaderProfileHeaderData = {
@@ -9,8 +10,20 @@ export type ReaderProfileHeaderData = {
   createdAt: Date;
 };
 
-/** Reader page header, laid out like the author page: banner, overlapping circular avatar, name, bio. */
-export default function ReaderProfileHeader({ reader }: { reader: ReaderProfileHeaderData }) {
+/**
+ * Reading-profile header, laid out like the author page: banner, overlapping
+ * circular avatar, name, bio. `action` is the owner's edit (pen) button;
+ * `note` is a line under the bio (e.g. who can see the page).
+ */
+export default function ReaderProfileHeader({
+  reader,
+  action,
+  note,
+}: {
+  reader: ReaderProfileHeaderData;
+  action?: ReactNode;
+  note?: ReactNode;
+}) {
   const displayName = reader.name?.trim() || "Reader";
   const memberSince = new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(reader.createdAt);
 
@@ -26,6 +39,7 @@ export default function ReaderProfileHeader({ reader }: { reader: ReaderProfileH
       </div>
 
       <div className="relative px-5 pb-8 sm:px-6 md:px-8">
+        {action ? <div className="absolute right-4 top-3 sm:right-6 md:right-8">{action}</div> : null}
         {/* The avatar overlaps the banner. Phones: the name sits below it. Wider:
             beside it, starting just under the banner edge so a long name never
             runs up into the banner image. */}
@@ -47,16 +61,13 @@ export default function ReaderProfileHeader({ reader }: { reader: ReaderProfileH
 
         {reader.bio ? <p className="theme-body mt-5 max-w-3xl text-base leading-7 md:text-lg">{reader.bio}</p> : null}
 
-        <p className="theme-meta mt-5 flex items-center gap-2 text-xs">
-          <LockIcon />
-          Only you can see this page.
-        </p>
+        {note ? <div className="theme-meta mt-5 text-xs">{note}</div> : null}
       </div>
     </section>
   );
 }
 
-function LockIcon() {
+export function LockIcon() {
   return (
     <svg aria-hidden="true" viewBox="0 0 16 16" className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="7" width="10" height="7" rx="1.5" />

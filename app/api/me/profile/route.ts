@@ -6,7 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { PROFILE_LIMITS, PROFILE_LINK_FIELDS, normalizeProfileLink } from "@/lib/profile";
 
 /*
- * The signed-in user's own profile text: display name, bio and public links.
+ * The signed-in user's own profile text: display name, bio, public links, and
+ * whether their reading profile's content (Library…) is PRIVATE or PUBLIC.
  * No user id is accepted (the account always comes from the session), and the
  * schema is strict: any other key (role, writerStatus, email, id, image, ...)
  * rejects the whole request. Pictures go through /api/me/profile-images.
@@ -22,6 +23,7 @@ const schema = z
     instagramUrl: optionalText,
     youtubeUrl: optionalText,
     discordUrl: optionalText,
+    readingProfileVisibility: z.enum(["PRIVATE", "PUBLIC"]).optional(),
   })
   .strict();
 
@@ -36,10 +38,11 @@ export async function PATCH(request: Request) {
     return badRequest("Malformed JSON body.");
   }
   const parsed = schema.safeParse(raw);
-  if (!parsed.success) return badRequest("Only your name, bio and links can be changed here.");
+  if (!parsed.success) return badRequest("Only your name, bio, links and profile visibility can be changed here.");
   const input = parsed.data;
 
   const data: Record<string, string | null> = {};
+  if (input.readingProfileVisibility) data.readingProfileVisibility = input.readingProfileVisibility;
 
   if (input.name !== undefined) {
     const name = input.name.trim().replace(/\s+/g, " ");
@@ -78,6 +81,7 @@ export async function PATCH(request: Request) {
         instagramUrl: true,
         youtubeUrl: true,
         discordUrl: true,
+        readingProfileVisibility: true,
       },
     });
 

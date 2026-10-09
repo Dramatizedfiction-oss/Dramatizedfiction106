@@ -34,11 +34,17 @@ export async function addPlatformAvatar(actorId: string, input: { url: string; l
   return { ok: true as const, avatar };
 }
 
-/** Removes an avatar. If it was a default, that default falls back to the built-in one (FK SET NULL). */
+/**
+ * Removes an avatar. If it was a default, that default falls back to the
+ * built-in one (FK SET NULL). Members who chose it as their picture fall back
+ * to their role default, so nobody is left pointing at a deleted image.
+ */
 export async function removePlatformAvatar(actorId: string, id: string) {
   const avatar = await prisma.platformAvatar.findUnique({ where: { id }, select: { id: true, url: true } });
   if (!avatar) return { ok: false as const, status: 404, message: "Avatar not found." };
   await prisma.$transaction(async (tx) => {
+    await tx.user.updateMany({ where: { image: avatar.url }, data: { image: null } });
+    await tx.authorProfile.updateMany({ where: { profileImage: avatar.url }, data: { profileImage: null } });
     await tx.platformAvatar.delete({ where: { id } });
     await recordAudit(tx, { action: AUDIT.AVATAR_REMOVED, actorId, details: { avatarId: id } });
   });

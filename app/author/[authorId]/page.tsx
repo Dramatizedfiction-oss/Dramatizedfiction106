@@ -4,10 +4,10 @@ import AiTagBanner from "@/components/AiTagBanner";
 import AuthorTierBadge from "@/components/AuthorTierBadge";
 import AuthorWorksCarousel from "@/components/AuthorWorksCarousel";
 import FollowAuthorButton from "@/components/follow/FollowAuthorButton";
-import ProfileImagesEditor from "@/components/profile/ProfileImagesEditor";
+import ProfileEditor from "@/components/profile/ProfileEditor";
 import UserAvatar from "@/components/UserAvatar";
-import { defaultAvatarFor } from "@/lib/avatars";
 import { safeProfileLink } from "@/lib/profile";
+import { hasRoleAccess } from "@/lib/roles";
 import { deriveAuthorTier, derivePostingConsistency } from "@/lib/author-tier";
 import { PUBLIC_EPISODE_WHERE, PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
 import { createViewerMonetizationState } from "@/lib/monetization";
@@ -37,6 +37,8 @@ export default async function AuthorProfilePage({
       youtubeUrl: true,
       websiteUrl: true,
       discordUrl: true,
+      // Only passed on to the owner's profile editor; never shown here.
+      readingProfileVisibility: true,
       // Public profile: published work only.
       series: {
         where: PUBLIC_SERIES_WHERE,
@@ -167,6 +169,29 @@ export default async function AuthorProfilePage({
         </div>
 
         <div className="relative px-5 pb-8 sm:px-6 md:px-8">
+          {/* The owner's profile editor (pen). Author pages are always public. */}
+          {session?.user?.id === author.id ? (
+            <div className="absolute right-4 top-3 z-10 sm:right-6 md:right-8">
+              <ProfileEditor
+                role={author.role}
+                isWriter={hasRoleAccess(author.role, "WRITER")}
+                initial={{
+                  name: author.name ?? "",
+                  bio: author.bio ?? "",
+                  image: author.image ?? "",
+                  bannerImage: author.bannerImage ?? "",
+                  readingProfileVisibility: author.readingProfileVisibility,
+                  links: {
+                    websiteUrl: author.websiteUrl ?? "",
+                    twitterUrl: author.twitterUrl ?? "",
+                    instagramUrl: author.instagramUrl ?? "",
+                    youtubeUrl: author.youtubeUrl ?? "",
+                    discordUrl: author.discordUrl ?? "",
+                  },
+                }}
+              />
+            </div>
+          ) : null}
           <div className="-mt-12 flex flex-col gap-6 md:-mt-16 md:flex-row md:items-end md:justify-between">
             {/* Phones: the avatar overlaps the banner and the name sits below it. */}
             <div className="flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-end sm:gap-4">
@@ -185,13 +210,6 @@ export default async function AuthorProfilePage({
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   <AuthorTierBadge tier={authorTier} />
                   <FollowAuthorButton authorId={author.id} authorName={displayName} />
-                  {session?.user?.id === author.id ? (
-                    <ProfileImagesEditor
-                      image={author.image}
-                      bannerImage={author.bannerImage}
-                      defaultImage={defaultAvatarFor(author.role)}
-                    />
-                  ) : null}
                 </div>
               </div>
             </div>
