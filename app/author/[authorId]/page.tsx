@@ -176,7 +176,6 @@ export default async function AuthorProfilePage({
                 role={author.role}
                 isWriter={hasRoleAccess(author.role, "WRITER")}
                 initial={{
-                  name: author.name ?? "",
                   bio: author.bio ?? "",
                   image: author.image ?? "",
                   bannerImage: author.bannerImage ?? "",

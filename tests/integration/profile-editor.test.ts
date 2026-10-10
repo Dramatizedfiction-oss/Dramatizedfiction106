@@ -127,9 +127,11 @@ describe("profile editor", () => {
 
   test("Settings no longer edits the profile", async (t) => {
     if (!requireServer(t)) return;
+    // Sweep 7: Settings is a list of cards; the display name lives on Settings > Account.
     const page = await (await call("/settings", owner)).text();
-    assert.match(page, /Edit on your profile page/);
-    assert.doesNotMatch(page, /Display name|Save profile|Profile picture/);
+    assert.match(page, /href="\/settings\/account"/);
+    assert.doesNotMatch(page, /Save profile|Profile picture|Background picture/);
+    assert.equal((await patch("/api/me/profile", owner, { name: "Renamed" })).status, 400, "name no longer accepted here");
   });
 
   test("removing a library avatar sends its users back to the default picture", async () => {

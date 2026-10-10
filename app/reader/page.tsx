@@ -55,7 +55,6 @@ export default async function ReaderProfilePage() {
             role={reader.role}
             isWriter={hasRoleAccess(reader.role, "WRITER")}
             initial={{
-              name: reader.name ?? "",
               bio: reader.bio ?? "",
               image: reader.image ?? "",
               bannerImage: reader.bannerImage ?? "",

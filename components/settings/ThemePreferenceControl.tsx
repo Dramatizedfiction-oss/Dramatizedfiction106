@@ -24,6 +24,7 @@ export default function ThemePreferenceControl() {
               type="button"
               role="radio"
               aria-checked={selected}
+              aria-label={`${label} theme`}
               onClick={() => setPreference(value)}
               className="ui-choice flex flex-col items-start gap-2 rounded-2xl p-4 text-left"
             >

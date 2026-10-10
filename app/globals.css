@@ -383,7 +383,7 @@
 
   .reader-column {
     width: 100%;
-    max-width: 42rem;
+    max-width: var(--reader-width, 42rem);
     margin-inline: auto;
     padding-inline: clamp(1.25rem, 5vw, 2rem);
   }
@@ -1131,3 +1131,41 @@
     animation: none !important;
   }
 }
+
+/*
+ * Reading preferences (lib/reading-prefs.ts, Settings > Reading & Appearance).
+ * Saved per device and set on <html> before first paint. Size, spacing and
+ * width apply inside .reader-column (episode reader + Writer Studio preview);
+ * the "default" values equal the original reading sizes (about 17-20px, 1.72,
+ * 42rem / 60-70 characters).
+ */
+.reader-column .reading-body {
+  font-size: calc(clamp(1.0625rem, 0.98rem + 0.35vw, 1.25rem) * var(--reader-scale, 1));
+  line-height: var(--reader-leading, 1.72);
+}
+
+html[data-reading-size="sm"] { --reader-scale: 0.9; }
+html[data-reading-size="lg"] { --reader-scale: 1.12; }
+html[data-reading-size="xl"] { --reader-scale: 1.25; }
+
+html[data-reading-spacing="compact"] { --reader-leading: 1.5; }
+html[data-reading-spacing="relaxed"] { --reader-leading: 1.95; }
+
+html[data-reading-width="narrow"] { --reader-width: 36rem; }
+html[data-reading-width="wide"] { --reader-width: 48rem; }
+
+/* "Always reduce" stops animation everywhere, even if the device setting is off. */
+html[data-reduce-motion="always"] *,
+html[data-reduce-motion="always"] *::before,
+html[data-reduce-motion="always"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Text on a solid --status-danger fill (Delete account button): white on the
+   light-mode red, near-black on the lighter dark-mode red (both above 4.5:1). */
+:root { --on-status-danger: #ffffff; }
+.dark { --on-status-danger: #2a0606; }

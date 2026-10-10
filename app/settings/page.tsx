@@ -1,110 +1,68 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import ThemePreferenceControl from "@/components/settings/ThemePreferenceControl";
-import UserAvatar from "@/components/UserAvatar";
-import { prisma } from "@/lib/prisma";
-import { getRoleLabel, hasRoleAccess, normalizeRole } from "@/lib/roles";
-import { writerStatusLabel } from "@/lib/writer-studio/status";
+import { BookOpenIcon, UserIcon } from "@/components/icons";
+import { SettingsCard } from "@/components/settings/SettingsUi";
 
 /*
- * Settings: app settings and preferences only (Appearance for everyone,
- * Account details for signed-in users). Everything about a member's profile
- * (name, bio, pictures, links, visibility) is edited in the profile editor:
- * the pen on their profile page (/reader, or their author page).
+ * Settings: how the app behaves for this member. A short list of arrow cards,
+ * each leading to its own page, and only for sections that really work. How
+ * others see you (picture, visibility, bio) lives in the profile editor;
+ * anything about money will live in Writer Studio > Grow.
  */
 export default async function SettingsPage() {
   const session = await auth();
-  const user = session?.user
-    ? await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { id: true, email: true, image: true, role: true, writerStatus: true },
-      })
-    : null;
-  const isWriter = hasRoleAccess(user?.role, "WRITER");
+  const signedIn = Boolean(session?.user?.id);
 
   return (
-    <main className="md:p-10">
-      <div className="mx-auto max-w-3xl">
+    <main className="px-4 py-6 md:p-10">
+      <div className="mx-auto max-w-2xl">
         <p className="eyebrow">Settings</p>
         <h1 className="font-heading theme-heading mt-3 text-4xl font-semibold md:text-5xl">Settings</h1>
 
-        <Section title="Appearance" description="Choose how Dramatized Fiction looks on this device.">
-          <ThemePreferenceControl />
-        </Section>
+        <ul className="mt-8 space-y-3">
+          {signedIn ? (
+            <SettingsCard
+              href="/settings/account"
+              title="Account"
+              description="Email, display name, 18+ confirmation, password and account deletion."
+              icon={<UserIcon size={18} />}
+            />
+          ) : null}
+          <SettingsCard
+            href="/settings/reading"
+            title="Reading & Appearance"
+            description="Theme, text size, line spacing, reading width and motion on this device."
+            icon={<BookOpenIcon size={18} />}
+          />
+          {signedIn ? (
+            <SettingsCard href="/settings/about" title="About & Help" description="About Dramatized Fiction and how AI labels work." icon={<InfoIcon />} />
+          ) : null}
+        </ul>
 
-        {user ? (
-          <Section title="Account" description="Your sign-in details and access.">
-            <dl className="divide-y divide-[var(--border-color)]">
-              <Row label="Email" value={user.email ?? "Not set"} />
-              <Row
-                label="Account type"
-                value={
-                  <span className="flex items-center justify-end gap-2">
-                    <UserAvatar user={user} size="xs" />
-                    {getRoleLabel(normalizeRole(user.role))}
-                  </span>
-                }
-              />
-              {isWriter ? <Row label="Writer status" value={writerStatusLabel(user.writerStatus)} /> : null}
-              <Row
-                label="Profile"
-                value={
-                  <Link
-                    href="/reader"
-                    className="inline-flex min-h-11 items-center underline decoration-1 underline-offset-4 hover:decoration-2"
-                  >
-                    Edit on your profile page
-                  </Link>
-                }
-              />
-            </dl>
-            <p className="theme-meta mt-4 text-xs leading-5">
-              Account type and writer status are managed by Dramatized Fiction. Your name, picture, bio and who can see your
-              profile are edited with the pen on your profile page.
-              {isWriter ? null : (
-                <>
-                  {" "}
-                  Want to publish?{" "}
-                  <Link href="/become-author" className="text-[var(--accent)] underline-offset-4 hover:underline">
-                    Become a writer
-                  </Link>
-                  .
-                </>
-              )}
-            </p>
-          </Section>
-        ) : (
-          <Section title="Your account" description="Sign in to manage your account and profile.">
-            <div className="flex flex-wrap gap-3">
-              <Link href="/sign-in?callbackUrl=/settings" className="story-button-primary">
+        {!signedIn ? (
+          <section className="theme-panel mt-6 rounded-[24px] border p-5 sm:p-6">
+            <h2 className="theme-heading text-lg font-semibold">Your account</h2>
+            <p className="theme-meta mt-1 text-sm">Sign in to manage your account.</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link href="/sign-in?callbackUrl=/settings" className="story-button-primary min-h-11">
                 Sign in
               </Link>
-              <Link href="/sign-up" className="story-button-secondary">
+              <Link href="/sign-up" className="story-button-secondary min-h-11">
                 Create account
               </Link>
             </div>
-          </Section>
-        )}
+          </section>
+        ) : null}
       </div>
     </main>
   );
 }
 
-function Section({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
+function InfoIcon() {
   return (
-    <section className="theme-panel mt-8 rounded-[28px] border p-5 sm:p-6">
-      <h2 className="theme-heading text-xl font-semibold">{title}</h2>
-      <p className="theme-meta mt-1 text-sm">{description}</p>
-      <div className="mt-5">{children}</div>
-    </section>
-  );
-}
-
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3 text-sm first:pt-0 last:pb-0">
-      <dt className="theme-meta">{label}</dt>
-      <dd className="theme-heading min-w-0 break-all text-right font-medium">{value}</dd>
-    </div>
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+      <circle cx="10" cy="10" r="7.5" />
+      <path d="M10 9v5M10 6.2v.1" />
+    </svg>
   );
 }

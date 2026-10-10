@@ -8,6 +8,7 @@ import AuthSessionProvider from "@/components/providers/AuthSessionProvider";
 import ThemeProvider from "@/components/providers/ThemeProvider";
 import { canBypassRenovation, isRenovationOpenPath } from "@/lib/admin/policy";
 import { PATHNAME_HEADER } from "@/lib/auth-route-guards";
+import { READING_INIT_SCRIPT } from "@/lib/reading-prefs";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
 import { getPlatformSettings } from "@/lib/phases";
@@ -88,6 +89,7 @@ export default async function RootLayout({
     <html lang="en" className="light" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: READING_INIT_SCRIPT }} />
       </head>
       <body className="bg-[var(--page-bg)] text-[var(--text-primary)]">
         <ThemeProvider>

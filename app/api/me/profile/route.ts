@@ -6,8 +6,9 @@ import { prisma } from "@/lib/prisma";
 import { PROFILE_LIMITS, PROFILE_LINK_FIELDS, normalizeProfileLink } from "@/lib/profile";
 
 /*
- * The signed-in user's own profile text: display name, bio, public links, and
- * whether their reading profile's content (Library…) is PRIVATE or PUBLIC.
+ * The signed-in user's own profile text: bio, public links, and whether their
+ * reading profile's content (Library…) is PRIVATE or PUBLIC. The display name
+ * is changed on Settings > Account (/api/me/account/name), not here.
  * No user id is accepted (the account always comes from the session), and the
  * schema is strict: any other key (role, writerStatus, email, id, image, ...)
  * rejects the whole request. Pictures go through /api/me/profile-images.
@@ -16,7 +17,6 @@ const optionalText = z.string().max(2000).nullable().optional();
 
 const schema = z
   .object({
-    name: z.string().max(200).optional(),
     bio: optionalText,
     websiteUrl: optionalText,
     twitterUrl: optionalText,
@@ -38,20 +38,11 @@ export async function PATCH(request: Request) {
     return badRequest("Malformed JSON body.");
   }
   const parsed = schema.safeParse(raw);
-  if (!parsed.success) return badRequest("Only your name, bio, links and profile visibility can be changed here.");
+  if (!parsed.success) return badRequest("Only your bio, links and profile visibility can be changed here.");
   const input = parsed.data;
 
   const data: Record<string, string | null> = {};
   if (input.readingProfileVisibility) data.readingProfileVisibility = input.readingProfileVisibility;
-
-  if (input.name !== undefined) {
-    const name = input.name.trim().replace(/\s+/g, " ");
-    if (!name) return badRequest("Please enter a display name.");
-    if (name.length > PROFILE_LIMITS.name) {
-      return badRequest(`Display names can be up to ${PROFILE_LIMITS.name} characters.`);
-    }
-    data.name = name;
-  }
 
   if (input.bio !== undefined) {
     const bio = input.bio?.trim() ?? "";
@@ -85,14 +76,11 @@ export async function PATCH(request: Request) {
       },
     });
 
-    // Writers keep a copy of their name and bio on AuthorProfile.
-    if (data.name !== undefined || data.bio !== undefined) {
+    // Writers keep a copy of their bio on AuthorProfile.
+    if (data.bio !== undefined) {
       await prisma.authorProfile.updateMany({
         where: { userId: guard.user.id },
-        data: {
-          ...(data.name !== undefined ? { displayName: updated.name ?? "" } : {}),
-          ...(data.bio !== undefined ? { bio: updated.bio } : {}),
-        },
+        data: { bio: updated.bio },
       });
     }
 

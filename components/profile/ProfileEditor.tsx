@@ -18,8 +18,8 @@ import { PROFILE_LIMITS, PROFILE_LINK_FIELDS, normalizeProfileLink, type Profile
  * it to ProfileEditorValues, give it a <Section>, and include it in save().
  */
 
+// The display name is edited on Settings > Account, not here.
 export type ProfileEditorValues = {
-  name: string;
   bio: string;
   /** Chosen library avatar URL, or "" for the role default. */
   image: string;
@@ -76,11 +76,7 @@ export default function ProfileEditor({
   }
 
   async function save() {
-    const name = values.name.trim();
-    if (!name) return setStatus({ kind: "error", message: "Please enter a display name." });
-
     const text: Record<string, string> = {};
-    if (name !== saved.name) text.name = name;
     if (values.bio !== saved.bio) text.bio = values.bio;
     if (values.readingProfileVisibility !== saved.readingProfileVisibility) {
       text.readingProfileVisibility = values.readingProfileVisibility;
@@ -116,9 +112,7 @@ export default function ProfileEditor({
       }
     }
 
-    const next = { ...values, name };
-    setSaved(next);
-    setValues(next);
+    setSaved(values);
     setStatus({ kind: "idle" });
     setOpen(false);
     void refreshSession();
@@ -183,18 +177,8 @@ export default function ProfileEditor({
             hint="Shown across the top of your profile. A wide image (about 3:1) works best."
           />
 
-          <Section title="About you">
+          <Section title="About you" description="Your display name is changed in Settings › Account.">
             <div className="space-y-5">
-              <Field label="Display name">
-                <input
-                  value={values.name}
-                  onChange={(event) => set("name", event.target.value)}
-                  maxLength={PROFILE_LIMITS.name}
-                  autoComplete="nickname"
-                  required
-                  className="ui-input w-full px-4 py-3 text-base sm:text-sm"
-                />
-              </Field>
               <Field label="Bio" hint={`${values.bio.length}/${PROFILE_LIMITS.bio}`}>
                 <textarea
                   value={values.bio}

@@ -30,6 +30,11 @@ model User {
   /// Library and later sections. The header (picture, banner, name, bio) is
   /// always visible to anyone with the link. Author pages are always public.
   readingProfileVisibility ProfileVisibility @default(PRIVATE)
+  /// Voluntary 18+ confirmation (Settings > Account). Only the time and the
+  /// wording version are stored, never the birthdate. Null = not confirmed.
+  /// Nothing is gated on it yet (later: mature content, purchases/payouts).
+  ageConfirmedAt           DateTime?
+  ageConfirmationVersion   String?
   passwordHash             String?
   accounts                 Account[]
   adImpressions            AdImpression[]
