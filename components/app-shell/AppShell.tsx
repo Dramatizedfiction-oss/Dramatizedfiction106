@@ -9,6 +9,7 @@ import ProfileMenu from "@/components/app-shell/ProfileMenu";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { BookOpenIcon, MenuIcon, SearchIcon } from "@/components/icons";
+import LegalFooterLinks from "@/components/legal/LegalFooterLinks";
 import type { AppShellUser, StudioLink } from "@/lib/navigation";
 import { getRoleLabel, hasRoleAccess, normalizeRole } from "@/lib/roles";
 
@@ -206,13 +207,14 @@ export default function AppShell({ user, studios, trending, renovationMode = fal
         ) : null}
         <main className={isFlushRoute ? "flex-1" : "page-shell flex-1"}>{children}</main>
         {!isReaderRoute ? (
-          <footer className="border-t border-[var(--border-color)] px-6 py-8">
+          <footer className="border-t border-[var(--border-color)] px-6 py-6 sm:py-8">
             <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
               <p className="font-mono-df text-xs uppercase tracking-widest text-[var(--text-muted)]">
                 Dramatized Fiction
               </p>
               <p className="text-xs text-[var(--text-muted)]">Stories performed in text</p>
             </div>
+            <LegalFooterLinks className="mt-2 sm:mt-3" />
           </footer>
         ) : null}
       </div>

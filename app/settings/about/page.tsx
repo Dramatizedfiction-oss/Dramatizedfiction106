@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { ChevronIcon, SettingsPageHeader } from "@/components/settings/SettingsUi";
 
-/*
- * Settings > About & Help: links to pages that exist. Terms, Privacy,
- * Community Guidelines and Contact will be added here once those pages exist.
- */
+/* Settings > About & Help: links to the About and AI-label pages and the six legal pages. */
 const LINKS = [
   { href: "/about", title: "About Dramatized Fiction", description: "What the platform is and who it's for." },
   { href: "/ai-usage", title: "AI labels", description: "What AI Free, AI Corrected, AI Heavy and AI Written mean." },
+  { href: "/terms", title: "Terms of Service", description: "The agreement for using Dramatized Fiction." },
+  { href: "/privacy", title: "Privacy Policy", description: "What we collect, why, and your choices." },
+  { href: "/guidelines", title: "Community Guidelines", description: "What's allowed, AI-use labels and reporting." },
+  { href: "/copyright", title: "Copyright Policy", description: "Takedown notices and counter-notices." },
+  { href: "/cookies", title: "Cookie Notice", description: "The cookies and browser storage we use." },
+  { href: "/contact", title: "Contact", description: "Questions, problems, feedback and reports." },
 ];
 
 export default function AboutSettingsPage() {

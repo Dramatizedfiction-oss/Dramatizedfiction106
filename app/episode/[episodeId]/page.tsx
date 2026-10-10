@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LegalFooterLinks from "@/components/legal/LegalFooterLinks";
 import { getNextEpisode } from "@/lib/nextEpisode";
 import { auth } from "@/auth";
 import EpisodeTransitionCard from "@/components/EpisodeTransitionCard";
@@ -145,6 +146,8 @@ export default async function EpisodeReaderPage({
                 Back to {episode.series.title}
               </Link>
             </p>
+            {/* The reader hides the app shell (and its footer), so the legal links live here. */}
+            <LegalFooterLinks className="mt-6 [&_ul]:justify-center" />
           </footer>
         </EpisodeReadingView>
       </main>

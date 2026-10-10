@@ -105,6 +105,19 @@ export default function SignUpForm() {
         {isSubmitting ? "Creating account..." : "Create Account"}
       </button>
 
+      {/* Notice only: no checkbox or birthdate, and registration itself is unchanged. */}
+      <p className="theme-meta text-xs leading-5">
+        By creating an account you agree to the{" "}
+        <Link href="/terms" className="font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 hover:decoration-2">
+          Terms
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 hover:decoration-2">
+          Privacy Policy
+        </Link>{" "}
+        and confirm you are at least 13.
+      </p>
+
       <p className="theme-meta text-sm">
         Already have an account?{" "}
         <Link href="/sign-in" className="theme-heading font-medium">

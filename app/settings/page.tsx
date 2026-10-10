@@ -35,7 +35,7 @@ export default async function SettingsPage() {
             icon={<BookOpenIcon size={18} />}
           />
           {signedIn ? (
-            <SettingsCard href="/settings/about" title="About & Help" description="About Dramatized Fiction and how AI labels work." icon={<InfoIcon />} />
+            <SettingsCard href="/settings/about" title="About & Help" description="About, AI labels, terms, privacy, guidelines and contact." icon={<InfoIcon />} />
           ) : null}
         </ul>
 

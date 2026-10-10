@@ -183,7 +183,10 @@ export default function ProfileMenu({
               <SettingsIcon size={16} className="shrink-0" />
               <span>Settings</span>
             </Link>
-            <UnavailableItem icon={<MailIcon size={16} className="shrink-0" />} label="Contact" />
+            <Link href="/contact" onClick={choose} className="sidebar-link">
+              <MailIcon size={16} className="shrink-0" />
+              <span>Contact</span>
+            </Link>
           </div>
 
           <div className="mt-1 border-t border-[var(--border-color)] pt-1">
@@ -203,18 +206,5 @@ export default function ProfileMenu({
         </div>
       ) : null}
     </>
-  );
-}
-
-/** A destination that doesn't exist yet: shown, but clearly not usable. */
-function UnavailableItem({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <button type="button" disabled className="sidebar-link w-full cursor-not-allowed opacity-60">
-      {icon}
-      <span className="flex-1 text-left">{label}</span>
-      <span className="whitespace-nowrap font-mono-df text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
-        Coming soon
-      </span>
-    </button>
   );
 }
