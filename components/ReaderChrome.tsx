@@ -15,11 +15,14 @@ export default function ReaderChrome({
   backHref,
   seriesTitle,
   episodeTitle,
+  actions,
   children,
 }: {
   backHref: string;
   seriesTitle: string;
   episodeTitle: string;
+  /** Extra 44px controls shown before the theme switch (e.g. Bookmark). */
+  actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const { resolvedTheme, setPreference } = useTheme();
@@ -77,6 +80,8 @@ export default function ReaderChrome({
           >
             {episodeTitle}
           </p>
+
+          {actions}
 
           <button
             type="button"

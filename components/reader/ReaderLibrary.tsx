@@ -34,12 +34,12 @@ export default function ReaderLibrary({ entries, visitor = false }: { entries: L
       <p className="theme-meta text-sm">
         {entries.length} series {visitor ? "followed" : "you follow"}
       </p>
-      <ul className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {entries.map((entry) => {
           const cover = safeImageUrl(entry.coverImage);
           const accent = safeHexColor(entry.themeColor);
           return (
-            <li key={entry.id}>
+            <li key={entry.id} className="min-w-0">
               <Link
                 href={`/series/${entry.id}`}
                 className="theme-panel-hover flex min-h-[96px] items-center gap-4 rounded-[20px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-3 transition"

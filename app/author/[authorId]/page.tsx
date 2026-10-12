@@ -39,6 +39,7 @@ export default async function AuthorProfilePage({
       discordUrl: true,
       // Only passed on to the owner's profile editor; never shown here.
       readingProfileVisibility: true,
+      activityVisibility: true,
       // Public profile: published work only.
       series: {
         where: PUBLIC_SERIES_WHERE,
@@ -147,7 +148,7 @@ export default async function AuthorProfilePage({
     description: book.description,
     coverImage: book.coverUrl,
     href: `/author/${author.id}`,
-    meta: "Rating placeholder: 4.8/5",
+    meta: "Book",
     badge: "Completed",
     aiUsageTag: null,
   }));
@@ -180,6 +181,7 @@ export default async function AuthorProfilePage({
                   image: author.image ?? "",
                   bannerImage: author.bannerImage ?? "",
                   readingProfileVisibility: author.readingProfileVisibility,
+                  activityVisibility: author.activityVisibility,
                   links: {
                     websiteUrl: author.websiteUrl ?? "",
                     twitterUrl: author.twitterUrl ?? "",

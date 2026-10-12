@@ -8,6 +8,14 @@ import EpisodeReadingView from "@/components/episode-content/EpisodeReadingView"
 import ReportAiTagButton from "@/components/ReportAiTagButton";
 import ReaderChrome from "@/components/ReaderChrome";
 import ReadTracker from "@/components/ReadTracker";
+import BookmarkButton, { BookmarkProvider } from "@/components/engagement/BookmarkButton";
+import CommentsSection from "@/components/engagement/CommentsSection";
+import RatingControl from "@/components/engagement/RatingControl";
+import { isBookmarked } from "@/lib/bookmarks";
+import { listComments } from "@/lib/comments";
+import { starColors } from "@/lib/engagement-rules";
+import { viewerRating } from "@/lib/ratings";
+import { hasRoleAccess } from "@/lib/roles";
 import { isPhaseThreeActive } from "@/lib/phases";
 import {
   canUserAccessContent,
@@ -94,63 +102,111 @@ export default async function EpisodeReaderPage({
 
   const seriesHref = `/series/${episode.seriesId}`;
 
-  return (
-    <ReaderChrome backHref={seriesHref} seriesTitle={episode.series.title} episodeTitle={episode.title}>
-      {trackRead ? <ReadTracker episodeId={episode.id} /> : null}
-      <main className="pb-24">
-        <EpisodeReadingView
-          seriesTitle={episode.series.title}
-          seriesHref={seriesHref}
-          authorName={episode.author.name}
-          authorHref={`/author/${episode.author.id}`}
-          episodeNumber={episode.episodeNumber}
-          readTime={episode.readTime}
-          title={episode.title}
-          aiUsageTag={episode.aiUsageTag}
-          contentWarning={episode.contentWarning}
-          headerActions={<ReportAiTagButton subject={episode.title} />}
-        >
-          {canReadEpisode ? (
-            <div className="reading-body">
-              <EpisodeContent content={parseEpisodeHtml(episode.body)} />
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-[var(--paper-rule)] px-6 py-8 text-center">
-              <p className="reader-kicker">Not available</p>
-              <p className="mt-3 font-heading text-2xl font-semibold text-[var(--paper-ink)]">
-                This episode can&apos;t be read right now
-              </p>
-              {episode.teaser || episode.description ? (
-                <p className="reader-meta mx-auto mt-3 max-w-md leading-6">{episode.teaser || episode.description}</p>
-              ) : null}
-            </div>
-          )}
+  // Bookmarks, the viewer's rating and the first page of comments (one light query each).
+  const isCreator = Boolean(viewerId) && (viewerId === episode.authorId || viewerId === episode.series.authorId);
+  const [bookmarked, myRating, firstComments] = await Promise.all([
+    viewerId ? isBookmarked(viewerId, episode.id) : false,
+    viewerId && canReadEpisode && !isCreator ? viewerRating(viewerId, episode.id) : null,
+    canReadEpisode ? listComments(episode.id) : null,
+  ]);
 
-          <footer className="mt-16">
-            <div className="reader-ornament" aria-hidden>
-              ✦ ✦ ✦
-            </div>
-            <p className="reader-meta text-center">End of Episode {episode.episodeNumber}</p>
-            <div className="mt-10">
-              <EpisodeTransitionCard
-                currentEpisodeId={episode.id}
-                nextEpisode={
-                  next ? { id: next.id, title: next.title, episodeNumber: next.episodeNumber } : null
-                }
-                accessStatus={nextEpisodeAccessStatus}
-                phaseThreeActive={phaseThreeActive}
-              />
-            </div>
-            <p className="mt-8 text-center">
-              <Link href={seriesHref} className="reader-meta inline-block px-3 py-3 underline-offset-4 hover:text-[var(--paper-ink)] hover:underline">
-                Back to {episode.series.title}
-              </Link>
-            </p>
-            {/* The reader hides the app shell (and its footer), so the legal links live here. */}
-            <LegalFooterLinks className="mt-6 [&_ul]:justify-center" />
-          </footer>
-        </EpisodeReadingView>
-      </main>
-    </ReaderChrome>
+  return (
+    <BookmarkProvider episodeId={episode.id} initialBookmarked={bookmarked} signedIn={Boolean(viewerId)}>
+      <ReaderChrome
+        backHref={seriesHref}
+        seriesTitle={episode.series.title}
+        episodeTitle={episode.title}
+        actions={<BookmarkButton variant="icon" episodeTitle={episode.title} />}
+      >
+        {trackRead ? <ReadTracker episodeId={episode.id} /> : null}
+        <main className="pb-24">
+          <EpisodeReadingView
+            seriesTitle={episode.series.title}
+            seriesHref={seriesHref}
+            authorName={episode.author.name}
+            authorHref={`/author/${episode.author.id}`}
+            episodeNumber={episode.episodeNumber}
+            readTime={episode.readTime}
+            title={episode.title}
+            aiUsageTag={episode.aiUsageTag}
+            contentWarning={episode.contentWarning}
+            headerActions={<ReportAiTagButton subject={episode.title} />}
+          >
+            {canReadEpisode ? (
+              <div className="reading-body">
+                <EpisodeContent content={parseEpisodeHtml(episode.body)} />
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-[var(--paper-rule)] px-6 py-8 text-center">
+                <p className="reader-kicker">Not available</p>
+                <p className="mt-3 font-heading text-2xl font-semibold text-[var(--paper-ink)]">
+                  This episode can&apos;t be read right now
+                </p>
+                {episode.teaser || episode.description ? (
+                  <p className="reader-meta mx-auto mt-3 max-w-md leading-6">{episode.teaser || episode.description}</p>
+                ) : null}
+              </div>
+            )}
+
+            <footer className="mt-16">
+              <div className="reader-ornament" aria-hidden>
+                ✦ ✦ ✦
+              </div>
+              <p className="reader-meta text-center">End of Episode {episode.episodeNumber}</p>
+              <div className="mt-5">
+                <BookmarkButton variant="pill" episodeTitle={episode.title} />
+              </div>
+
+              {canReadEpisode ? (
+                <div className="mt-12">
+                  <RatingControl
+                    episodeId={episode.id}
+                    initialValue={myRating}
+                    mode={!viewerId ? "signed-out" : isCreator ? "own" : "rate"}
+                    colors={starColors(episode.series.themeColor)}
+                  />
+                </div>
+              ) : null}
+
+              {firstComments ? (
+                <div className="mt-12 border-t border-[var(--paper-rule)] pt-10">
+                  <CommentsSection
+                    episodeId={episode.id}
+                    initial={firstComments}
+                    viewer={
+                      session?.user?.id
+                        ? {
+                            id: session.user.id,
+                            isSeriesAuthor: session.user.id === episode.series.authorId,
+                            isModerator: hasRoleAccess(session.user.role, "BOARD"),
+                          }
+                        : null
+                    }
+                  />
+                </div>
+              ) : null}
+
+              <div className="mt-14 border-t border-[var(--paper-rule)] pt-10">
+                <EpisodeTransitionCard
+                  currentEpisodeId={episode.id}
+                  nextEpisode={
+                    next ? { id: next.id, title: next.title, episodeNumber: next.episodeNumber } : null
+                  }
+                  accessStatus={nextEpisodeAccessStatus}
+                  phaseThreeActive={phaseThreeActive}
+                />
+              </div>
+              <p className="mt-8 text-center">
+                <Link href={seriesHref} className="reader-meta inline-block px-3 py-3 underline-offset-4 hover:text-[var(--paper-ink)] hover:underline">
+                  Back to {episode.series.title}
+                </Link>
+              </p>
+              {/* The reader hides the app shell (and its footer), so the legal links live here. */}
+              <LegalFooterLinks className="mt-6 [&_ul]:justify-center" />
+            </footer>
+          </EpisodeReadingView>
+        </main>
+      </ReaderChrome>
+    </BookmarkProvider>
   );
 }

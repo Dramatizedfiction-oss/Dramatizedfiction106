@@ -1165,6 +1165,11 @@ html[data-reduce-motion="always"] *::after {
   scroll-behavior: auto !important;
 }
 
+/* Filled rating stars: the series color or its fallback, chosen per theme on
+   the server (lib/engagement-rules.ts starColors) and passed in as variables. */
+.rating-stars { --star-fill: var(--star-fill-light, #b45309); }
+.dark .rating-stars { --star-fill: var(--star-fill-dark, #fbbf24); }
+
 /* Text on a solid --status-danger fill (Delete account button): white on the
    light-mode red, near-black on the lighter dark-mode red (both above 4.5:1). */
 :root { --on-status-danger: #ffffff; }

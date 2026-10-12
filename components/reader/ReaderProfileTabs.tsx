@@ -35,7 +35,7 @@ const SECTIONS: Section[] = [
     id: "activity",
     label: "Activity",
     title: "Activity is coming soon",
-    body: "Your comments and hearts will show up here once they arrive on Dramatized Fiction.",
+    body: "Your bookmarks, ratings and comments will show up here.",
     icon: <ActivityIcon />,
   },
 ];
@@ -156,7 +156,7 @@ function BookmarkIcon() {
 function ActivityIcon() {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+      <path d="M3 12h4l3-7 4 14 3-7h4" />
     </svg>
   );
 }

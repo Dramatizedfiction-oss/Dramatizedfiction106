@@ -47,6 +47,10 @@ export default async function DeleteAccountPage() {
               <ul className="theme-body mt-3 list-disc space-y-1.5 pl-5 text-sm leading-6">
                 <li>Your sign-ins on every device. You&apos;ll be signed out everywhere.</li>
                 <li>Your follows: {summary.follows.toLocaleString()} series in your Library.</li>
+                <li>
+                  Your activity: {plural(summary.bookmarks, "bookmark")}, {plural(summary.ratings, "rating")} and{" "}
+                  {plural(summary.comments, "comment")}. Your ratings stop counting toward series ratings.
+                </li>
                 <li>Your profile: display name, picture, background picture, bio and links.</li>
                 {summary.series > 0 || summary.episodes > 0 ? (
                   <li className="font-semibold text-[var(--status-danger)]">

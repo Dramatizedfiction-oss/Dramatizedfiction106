@@ -25,6 +25,7 @@ export type ProfileEditorValues = {
   image: string;
   bannerImage: string;
   readingProfileVisibility: "PRIVATE" | "PUBLIC";
+  activityVisibility: "PRIVATE" | "PUBLIC";
   links: Record<ProfileLinkKey, string>;
 };
 
@@ -80,6 +81,9 @@ export default function ProfileEditor({
     if (values.bio !== saved.bio) text.bio = values.bio;
     if (values.readingProfileVisibility !== saved.readingProfileVisibility) {
       text.readingProfileVisibility = values.readingProfileVisibility;
+    }
+    if (values.activityVisibility !== saved.activityVisibility) {
+      text.activityVisibility = values.activityVisibility;
     }
     if (isWriter) {
       for (const field of PROFILE_LINK_FIELDS) {
@@ -216,10 +220,23 @@ export default function ProfileEditor({
             title="Reading profile"
             description="Your picture, background picture, name and bio are always visible to anyone with the link to your reading profile."
           >
-            <VisibilitySwitch
-              value={values.readingProfileVisibility}
-              onChange={(value) => set("readingProfileVisibility", value)}
-            />
+            <div className="space-y-3">
+              <VisibilitySwitch
+                name="Library"
+                value={values.readingProfileVisibility}
+                onChange={(value) => set("readingProfileVisibility", value)}
+                publicText="Anyone with the link can see the series you follow."
+                privateText="Only you can see the series you follow."
+              />
+              <VisibilitySwitch
+                name="Activity"
+                value={values.activityVisibility}
+                onChange={(value) => set("activityVisibility", value)}
+                publicText="Anyone with the link can see your bookmarks, ratings and comments. Comments always show under their episode."
+                privateText="Only you can see your Activity. Your comments still show under their episode."
+              />
+              <p className="theme-meta text-xs leading-5">Your Bookmarks tab is always private.</p>
+            </div>
             {isWriter ? (
               <p className="theme-meta mt-3 text-xs leading-5">Your author page is always public; this only affects your reading profile.</p>
             ) : null}
@@ -318,11 +335,17 @@ function AvatarChooser({
 }
 
 function VisibilitySwitch({
+  name,
   value,
   onChange,
+  publicText,
+  privateText,
 }: {
+  name: string;
   value: "PRIVATE" | "PUBLIC";
   onChange: (value: "PRIVATE" | "PUBLIC") => void;
+  publicText: string;
+  privateText: string;
 }) {
   const labelId = useId();
   const isPublic = value === "PUBLIC";
@@ -330,19 +353,15 @@ function VisibilitySwitch({
     <div className="flex items-start justify-between gap-4 rounded-2xl border border-[var(--border-color)] p-4">
       <div className="min-w-0">
         <p id={labelId} className="theme-heading text-sm font-semibold">
-          {isPublic ? "Public" : "Private"}
+          {name}: {isPublic ? "Public" : "Private"}
         </p>
-        <p className="theme-meta mt-1 text-xs leading-5">
-          {isPublic
-            ? "Anyone with the link can see your Library and the other sections of your reading profile."
-            : "Only you can see your Library and the other sections of your reading profile."}
-        </p>
+        <p className="theme-meta mt-1 text-xs leading-5">{isPublic ? publicText : privateText}</p>
       </div>
       <button
         type="button"
         role="switch"
         aria-checked={isPublic}
-        aria-label="Public reading profile"
+        aria-label={`Public ${name}`}
         aria-describedby={labelId}
         onClick={() => onChange(isPublic ? "PRIVATE" : "PUBLIC")}
         className="relative flex h-11 w-[60px] shrink-0 items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--series-accent))]"

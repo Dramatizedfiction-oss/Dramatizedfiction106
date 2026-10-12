@@ -12,6 +12,7 @@ import { createViewerMonetizationState } from "@/lib/monetization";
 import { PUBLIC_SERIES_WHERE, publicEpisodePreview } from "@/lib/content-visibility";
 import { prisma } from "@/lib/prisma";
 import { isFollowingSeries } from "@/lib/series-follows";
+import { seriesRating } from "@/lib/ratings";
 
 export default async function SeriesPage({
   params,
@@ -52,7 +53,11 @@ export default async function SeriesPage({
   }
 
   const viewer = createViewerMonetizationState(session?.user?.id);
-  const viewerFollows = session?.user?.id ? await isFollowingSeries(session.user.id, series.id) : false;
+  const [viewerFollows, rating] = await Promise.all([
+    session?.user?.id ? isFollowingSeries(session.user.id, series.id) : false,
+    // Pooled across every rating of its published episodes; null below the minimum count.
+    seriesRating(series.id),
+  ]);
   const authorTier = deriveAuthorTier({
     totalReads: series.reads,
     engagementRate: Math.min(0.95, (series.followers / Math.max(series.reads, 1)) * 4),
@@ -131,9 +136,21 @@ export default async function SeriesPage({
               <ReportAiTagButton subject={series.title} underline />
             </div>
             {/* Below desktop the description follows the actions, so Start Reading is reachable sooner. */}
-            <p className="theme-body order-last mt-6 max-w-3xl text-base leading-7 md:text-lg lg:order-none">
-              {series.description}
-            </p>
+            <div className="order-last mt-6 max-w-3xl lg:order-none">
+              {rating ? (
+                <p className="theme-meta mb-2 flex items-center gap-1.5 text-sm">
+                  <span className="sr-only">{rating.label}</span>
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 text-[var(--status-warning)]" fill="currentColor">
+                    <path d="M12 3.2l2.6 5.5 6 .8-4.4 4.1 1.1 5.9L12 16.6l-5.3 2.9 1.1-5.9-4.4-4.1 6-.8z" />
+                  </svg>
+                  <span aria-hidden>
+                    <span className="font-semibold text-[var(--text-primary)]">{rating.value}</span> ({rating.count.toLocaleString()}{" "}
+                    {rating.count === 1 ? "rating" : "ratings"})
+                  </span>
+                </p>
+              ) : null}
+              <p className="theme-body text-base leading-7 md:text-lg">{series.description}</p>
+            </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-3 lg:mt-8">
               {/* Placeholder: seasons are not in the data model yet. */}

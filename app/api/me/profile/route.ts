@@ -6,8 +6,9 @@ import { prisma } from "@/lib/prisma";
 import { PROFILE_LIMITS, PROFILE_LINK_FIELDS, normalizeProfileLink } from "@/lib/profile";
 
 /*
- * The signed-in user's own profile text: bio, public links, and whether their
- * reading profile's content (Library…) is PRIVATE or PUBLIC. The display name
+ * The signed-in user's own profile text: bio, public links, whether their
+ * reading profile's Library is PRIVATE or PUBLIC, and the same for their
+ * Activity (bookmarks, ratings, comments). The display name
  * is changed on Settings > Account (/api/me/account/name), not here.
  * No user id is accepted (the account always comes from the session), and the
  * schema is strict: any other key (role, writerStatus, email, id, image, ...)
@@ -24,6 +25,7 @@ const schema = z
     youtubeUrl: optionalText,
     discordUrl: optionalText,
     readingProfileVisibility: z.enum(["PRIVATE", "PUBLIC"]).optional(),
+    activityVisibility: z.enum(["PRIVATE", "PUBLIC"]).optional(),
   })
   .strict();
 
@@ -43,6 +45,7 @@ export async function PATCH(request: Request) {
 
   const data: Record<string, string | null> = {};
   if (input.readingProfileVisibility) data.readingProfileVisibility = input.readingProfileVisibility;
+  if (input.activityVisibility) data.activityVisibility = input.activityVisibility;
 
   if (input.bio !== undefined) {
     const bio = input.bio?.trim() ?? "";
@@ -73,6 +76,7 @@ export async function PATCH(request: Request) {
         youtubeUrl: true,
         discordUrl: true,
         readingProfileVisibility: true,
+        activityVisibility: true,
       },
     });
 

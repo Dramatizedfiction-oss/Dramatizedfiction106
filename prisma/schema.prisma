@@ -30,6 +30,10 @@ model User {
   /// Library and later sections. The header (picture, banner, name, bio) is
   /// always visible to anyone with the link. Author pages are always public.
   readingProfileVisibility ProfileVisibility @default(PRIVATE)
+  /// Whether the Activity section (bookmarks, ratings, comments) appears on
+  /// this member's reading profile for others. Comments always stay visible
+  /// under their episode either way.
+  activityVisibility       ProfileVisibility @default(PRIVATE)
   /// Voluntary 18+ confirmation (Settings > Account). Only the time and the
   /// wording version are stored, never the birthdate. Null = not confirmed.
   /// Nothing is gated on it yet (later: mature content, purchases/payouts).
@@ -56,6 +60,12 @@ model User {
   auditEntries             AdminAuditLog[]     @relation("AuditTarget")
   platformAvatarsAdded     PlatformAvatar[]
   seriesFollows            SeriesFollow[]
+  bookmarks                Bookmark[]
+  ratings                  Rating[]
+  comments                 Comment[]
+  commentsRemoved          Comment[]       @relation("CommentRemover")
+  reportsFiled             ContentReport[] @relation("ReportFiler")
+  reportsResolved          ContentReport[] @relation("ReportResolver")
 }
 
 model AuthorProfile {
@@ -187,8 +197,81 @@ model Episode {
   author        User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   series        Series         @relation(fields: [seriesId], references: [id], onDelete: Cascade)
   readEvents    ReadEvent[]
+  bookmarks     Bookmark[]
+  ratings       Rating[]
+  comments      Comment[]
 
   @@unique([seriesId, episodeNumber])
+}
+
+/// A member saving an episode to their Bookmarks list (not a reading position).
+model Bookmark {
+  userId    String
+  episodeId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  episode   Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, episodeId])
+  @@index([userId, createdAt])
+}
+
+/// One 1-5 star rating per member per episode, changeable. The database also
+/// enforces 1-5 with a CHECK constraint (migration 20261011120000_engagement;
+/// Prisma doesn't model it). A series' rating pools every rating of its
+/// published episodes and is computed on read (lib/ratings.ts).
+model Rating {
+  userId    String
+  episodeId String
+  value     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  episode   Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, episodeId])
+  @@index([episodeId])
+  @@index([userId, updatedAt])
+}
+
+/// A flat (no replies) plain-text comment on an episode. The author deletes
+/// their own outright; the series author or Board/CEO remove one by setting
+/// removedAt (hidden everywhere, kept so its reports keep their context).
+model Comment {
+  id          String          @id @default(cuid())
+  episodeId   String
+  userId      String
+  body        String
+  createdAt   DateTime        @default(now())
+  editedAt    DateTime?
+  removedAt   DateTime?
+  removedById String?
+  episode     Episode         @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  removedBy   User?           @relation("CommentRemover", fields: [removedById], references: [id], onDelete: SetNull)
+  reports     ContentReport[]
+
+  @@index([episodeId, createdAt, id])
+  @@index([userId, createdAt])
+}
+
+/// A member reporting a comment, reviewed in Administration > Reports.
+model ContentReport {
+  id           String       @id @default(cuid())
+  commentId    String
+  reporterId   String?
+  reason       ReportReason
+  note         String?
+  status       ReportStatus @default(OPEN)
+  createdAt    DateTime     @default(now())
+  resolvedAt   DateTime?
+  resolvedById String?
+  comment      Comment      @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  reporter     User?        @relation("ReportFiler", fields: [reporterId], references: [id], onDelete: SetNull)
+  resolvedBy   User?        @relation("ReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@unique([commentId, reporterId])
+  @@index([status, createdAt])
 }
 
 model UserStats {
@@ -357,6 +440,21 @@ enum Role {
 enum ProfileVisibility {
   PRIVATE
   PUBLIC
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  HATE
+  SEXUAL
+  SPOILERS
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  ACTIONED
+  DISMISSED
 }
 
 enum RestrictionKind {

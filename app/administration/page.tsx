@@ -25,6 +25,7 @@ export default async function AdministrationOverviewPage() {
 
   const links = [
     { href: "/administration/members", title: "Members", body: "Search members, moderate accounts and manage Board seats." },
+    { href: "/administration/reports", title: "Reports", body: "Comments members have reported: remove them or dismiss the report." },
     { href: "/administration/analytics", title: "Analytics", body: "Accounts, published content and reading activity." },
     { href: "/administration/avatars", title: "Avatars", body: "Shared avatars and the Reader and Writer defaults." },
     { href: "/administration/renovation", title: "Renovation Mode", body: "Temporarily close the platform while major changes are made." },

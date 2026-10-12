@@ -63,22 +63,35 @@ export async function changePassword(
 
 /** What deleting this account would remove (shown on the confirmation screen). */
 export async function deletionSummary(userId: string) {
-  const [series, episodes, follows, followersLosing, ceoCount, user] = await Promise.all([
+  const [series, episodes, follows, followersLosing, bookmarks, ratings, comments, ceoCount, user] = await Promise.all([
     prisma.series.count({ where: { authorId: userId } }),
     prisma.episode.count({ where: { authorId: userId } }),
     prisma.seriesFollow.count({ where: { userId } }),
     prisma.seriesFollow.count({ where: { series: { authorId: userId }, NOT: { userId } } }),
+    prisma.bookmark.count({ where: { userId } }),
+    prisma.rating.count({ where: { userId } }),
+    prisma.comment.count({ where: { userId } }),
     prisma.user.count({ where: { role: "CEO" } }),
     prisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
   ]);
-  return { series, episodes, follows, followersLosing, isLastCeo: user?.role === "CEO" && ceoCount <= 1 };
+  return {
+    series,
+    episodes,
+    follows,
+    followersLosing,
+    bookmarks,
+    ratings,
+    comments,
+    isLastCeo: user?.role === "CEO" && ceoCount <= 1,
+  };
 }
 
 /**
  * Deletes the member immediately, after checking their password. The database
- * cascades sessions, follows, profile, series, episodes, books and memberships
- * (see schema.prisma onDelete rules); reads/ad views/audit rows they made are
- * kept unlinked. Their personal studio would be left ownerless, so it is
+ * cascades sessions, follows, bookmarks, ratings, comments (and the reports on
+ * them), profile, series, episodes, books and memberships (see schema.prisma
+ * onDelete rules); reports they filed, and reads/ad views/audit rows they
+ * made, are kept unlinked. Their personal studio would be left ownerless, so it is
  * removed too. Serialized with role changes (same advisory lock as
  * lib/admin/roles-service.ts) so the last CEO can never be deleted.
  */

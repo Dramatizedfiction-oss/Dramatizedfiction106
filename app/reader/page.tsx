@@ -2,7 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import ProfileEditor from "@/components/profile/ProfileEditor";
+import ReaderActivity from "@/components/reader/ReaderActivity";
+import ReaderBookmarks from "@/components/reader/ReaderBookmarks";
 import ReaderLibrary from "@/components/reader/ReaderLibrary";
+import { listActivity } from "@/lib/activity";
+import { listBookmarks } from "@/lib/bookmarks";
 import ReaderProfileHeader, { LockIcon } from "@/components/reader/ReaderProfileHeader";
 import ReaderProfileTabs from "@/components/reader/ReaderProfileTabs";
 import { prisma } from "@/lib/prisma";
@@ -12,8 +16,9 @@ import { requireRole } from "@/lib/utils";
 
 /*
  * The signed-in member's own reading profile, with the profile editor (pen).
- * Others see it at /reader/[id]: the header always, the content (Library…)
- * only when readingProfileVisibility is PUBLIC.
+ * Others see it at /reader/[id]: the header always, the Library when
+ * readingProfileVisibility is PUBLIC, Activity when activityVisibility is
+ * PUBLIC. Bookmarks are only ever shown here, to their owner.
  */
 export default async function ReaderProfilePage() {
   const session = await auth();
@@ -33,6 +38,7 @@ export default async function ReaderProfilePage() {
       bannerImage: true,
       createdAt: true,
       readingProfileVisibility: true,
+      activityVisibility: true,
       websiteUrl: true,
       twitterUrl: true,
       instagramUrl: true,
@@ -42,9 +48,14 @@ export default async function ReaderProfilePage() {
   });
   if (!reader) redirect("/sign-in?callbackUrl=/reader");
 
-  // Only the signed-in member's own follows; never another member's.
-  const library = await getLibrary(session.user.id);
+  // Only the signed-in member's own follows, bookmarks and activity; never another member's.
+  const [library, bookmarks, activity] = await Promise.all([
+    getLibrary(session.user.id),
+    listBookmarks(session.user.id),
+    listActivity(session.user.id),
+  ]);
   const isPublic = reader.readingProfileVisibility === "PUBLIC";
+  const activityPublic = reader.activityVisibility === "PUBLIC";
 
   return (
     <main className="overflow-hidden md:px-6 md:py-6 lg:px-8">
@@ -59,6 +70,7 @@ export default async function ReaderProfilePage() {
               image: reader.image ?? "",
               bannerImage: reader.bannerImage ?? "",
               readingProfileVisibility: reader.readingProfileVisibility,
+              activityVisibility: reader.activityVisibility,
               links: {
                 websiteUrl: reader.websiteUrl ?? "",
                 twitterUrl: reader.twitterUrl ?? "",
@@ -75,9 +87,10 @@ export default async function ReaderProfilePage() {
               <LockIcon />
             </span>
             <p className="min-w-0">
-              {isPublic
-                ? "Your Library is public to anyone with your profile link."
-                : "Your Library is private. Others with your link see only your picture, name and bio."}{" "}
+              {`Library: ${isPublic ? "public" : "private"} · Activity: ${activityPublic ? "public" : "private"}. `}
+              {isPublic || activityPublic
+                ? "Anyone with your profile link sees what's public."
+                : "Others with your link see only your picture, name and bio."}{" "}
               <Link
                 href={`/reader/${reader.id}`}
                 className="inline-flex min-h-11 items-center font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 hover:decoration-2"
@@ -89,7 +102,13 @@ export default async function ReaderProfilePage() {
         }
       />
       <div className="px-4 pt-6 md:px-0 md:pt-8">
-        <ReaderProfileTabs panels={{ library: <ReaderLibrary entries={library} /> }} />
+        <ReaderProfileTabs
+          panels={{
+            library: <ReaderLibrary entries={library} />,
+            bookmarks: <ReaderBookmarks initial={bookmarks} />,
+            activity: <ReaderActivity readerId={reader.id} initial={activity} />,
+          }}
+        />
       </div>
     </main>
   );
