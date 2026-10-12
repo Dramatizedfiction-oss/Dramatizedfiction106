@@ -7,7 +7,14 @@ import { formatRestrictionEnd } from "@/lib/admin/format";
 import { MAX_BOARD_MEMBERS, type RoleChange } from "@/lib/admin/policy";
 
 type Viewer = { id: string; role: string };
-type Member = { id: string; name: string; role: string; status: "active" | "disciplined" | "banned"; restrictionEndsAt: string | null };
+type Member = {
+  id: string;
+  name: string;
+  role: string;
+  writerStatus: string;
+  status: "active" | "disciplined" | "banned";
+  restrictionEndsAt: string | null;
+};
 
 type ModerationStep = null | "DISCIPLINE" | "BAN" | "LIFT";
 
@@ -31,11 +38,89 @@ export default function MemberActions({
   const isSelf = viewer.id === member.id;
   const canModerate = !isSelf && member.role !== "CEO" && (member.role !== "BOARD" || viewerIsCeo);
 
+  const isWriter = ["WRITER", "BOARD", "CEO"].includes(member.role);
+  const canSetLevel = !isSelf && (viewerIsCeo || (member.role !== "BOARD" && member.role !== "CEO"));
+
   return (
     <>
+      {isWriter ? <WriterLevelPanel member={member} canChange={canSetLevel} isSelf={isSelf} /> : null}
       <ModerationPanel member={member} canModerate={canModerate} isSelf={isSelf} />
       {viewerIsCeo ? <RolePanel member={member} isSelf={isSelf} boardSeatsUsed={boardSeatsUsed} ceoCount={ceoCount} /> : null}
     </>
+  );
+}
+
+const LEVELS = [
+  { value: "BEGINNER", label: "Beginner writer", frame: "Ink" },
+  { value: "FULL", label: "Full writer", frame: "Quill" },
+  { value: "FEATURED", label: "Featured writer", frame: "Gilded" },
+  { value: "ELITE", label: "Elite writer", frame: "Laureate" },
+];
+
+function WriterLevelPanel({ member, canChange, isSelf }: { member: Member; canChange: boolean; isSelf: boolean }) {
+  const router = useRouter();
+  const [level, setLevel] = useState(member.writerStatus);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<{ tone: "error" | "success"; text: string } | null>(null);
+
+  async function save() {
+    setBusy(true);
+    setMessage(null);
+    const response = await fetch(`/api/admin/members/${member.id}/writer-level`, {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ level }),
+    }).catch(() => null);
+    const payload = (await response?.json().catch(() => null)) as { error?: string } | null;
+    setBusy(false);
+    if (!response?.ok) {
+      setMessage({ tone: "error", text: payload?.error || "That didn't work. Nothing was changed." });
+      return;
+    }
+    setMessage({ tone: "success", text: `Saved. ${member.name} is now a ${LEVELS.find((item) => item.value === level)?.label.toLowerCase()}.` });
+    router.refresh();
+  }
+
+  return (
+    <Panel
+      title="Writer level"
+      description={
+        canChange
+          ? "Sets the writer's level and the frame around their avatar (Ink, Quill, Gilded, Laureate). It doesn't change their role or access."
+          : isSelf
+            ? "You can't change your own writer level."
+            : "Only the CEO can change a Board or CEO member's writer level."
+      }
+    >
+      {canChange ? (
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="block">
+            <span className="theme-meta mb-1 block text-xs">Level</span>
+            <select value={level} onChange={(event) => setLevel(event.target.value)} className="ui-input min-h-11 px-3 py-2 text-sm">
+              {LEVELS.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label} ({item.frame} frame)
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            onClick={() => void save()}
+            disabled={busy || level === member.writerStatus}
+            className="story-button-primary min-h-11 disabled:opacity-50"
+          >
+            {busy ? "Saving…" : "Save level"}
+          </button>
+        </div>
+      ) : null}
+      {message ? (
+        <div className="mt-3">
+          <Notice tone={message.tone}>{message.text}</Notice>
+        </div>
+      ) : null}
+    </Panel>
   );
 }
 

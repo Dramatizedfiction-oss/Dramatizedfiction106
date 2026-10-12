@@ -34,6 +34,7 @@ export default async function ReaderProfilePage() {
       name: true,
       image: true,
       role: true,
+      writerStatus: true,
       bio: true,
       bannerImage: true,
       createdAt: true,

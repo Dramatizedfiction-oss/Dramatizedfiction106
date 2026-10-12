@@ -1,4 +1,4 @@
-import { normalizeRole, type AppRole } from "@/lib/auth/roles";
+import { hasRoleAccess, normalizeRole, type AppRole } from "@/lib/auth/roles";
 
 /*
  * Administration rules as pure functions (no database, no framework), so the
@@ -167,6 +167,46 @@ export function decideModeration(input: {
     return { ok: false, code: "INVALID", message: "This member already has an active discipline action." };
   }
   return { ok: true };
+}
+
+// ------------------------------------------------------------- writer levels
+
+export const WRITER_LEVELS = ["BEGINNER", "FULL", "FEATURED", "ELITE"] as const;
+export type WriterLevel = (typeof WRITER_LEVELS)[number];
+
+/**
+ * Who may set a writer's level (User.writerStatus, which also picks their
+ * avatar frame). Board and CEO, for writers; same reach as moderation: Board
+ * can't change Board or CEO members, only a CEO can, and nobody changes their
+ * own level.
+ */
+export function decideWriterLevelChange(input: {
+  actor: { id: string; role: string };
+  target: { id: string; role: string; writerStatus: string };
+  level: string;
+}): { ok: true; level: WriterLevel } | PolicyError {
+  const actorRole = normalizeRole(input.actor.role);
+  const targetRole = normalizeRole(input.target.role);
+
+  if (actorRole !== "BOARD" && actorRole !== "CEO") {
+    return { ok: false, code: "FORBIDDEN", message: "Only Administration can change writer levels." };
+  }
+  if (input.actor.id === input.target.id) {
+    return { ok: false, code: "FORBIDDEN", message: "You can't change your own writer level." };
+  }
+  if (!hasRoleAccess(targetRole, "WRITER")) {
+    return { ok: false, code: "INVALID", message: "Only writers have a writer level." };
+  }
+  if ((targetRole === "BOARD" || targetRole === "CEO") && actorRole !== "CEO") {
+    return { ok: false, code: "FORBIDDEN", message: "Only the CEO can change a Board or CEO member's writer level." };
+  }
+  if (!(WRITER_LEVELS as readonly string[]).includes(input.level)) {
+    return { ok: false, code: "INVALID", message: "Choose a writer level." };
+  }
+  if (input.level === input.target.writerStatus) {
+    return { ok: false, code: "INVALID", message: "That is already their writer level." };
+  }
+  return { ok: true, level: input.level as WriterLevel };
 }
 
 // ---------------------------------------------------------------- renovation

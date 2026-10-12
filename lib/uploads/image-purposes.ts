@@ -12,7 +12,11 @@
 export const IMAGE_PURPOSES = {
   "series-cover": { label: "Series cover", maxWidth: 1600, maxHeight: 2400, needsTarget: true },
   "episode-cover": { label: "Episode cover", maxWidth: 2400, maxHeight: 2400, needsTarget: true },
+  // A member's own photo: the 320px circle crop (profile-image) and the resized
+  // original it is cut from (profile-original). Both are made on the server by
+  // /api/me/avatar/photo, never through the general upload route.
   "profile-image": { label: "Profile picture", maxWidth: 800, maxHeight: 800, needsTarget: false },
+  "profile-original": { label: "Profile photo original", maxWidth: 1024, maxHeight: 1024, needsTarget: false },
   "profile-banner": { label: "Profile banner", maxWidth: 2400, maxHeight: 1200, needsTarget: false },
   // Administration's shared avatar library (BOARD and CEO only).
   "platform-avatar": { label: "Platform avatar", maxWidth: 800, maxHeight: 800, needsTarget: false },

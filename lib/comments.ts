@@ -25,7 +25,7 @@ export type CommentView = {
   body: string;
   createdAt: string;
   editedAt: string | null;
-  author: { id: string; name: string | null; image: string | null; role: string };
+  author: { id: string; name: string | null; image: string | null; role: string; writerStatus: string };
 };
 
 const VISIBLE = { removedAt: null } satisfies Prisma.CommentWhereInput;
@@ -35,7 +35,8 @@ const commentSelect = {
   body: true,
   createdAt: true,
   editedAt: true,
-  user: { select: { id: true, name: true, image: true, role: true } },
+  // writerStatus picks the writer's avatar ring.
+  user: { select: { id: true, name: true, image: true, role: true, writerStatus: true } },
 } satisfies Prisma.CommentSelect;
 
 type CommentRow = Prisma.CommentGetPayload<{ select: typeof commentSelect }>;

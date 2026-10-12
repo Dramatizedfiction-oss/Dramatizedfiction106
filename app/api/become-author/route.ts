@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/auth/guards";
 import { promoteUserToWriter } from "@/lib/author-onboarding";
-import { decideImageField, deleteReplacedImage } from "@/lib/uploads/image-storage";
 
 function cleanOptionalText(value: unknown) {
   if (typeof value !== "string") {
@@ -22,7 +21,6 @@ export async function POST(request: Request) {
     const body = (await request.json().catch(() => null)) as
       | {
           displayName?: string;
-          profileImage?: string;
           bio?: string;
           acknowledged?: boolean;
         }
@@ -36,13 +34,9 @@ export async function POST(request: Request) {
     }
     const displayName =
       cleanOptionalText(body?.displayName) ?? session.user.name ?? "New Writer";
-    // A new picture must be an uploaded image; blank keeps the current one.
-    const requestedImage = cleanOptionalText(body?.profileImage);
-    const imageDecision = decideImageField(requestedImage ?? undefined, session.user.image);
-    if (!imageDecision.ok) {
-      return NextResponse.json({ error: imageDecision.message }, { status: 400 });
-    }
-    const profileImage = imageDecision.value ?? session.user.image;
+    // The picture is never changed here: it keeps the member's current one
+    // (photos and library avatars are chosen at /reader/avatar).
+    const profileImage = session.user.image;
     const bio = cleanOptionalText(body?.bio) ?? session.user.bio ?? null;
 
     if (displayName.length > 80) {
@@ -66,10 +60,6 @@ export async function POST(request: Request) {
       profileImage,
       bio,
     });
-
-    if (result.outcome === "PROMOTED") {
-      await deleteReplacedImage(session.user.image, result.user.image);
-    }
 
     return NextResponse.json({
       success: true,

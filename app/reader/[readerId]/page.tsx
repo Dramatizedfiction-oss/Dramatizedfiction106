@@ -27,6 +27,7 @@ export default async function PublicReaderProfilePage({ params }: { params: { re
       name: true,
       image: true,
       role: true,
+      writerStatus: true,
       bio: true,
       bannerImage: true,
       createdAt: true,

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import AiTagBanner from "@/components/AiTagBanner";
 import AuthorTierBadge from "@/components/AuthorTierBadge";
+import FramedAvatar from "@/components/avatar/FramedAvatar";
 import EpisodeCarousel from "@/components/EpisodeCarousel";
 import FollowSeriesButton from "@/components/follow/FollowSeriesButton";
 import ReportAiTagButton from "@/components/ReportAiTagButton";
@@ -24,9 +25,8 @@ export default async function SeriesPage({
     where: { id: params.seriesId, ...PUBLIC_SERIES_WHERE },
     include: {
       author: {
-        select: {
-          name: true,
-        },
+        // Picture, and role + writer level for the default avatar and its ring.
+        select: { name: true, image: true, role: true, writerStatus: true },
       },
       // Metadata only; `body` is read here solely to build the preview and
       // is never passed to client components.
@@ -111,7 +111,8 @@ export default async function SeriesPage({
               {series.title}
             </h1>
             <div className="mt-3 flex flex-wrap items-center gap-3">
-              <p className="theme-meta text-sm md:text-base">
+              <p className="theme-meta flex items-center gap-2 text-sm md:text-base">
+                <FramedAvatar user={series.author} size="sm" />
                 Written by{" "}
                 <Link
                   href={`/author/${series.authorId}`}

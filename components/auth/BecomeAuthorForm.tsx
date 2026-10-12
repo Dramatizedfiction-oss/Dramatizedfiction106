@@ -4,20 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
-import ImageUploadField from "@/components/uploads/ImageUploadField";
 
-export default function BecomeAuthorForm({
-  defaultDisplayName,
-  currentAvatar,
-}: {
-  defaultDisplayName: string;
-  /** What the writer will be shown with if they don't upload: their picture, or the writer default. */
-  currentAvatar: string;
-}) {
+export default function BecomeAuthorForm({ defaultDisplayName }: { defaultDisplayName: string }) {
   const router = useRouter();
   const { refreshSession } = useAuthSession();
   const [displayName, setDisplayName] = useState(defaultDisplayName);
-  const [profileImage, setProfileImage] = useState("");
   const [bio, setBio] = useState("");
   const [acknowledged, setAcknowledged] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +27,6 @@ export default function BecomeAuthorForm({
       credentials: "include",
       body: JSON.stringify({
         displayName,
-        profileImage,
         bio,
         acknowledged,
       }),
@@ -94,15 +84,10 @@ export default function BecomeAuthorForm({
           </span>
         </label>
 
-        <ImageUploadField
-          label="Profile picture (optional)"
-          purpose="profile-image"
-          shape="avatar"
-          value={profileImage}
-          onChange={setProfileImage}
-          fallbackSrc={currentAvatar}
-          hint="A square photo works best. JPEG, PNG or WebP. Leave it to keep the picture shown."
-        />
+        <p className="theme-meta rounded-[18px] border border-[var(--border-color)] px-4 py-3 text-sm leading-6">
+          Your profile picture stays as it is. You can choose a library avatar or upload your own photo any time from your
+          profile (Edit profile › Choose avatar).
+        </p>
 
         <label className="block">
           <span className="theme-meta mb-2 block text-xs uppercase tracking-[0.24em]">

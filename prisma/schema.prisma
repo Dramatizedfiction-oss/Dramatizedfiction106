@@ -39,6 +39,15 @@ model User {
   /// Nothing is gated on it yet (later: mature content, purchases/payouts).
   ageConfirmedAt           DateTime?
   ageConfirmationVersion   String?
+  /// The member's own photo (chosen at /reader/avatar): `image` holds the server-made 320px circle crop; this is the resized
+  /// original (max 1024px) it was cut from, so the crop can be re-adjusted.
+  /// Crop: the circle's center as a 0-1 fraction of the original's width and
+  /// height, and zoom (1 = the circle exactly fits the shorter side). All null
+  /// when the picture is a library avatar or the default.
+  avatarOriginalUrl        String?
+  avatarCropX              Float?
+  avatarCropY              Float?
+  avatarZoom               Float?
   passwordHash             String?
   accounts                 Account[]
   adImpressions            AdImpression[]

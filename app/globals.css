@@ -1165,6 +1165,37 @@ html[data-reduce-motion="always"] *::after {
   scroll-behavior: auto !important;
 }
 
+/* Writer avatar frames (components/avatar/FramedAvatar.tsx). Each color has at
+   least 3:1 contrast against the backgrounds of its theme. --frame-backdrop
+   cuts small details (quill, crest) out of the ring. */
+:root {
+  --frame-ink: #5c5765;
+  --frame-bronze: #9a5b2a;
+  --frame-gold: #8f6b0c;
+  --frame-gold-light: #b8901f;
+  --frame-gold-deep: #6e5207;
+  --frame-backdrop: #ffffff;
+}
+.dark {
+  --frame-ink: #a39dad;
+  --frame-bronze: #d4935a;
+  --frame-gold: #e3bf55;
+  --frame-gold-light: #f3dc8f;
+  --frame-gold-deep: #b8901f;
+  --frame-backdrop: #131118;
+}
+.frame-shimmer {
+  transform-origin: 50px 50px;
+  animation: frame-shimmer 6s linear infinite;
+}
+@keyframes frame-shimmer {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .frame-shimmer { animation: none; display: none; }
+}
+html[data-reduce-motion="always"] .frame-shimmer { animation: none; display: none; }
+
 /* Filled rating stars: the series color or its fallback, chosen per theme on
    the server (lib/engagement-rules.ts starColors) and passed in as variables. */
 .rating-stars { --star-fill: var(--star-fill-light, #b45309); }

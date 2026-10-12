@@ -22,11 +22,13 @@ import {
  */
 
 export class ImageRejectedError extends Error {
-  constructor(
-    message: string,
-    readonly status: 400 | 413 | 415 = 400,
-  ) {
+  // A plain field (not a constructor parameter property) so Node's built-in
+  // TypeScript stripping can load this file in unit tests.
+  readonly status: 400 | 413 | 415;
+
+  constructor(message: string, status: 400 | 413 | 415 = 400) {
     super(message);
+    this.status = status;
   }
 }
 

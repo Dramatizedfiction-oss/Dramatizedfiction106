@@ -7,8 +7,9 @@ import { prisma } from "@/lib/prisma";
 import { decideImageField, deleteReplacedImage } from "@/lib/uploads/image-storage";
 
 // Only the signed-in user's own profile picture and banner. No user id is
-// accepted: the account always comes from the session. The picture comes from
-// the avatar library (or null = role default); the banner is an upload.
+// accepted: the account always comes from the session. Here the picture comes
+// from the avatar library (or null = role default); an own photo is set through
+// /api/me/avatar/photo. The banner is an upload.
 const schema = z.object({
   image: z.string().nullable().optional(),
   bannerImage: z.string().nullable().optional(),
@@ -23,7 +24,7 @@ export async function PATCH(request: Request) {
 
   const current = await prisma.user.findUnique({
     where: { id: guard.user.id },
-    select: { image: true, bannerImage: true },
+    select: { image: true, bannerImage: true, avatarOriginalUrl: true },
   });
   if (!current) return badRequest();
 
@@ -36,11 +37,18 @@ export async function PATCH(request: Request) {
   const image = { value: nextImage };
   const bannerImage = decideImageField(body.data.bannerImage, current.bannerImage);
   if (!bannerImage.ok) return badRequest(bannerImage.message);
+  // Switching away from an own photo (to a library avatar or the default)
+  // removes the photo: its crop values are cleared and its files deleted.
+  const leavingPhoto = image.value !== undefined && image.value !== current.image && Boolean(current.avatarOriginalUrl);
 
   try {
     const updated = await prisma.user.update({
       where: { id: guard.user.id },
-      data: { image: image.value, bannerImage: bannerImage.value },
+      data: {
+        image: image.value,
+        bannerImage: bannerImage.value,
+        ...(leavingPhoto ? { avatarOriginalUrl: null, avatarCropX: null, avatarCropY: null, avatarZoom: null } : {}),
+      },
       select: { image: true, bannerImage: true },
     });
 
@@ -55,6 +63,7 @@ export async function PATCH(request: Request) {
     // Library pictures are shared: never delete one just because this member
     // switched away from it. (An old personal upload is still cleaned up.)
     if (!isLibraryImagePath(current.image)) await deleteReplacedImage(current.image, updated.image);
+    if (leavingPhoto) await deleteReplacedImage(current.avatarOriginalUrl, null);
     await deleteReplacedImage(current.bannerImage, updated.bannerImage);
 
     return NextResponse.json({ success: true, ...updated });

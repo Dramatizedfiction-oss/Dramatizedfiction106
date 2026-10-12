@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import MemberActions from "@/components/admin/MemberActions";
 import { Badge, Panel, ROLE_LABELS } from "@/components/admin/ui";
-import UserAvatar from "@/components/UserAvatar";
+import FramedAvatar from "@/components/avatar/FramedAvatar";
 import { formatDate, formatRestrictionEnd, remainingLabel } from "@/lib/admin/format";
 import { boardSeatsUsed, getMemberDetail } from "@/lib/admin/members";
 import { prisma } from "@/lib/prisma";
@@ -30,7 +30,7 @@ export default async function MemberDetailPage({ params }: { params: { memberId:
 
       <Panel>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <UserAvatar user={member} size="lg" />
+          <FramedAvatar user={member} size="lg" />
           <div className="min-w-0 flex-1">
             <h2 className="font-heading theme-heading break-words text-2xl font-semibold">{member.name || "Unnamed member"}</h2>
             <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -59,6 +59,7 @@ export default async function MemberDetailPage({ params }: { params: { memberId:
           id: member.id,
           name: member.name || "this member",
           role: member.role,
+          writerStatus: member.writerStatus,
           status: member.status,
           restrictionEndsAt: active?.endsAt?.toISOString() ?? null,
         }}

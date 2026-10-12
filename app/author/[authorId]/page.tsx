@@ -5,7 +5,7 @@ import AuthorTierBadge from "@/components/AuthorTierBadge";
 import AuthorWorksCarousel from "@/components/AuthorWorksCarousel";
 import FollowAuthorButton from "@/components/follow/FollowAuthorButton";
 import ProfileEditor from "@/components/profile/ProfileEditor";
-import UserAvatar from "@/components/UserAvatar";
+import FramedAvatar from "@/components/avatar/FramedAvatar";
 import { safeProfileLink } from "@/lib/profile";
 import { hasRoleAccess } from "@/lib/roles";
 import { deriveAuthorTier, derivePostingConsistency } from "@/lib/author-tier";
@@ -31,6 +31,8 @@ export default async function AuthorProfilePage({
       bio: true,
       image: true,
       role: true,
+      // Picks the avatar frame (writer level); never displayed as data.
+      writerStatus: true,
       bannerImage: true,
       twitterUrl: true,
       instagramUrl: true,
@@ -196,11 +198,11 @@ export default async function AuthorProfilePage({
           <div className="-mt-12 flex flex-col gap-6 md:-mt-16 md:flex-row md:items-end md:justify-between">
             {/* Phones: the avatar overlaps the banner and the name sits below it. */}
             <div className="flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-end sm:gap-4">
-              <UserAvatar
-                user={{ image: author.image, role: author.role }}
-                size="xl"
-                label={displayName}
-                className="border-4 border-[var(--bg-secondary)]"
+              <FramedAvatar
+                user={{ image: author.image, role: author.role, writerStatus: author.writerStatus }}
+                size="2xl"
+                eager
+                className="rounded-full bg-[var(--bg-secondary)] p-1"
               />
 
               <div className="min-w-0 pb-2">

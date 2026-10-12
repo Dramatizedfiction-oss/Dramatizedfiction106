@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import UserAvatar from "@/components/UserAvatar";
+import FramedAvatar from "@/components/avatar/FramedAvatar";
 import type { CommentView } from "@/lib/comments";
 import { COMMENT_MAX_LENGTH, REPORT_NOTE_MAX_LENGTH, REPORT_REASONS, timeAgo } from "@/lib/engagement-rules";
 
@@ -303,7 +303,7 @@ function CommentItem({
     <li className="py-4">
       <div className="flex items-start gap-3">
         <Link href={`/reader/${comment.author.id}`} className="shrink-0" tabIndex={-1} aria-hidden>
-          <UserAvatar user={comment.author} size="md" />
+          <FramedAvatar user={comment.author} size="md" />
         </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-start gap-2">

@@ -14,7 +14,7 @@ const SHRINK_ABOVE_BYTES = MAX_UPLOAD_BYTES - 256 * 1024;
 export type UploadResult = { ok: true; url: string } | { ok: false; message: string };
 
 /** Downscales large photos in the browser (JPEG output); returns the original if it already fits. */
-async function prepareFile(file: File): Promise<Blob> {
+export async function prepareFile(file: File): Promise<Blob> {
   if (file.size <= SHRINK_ABOVE_BYTES) return file;
   if (typeof createImageBitmap !== "function") return file;
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PlusIcon } from "@/components/icons";
-import UserAvatar from "@/components/UserAvatar";
+import FramedAvatar from "@/components/avatar/FramedAvatar";
 import WriterStatusBadge from "@/components/writer-studio/shell/WriterStatusBadge";
 
 export default function StudioHeader({
@@ -20,8 +20,9 @@ export default function StudioHeader({
         <p className="eyebrow">Writer Studio</p>
         <div className="mt-2 flex min-w-0 items-center gap-3">
           {/* Everyone in the studio is WRITER or above, so the default is the writer one. */}
-          <UserAvatar user={{ image, role: "WRITER" }} size="lg" className="hidden sm:block" />
-          <UserAvatar user={{ image, role: "WRITER" }} size="md" className="sm:hidden" />
+          {/* The writer's level frame: full design on wider screens, a ring on phones. */}
+          <FramedAvatar user={{ image, role: "WRITER", writerStatus }} size="lg" eager className="!hidden sm:!inline-flex" />
+          <FramedAvatar user={{ image, role: "WRITER", writerStatus }} size="md" eager className="sm:!hidden" />
           <h1 className="font-heading theme-heading min-w-0 truncate text-3xl font-semibold md:text-4xl">{name}</h1>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">

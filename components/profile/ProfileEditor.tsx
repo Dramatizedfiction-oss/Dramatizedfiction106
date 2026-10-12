@@ -1,11 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import ImageUploadField from "@/components/uploads/ImageUploadField";
+import UserAvatar from "@/components/UserAvatar";
 import Sheet from "@/components/writer-studio/ui/Sheet";
-import { defaultAvatarFor } from "@/lib/avatars";
 import { PROFILE_LIMITS, PROFILE_LINK_FIELDS, normalizeProfileLink, type ProfileLinkKey } from "@/lib/profile";
 
 /*
@@ -13,23 +14,23 @@ import { PROFILE_LIMITS, PROFILE_LINK_FIELDS, normalizeProfileLink, type Profile
  * holds app settings only). Opened by the pen button on the member's own
  * reading profile or author page. Everything saves together with "Save":
  *   - text + visibility  -> PATCH /api/me/profile
- *   - picture + banner   -> PATCH /api/me/profile-images
- * Both routes only ever change the signed-in member. To add a field later, add
- * it to ProfileEditorValues, give it a <Section>, and include it in save().
+ *   - banner             -> PATCH /api/me/profile-images
+ * The picture has its own place (/reader/avatar, the "Choose avatar" row),
+ * which saves on its own. Both routes only ever change the signed-in member.
+ * To add a field later, add it to ProfileEditorValues, give it a <Section>,
+ * and include it in save().
  */
 
 // The display name is edited on Settings > Account, not here.
 export type ProfileEditorValues = {
   bio: string;
-  /** Chosen library avatar URL, or "" for the role default. */
+  /** The current picture (shown in the "Choose avatar" row; changed at /reader/avatar). */
   image: string;
   bannerImage: string;
   readingProfileVisibility: "PRIVATE" | "PUBLIC";
   activityVisibility: "PRIVATE" | "PUBLIC";
   links: Record<ProfileLinkKey, string>;
 };
-
-type LibraryAvatar = { id: string; label: string; url: string };
 
 export default function ProfileEditor({
   initial,
@@ -45,19 +46,9 @@ export default function ProfileEditor({
   const [open, setOpen] = useState(false);
   const [saved, setSaved] = useState(initial);
   const [values, setValues] = useState(initial);
-  const [library, setLibrary] = useState<LibraryAvatar[] | null>(null);
-  const [libraryError, setLibraryError] = useState(false);
   const [status, setStatus] = useState<{ kind: "idle" | "saving" | "error"; message?: string }>({ kind: "idle" });
 
   const dirty = JSON.stringify(values) !== JSON.stringify(saved);
-
-  useEffect(() => {
-    if (!open || library) return;
-    fetch("/api/avatars/library", { credentials: "include" })
-      .then((response) => (response.ok ? response.json() : Promise.reject()))
-      .then((data: { avatars: LibraryAvatar[] }) => setLibrary(data.avatars))
-      .catch(() => setLibraryError(true));
-  }, [open, library]);
 
   function openEditor() {
     setValues(saved);
@@ -95,7 +86,6 @@ export default function ProfileEditor({
     }
 
     const images: Record<string, string | null> = {};
-    if (values.image !== saved.image) images.image = values.image || null;
     if (values.bannerImage !== saved.bannerImage) images.bannerImage = values.bannerImage || null;
 
     setStatus({ kind: "saving" });
@@ -161,15 +151,23 @@ export default function ProfileEditor({
         }
       >
         <div className="space-y-8">
-          <Section title="Picture" description="Choose from the Dramatized Fiction avatar library.">
-            <AvatarChooser
-              value={values.image}
-              defaultSrc={defaultAvatarFor(role)}
-              initialImage={initial.image}
-              library={library}
-              libraryError={libraryError}
-              onChange={(url) => set("image", url)}
-            />
+          <Section title="Picture">
+            <Link
+              href="/reader/avatar"
+              onClick={(event) => {
+                if (dirty && !window.confirm("Leave the editor? Your unsaved changes here will be lost.")) event.preventDefault();
+              }}
+              className="flex min-h-[72px] items-center gap-4 rounded-2xl border border-[var(--border-color)] p-3 transition hover:border-[var(--border-strong)] hover:bg-[var(--panel-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--series-accent))]"
+            >
+              <UserAvatar user={{ image: values.image || null, role }} size="lg" />
+              <span className="min-w-0 flex-1">
+                <span className="theme-heading block text-sm font-semibold">Choose avatar</span>
+                <span className="theme-meta mt-0.5 block text-xs leading-5">Pick one from the library, or upload and position your own photo.</span>
+              </span>
+              <span aria-hidden className="text-lg text-[var(--text-muted)]">
+                ›
+              </span>
+            </Link>
           </Section>
 
           <ImageUploadField
@@ -244,93 +242,6 @@ export default function ProfileEditor({
         </div>
       </Sheet>
     </>
-  );
-}
-
-function AvatarChooser({
-  value,
-  defaultSrc,
-  initialImage,
-  library,
-  libraryError,
-  onChange,
-}: {
-  value: string;
-  defaultSrc: string;
-  initialImage: string;
-  library: LibraryAvatar[] | null;
-  libraryError: boolean;
-  onChange: (url: string) => void;
-}) {
-  const name = useId();
-  // A picture from before the library (a personal upload) can be kept until changed.
-  const keepCurrent = initialImage && library && !library.some((avatar) => avatar.url === initialImage);
-  const options: { url: string; label: string; src: string }[] = [
-    { url: "", label: "Default", src: defaultSrc },
-    ...(keepCurrent ? [{ url: initialImage, label: "Current", src: initialImage }] : []),
-    ...(library ?? []).map((avatar) => ({ url: avatar.url, label: avatar.label, src: avatar.url })),
-  ];
-  const current = options.find((option) => option.url === value) ?? options[0];
-
-  return (
-    <div>
-      <div className="flex items-center gap-4">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={current.src}
-          alt=""
-          className="h-20 w-20 shrink-0 rounded-full border border-[var(--border-strong)] bg-[var(--surface-raised)] object-cover"
-        />
-        <p className="theme-meta text-sm">
-          {current.url ? <>Selected: <span className="font-semibold text-[var(--text-primary)]">{current.label}</span></> : "Using the default picture."}
-        </p>
-      </div>
-
-      {libraryError ? (
-        <p role="alert" className="mt-4 text-sm text-[var(--status-danger)]">
-          Couldn&apos;t load the avatar library. Close the editor and try again.
-        </p>
-      ) : library === null ? (
-        <p className="theme-meta mt-4 text-sm">Loading avatars…</p>
-      ) : (
-        <fieldset className="mt-4">
-          <legend className="sr-only">Profile picture</legend>
-          <div className="grid grid-cols-4 gap-3 sm:grid-cols-5">
-            {options.map((option) => {
-              const checked = option.url === value;
-              return (
-                <label key={option.url || "default"} className="group flex cursor-pointer flex-col items-center gap-1.5">
-                  <input
-                    type="radio"
-                    name={name}
-                    value={option.url}
-                    checked={checked}
-                    aria-label={option.url ? option.label : "Default picture"}
-                    onChange={() => onChange(option.url)}
-                    className="peer sr-only"
-                  />
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={option.src}
-                    alt=""
-                    loading="lazy"
-                    className={`h-14 w-14 rounded-full border-2 bg-[var(--surface-raised)] object-cover transition peer-focus-visible:ring-2 peer-focus-visible:ring-[hsl(var(--series-accent))] peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[var(--bg-primary)] ${
-                      checked ? "border-[hsl(var(--series-accent))]" : "border-transparent group-hover:border-[var(--border-strong)]"
-                    }`}
-                  />
-                  <span className={`w-full truncate text-center text-xs ${checked ? "font-semibold text-[var(--text-primary)]" : "theme-meta"}`}>
-                    {option.label}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-          {library.length === 0 ? (
-            <p className="theme-meta mt-3 text-xs">The library is empty for now, so the default picture is the only choice.</p>
-          ) : null}
-        </fieldset>
-      )}
-    </div>
   );
 }
 
