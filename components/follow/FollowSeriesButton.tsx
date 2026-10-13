@@ -15,12 +15,15 @@ export default function FollowSeriesButton({
   initialFollowing,
   initialCount,
   signedIn,
+  variant = "default",
 }: {
   seriesId: string;
   seriesTitle: string;
   initialFollowing: boolean;
   initialCount: number;
   signedIn: boolean;
+  /** "secondary": an outlined button with no count beside it (the series page shows it next to its main button). */
+  variant?: "default" | "secondary";
 }) {
   const router = useRouter();
   const [following, setFollowing] = useState(initialFollowing);
@@ -77,7 +80,9 @@ export default function FollowSeriesButton({
         onClick={() => void toggle()}
         aria-pressed={signedIn ? following : undefined}
         aria-label={`${following ? "Unfollow" : "Follow"} the series ${seriesTitle}`}
-        className={`${following ? "story-button-secondary" : "story-button-primary"} min-h-11 gap-2`}
+        className={`${following || variant === "secondary" ? "story-button-secondary" : "story-button-primary"} min-h-11 gap-2 ${
+          variant === "secondary" ? "min-h-12 max-[420px]:w-12 max-[420px]:px-0" : ""
+        }`}
       >
         {following ? (
           <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
@@ -88,9 +93,12 @@ export default function FollowSeriesButton({
             <path d="M10 4v12M4 10h12" />
           </svg>
         )}
-        {following ? "Following" : "Follow Series"}
+        {/* The secondary button is icon-only on narrow phones; its aria-label keeps the name. */}
+        <span className={variant === "secondary" ? "max-[420px]:sr-only" : undefined}>
+          {following ? "Following" : variant === "secondary" ? "Follow" : "Follow Series"}
+        </span>
       </button>
-      <span className="theme-meta text-sm" aria-live="polite">
+      <span className={variant === "secondary" ? "sr-only" : "theme-meta text-sm"} aria-live="polite">
         {count.toLocaleString()} {count === 1 ? "follower" : "followers"}
       </span>
       {error ? (

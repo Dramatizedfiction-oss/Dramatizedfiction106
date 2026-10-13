@@ -22,6 +22,7 @@ const updateSeriesSchema = z.object({
   coverImage: optionalText,
   themeColor: optionalText,
   aiUsageTag: optionalText,
+  isComplete: z.boolean().optional(),
 });
 
 export async function PATCH(
@@ -57,6 +58,7 @@ export async function PATCH(
         coverImage: cover.value,
         themeColor: has("themeColor") ? cleanOptionalText(input.themeColor) : undefined,
         aiUsageTag: input.aiUsageTag ? serializeAiUsageTag(input.aiUsageTag) : undefined,
+        isComplete: input.isComplete,
       },
     });
 

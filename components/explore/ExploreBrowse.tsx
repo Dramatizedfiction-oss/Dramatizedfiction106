@@ -29,14 +29,20 @@ export default function ExploreBrowse({
   initialQuery = "",
   autoFocusSearch = false,
   showBecomeAuthorCta = false,
+  initialGenre,
 }: {
   stories: ExploreStory[];
   initialQuery?: string;
   autoFocusSearch?: boolean;
   showBecomeAuthorCta?: boolean;
+  /** Preselects a genre (?genre=); anything not in the list means all genres. */
+  initialGenre?: string;
 }) {
   const [search, setSearch] = useState(initialQuery);
-  const [activeGenre, setActiveGenre] = useState("all");
+  const [activeGenre, setActiveGenre] = useState(() => {
+    const wanted = initialGenre?.trim().toLowerCase();
+    return wanted && (GENRES as readonly string[]).includes(wanted) ? wanted : "all";
+  });
   const [sortBy, setSortBy] = useState<"trending" | "newest">("trending");
   const searchRef = useRef<HTMLInputElement>(null);
 

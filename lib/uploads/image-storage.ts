@@ -1,5 +1,6 @@
 import { del, put } from "@vercel/blob";
 import { randomUUID } from "crypto";
+import { coverThumbUrl } from "@/lib/cover-thumbs";
 import type { ImagePurpose } from "./image-purposes";
 
 /*
@@ -60,6 +61,23 @@ export async function storeImage(purpose: ImagePurpose, data: Buffer) {
 }
 
 /**
+ * Stores a cover's small copy at the derived name next to it (lib/cover-thumbs.ts).
+ * `overwrite` is for the one-time backfill script.
+ */
+export async function storeCoverThumb(coverUrl: string, data: Buffer, overwrite = false) {
+  const thumb = coverThumbUrl(coverUrl);
+  if (!thumb) return null;
+  await put(new URL(thumb).pathname.slice(1), data, {
+    access: "public",
+    contentType: "image/webp",
+    addRandomSuffix: false,
+    allowOverwrite: overwrite,
+    cacheControlMaxAge: 60 * 60 * 24 * 365,
+  });
+  return thumb;
+}
+
+/**
  * Deletes a replaced/removed image, but only if it lives in our own store.
  * External and legacy URLs are never touched. Failures are logged, not thrown:
  * the record update that triggered this has already succeeded.
@@ -67,7 +85,9 @@ export async function storeImage(purpose: ImagePurpose, data: Buffer) {
 export async function deleteReplacedImage(previous: string | null | undefined, next: string | null | undefined) {
   if (!previous || previous === next || !isOwnedImageUrl(previous) || !isImageStorageConfigured()) return;
   try {
-    await del(previous);
+    // A cover's small copy goes with it (deleting a missing blob is a no-op).
+    const thumb = coverThumbUrl(previous);
+    await del(thumb ? [previous, thumb] : previous);
   } catch (error) {
     console.error("Could not delete replaced image.", error);
   }

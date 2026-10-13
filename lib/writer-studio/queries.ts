@@ -159,6 +159,7 @@ export async function getSeriesHub(userId: string, seriesId: string) {
       coverImage: true,
       themeColor: true,
       status: true,
+      isComplete: true,
       aiUsageTag: true,
       reads: true,
       updatedAt: true,

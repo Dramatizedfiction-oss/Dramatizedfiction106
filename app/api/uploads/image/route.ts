@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { authorizeImageUpload } from "@/lib/uploads/authorize";
 import { IMAGE_PURPOSES, MAX_UPLOAD_BYTES, isImagePurpose } from "@/lib/uploads/image-purposes";
-import { isImageStorageConfigured, storeImage } from "@/lib/uploads/image-storage";
-import { ImageRejectedError, processImage } from "@/lib/uploads/process-image";
+import { isImageStorageConfigured, storeCoverThumb, storeImage } from "@/lib/uploads/image-storage";
+import { ImageRejectedError, makeCoverThumb, processImage } from "@/lib/uploads/process-image";
 
 export const runtime = "nodejs";
 
@@ -59,6 +59,15 @@ export async function POST(request: Request) {
   try {
     const processed = await processImage(Buffer.from(await file.arrayBuffer()), purpose);
     const url = await storeImage(purpose, processed.data);
+    // Covers also get a small copy for cards and rails. If that fails, cards
+    // simply show the full cover, so the upload itself still succeeds.
+    if (purpose === "series-cover" || purpose === "episode-cover") {
+      try {
+        await storeCoverThumb(url, await makeCoverThumb(processed.data));
+      } catch (error) {
+        console.error("Cover thumbnail failed; cards will use the full cover.", error);
+      }
+    }
     return NextResponse.json({ url, width: processed.width, height: processed.height });
   } catch (error) {
     if (error instanceof ImageRejectedError) {

@@ -76,6 +76,7 @@ export default async function SeriesHubPage({
                 aiUsageTag: series.aiUsageTag,
                 coverImage: series.coverImage ?? "",
                 themeColor: series.themeColor ?? "",
+                isComplete: series.isComplete,
               }}
             />
             {live ? (

@@ -45,6 +45,8 @@ export default function AppShell({ user, studios, trending, renovationMode = fal
   const isFlushRoute =
     pathname === "/" ||
     pathname.startsWith("/explore") ||
+    // The series page's hero runs edge to edge on phones; it pads itself.
+    pathname.startsWith("/series/") ||
     pathname.startsWith("/episode") ||
     pathname.startsWith("/writer-studio") ||
     pathname.startsWith("/writer") ||

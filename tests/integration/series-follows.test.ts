@@ -121,7 +121,8 @@ describe("follow a series", () => {
     assert.match(readerPage, new RegExp(`${TAG} followable`));
 
     const anonPage = await (await call(`/series/${published}`, undefined)).text();
-    assert.match(anonPage, /Follow Series/);
+    // The series page uses the compact Follow button (its accessible name names the series).
+    assert.match(anonPage, /Follow the series/);
   });
 
   test("unfollow is idempotent; deleting a member removes their follow and the count drops", async (t) => {

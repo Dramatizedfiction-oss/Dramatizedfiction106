@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
+import { safeCallbackPath } from "@/lib/safe-callback";
 
 export default function SignUpForm() {
   const router = useRouter();
@@ -43,7 +44,9 @@ export default function SignUpForm() {
 
     await refreshSession();
     router.refresh();
-    router.push("/explore");
+    // Back to where they came from (e.g. the series page's "save progress" link), same-site paths only.
+    const callback = new URLSearchParams(window.location.search).get("callbackUrl");
+    router.push(callback ? safeCallbackPath(callback) : "/explore");
   }
 
   return (

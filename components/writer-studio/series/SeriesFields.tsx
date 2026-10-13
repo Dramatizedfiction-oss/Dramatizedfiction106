@@ -13,6 +13,8 @@ export type SeriesFormValues = {
   aiUsageTag: AiUsageTag;
   coverImage: string;
   themeColor: string;
+  /** Shown to readers as Complete instead of Ongoing (series details only). */
+  isComplete?: boolean;
 };
 
 const THEME_SWATCHES = ["#7c3aed", "#2563eb", "#0891b2", "#059669", "#ca8a04", "#ea580c", "#dc2626", "#db2777", "#475569"];
@@ -135,6 +137,23 @@ export default function SeriesFields({
               </label>
             </div>
           </fieldset>
+
+          {values.isComplete !== undefined ? (
+            <label className="flex min-h-11 cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={values.isComplete}
+                onChange={(event) => set("isComplete", event.target.checked)}
+                className="mt-1 h-5 w-5 accent-[var(--accent-solid)]"
+              />
+              <span>
+                <span className="theme-heading block text-sm font-semibold">Series complete</span>
+                <span className="mt-0.5 block text-xs text-[var(--studio-muted)]">
+                  Readers see Complete instead of Ongoing. You can still add episodes.
+                </span>
+              </span>
+            </label>
+          ) : null}
         </>
       ) : null}
     </div>

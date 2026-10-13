@@ -1,4 +1,5 @@
 import sharp from "sharp";
+import { COVER_THUMB_WIDTH } from "@/lib/cover-thumbs";
 import {
   IMAGE_PURPOSES,
   MAX_SOURCE_DIMENSION,
@@ -50,6 +51,14 @@ function sniffImageType(bytes: Buffer): SniffedType | null {
     return "webp";
   }
   return null;
+}
+
+/** The 480px-wide small copy of a processed cover, for cards and rails. */
+export async function makeCoverThumb(processed: Buffer) {
+  return sharp(processed, { failOn: "error" })
+    .resize({ width: COVER_THUMB_WIDTH, withoutEnlargement: true })
+    .webp({ quality: 76 })
+    .toBuffer();
 }
 
 export async function processImage(bytes: Buffer, purpose: ImagePurpose) {

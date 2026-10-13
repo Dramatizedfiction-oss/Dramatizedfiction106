@@ -1196,6 +1196,28 @@ html[data-reduce-motion="always"] *::after {
 }
 html[data-reduce-motion="always"] .frame-shimmer { animation: none; display: none; }
 
+/* The series page's accent (lib/series-accent.ts sets the variables per series). */
+.series-accent { --sa: var(--sa-light, #7c3aed); --sa-ink: var(--sa-ink-light, #ffffff); --star-fill: var(--star-fill-light, #b45309); }
+.dark .series-accent { --sa: var(--sa-dark, #8b5cf6); --sa-ink: var(--sa-ink-dark, #ffffff); --star-fill: var(--star-fill-dark, #fbbf24); }
+
+/* Bottom sheet (components/ui/BottomSheet.tsx): slides up from the bottom on
+   phones, a centered panel on wider screens. */
+.bottom-sheet {
+  margin: auto auto 0;
+  width: 100%;
+  max-width: 32rem;
+  max-height: 75dvh;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 1.5rem 1.5rem 0 0;
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+.bottom-sheet::backdrop { background: rgb(0 0 0 / 0.45); }
+@media (min-width: 640px) {
+  .bottom-sheet { margin: auto; border-radius: 1.5rem; }
+}
+
 /* Filled rating stars: the series color or its fallback, chosen per theme on
    the server (lib/engagement-rules.ts starColors) and passed in as variables. */
 .rating-stars { --star-fill: var(--star-fill-light, #b45309); }

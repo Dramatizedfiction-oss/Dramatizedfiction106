@@ -1,207 +1,177 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import AiTagBanner from "@/components/AiTagBanner";
-import AuthorTierBadge from "@/components/AuthorTierBadge";
 import FramedAvatar from "@/components/avatar/FramedAvatar";
-import EpisodeCarousel from "@/components/EpisodeCarousel";
 import FollowSeriesButton from "@/components/follow/FollowSeriesButton";
-import ReportAiTagButton from "@/components/ReportAiTagButton";
-import SeasonSelector from "@/components/series/SeasonSelector";
-import { deriveAuthorTier, derivePostingConsistency } from "@/lib/author-tier";
-import { DEFAULT_SERIES_ACCENT, readableTextOn, seriesAccentHex } from "@/lib/series-color";
-import { createViewerMonetizationState } from "@/lib/monetization";
-import { PUBLIC_SERIES_WHERE, publicEpisodePreview } from "@/lib/content-visibility";
-import { prisma } from "@/lib/prisma";
-import { isFollowingSeries } from "@/lib/series-follows";
-import { seriesRating } from "@/lib/ratings";
+import CoverImage from "@/components/series/CoverImage";
+import EpisodeStrip from "@/components/series/EpisodeStrip";
+import ExpandableText from "@/components/series/ExpandableText";
+import PlaceholderArt from "@/components/series/PlaceholderArt";
+import SeriesRail from "@/components/series/SeriesRail";
+import { seriesAccentStyle } from "@/lib/series-accent";
+import { getSeriesPage } from "@/lib/series-page";
 
-export default async function SeriesPage({
-  params,
-}: {
-  params: { seriesId: string };
-}) {
+/*
+ * The series page. Phone, top to bottom: an edge-to-edge cover that fades
+ * into the page, an info card overlapping it (title, author, genre, rating,
+ * episodes/time/status, the main button and Follow, the description, the AI
+ * banner on its bottom edge), the episode strip, then the rails. Desktop: the
+ * cover and the info card side by side, the same sections below. The series
+ * color drives the main button, genre chip, stars and season pill
+ * (lib/series-accent.ts keeps them readable in both themes).
+ */
+
+function formatMinutes(total: number) {
+  if (total < 60) return `${total} min`;
+  const hours = Math.floor(total / 60);
+  const minutes = total % 60;
+  return minutes ? `${hours} h ${minutes} min` : `${hours} h`;
+}
+
+export default async function SeriesPage({ params }: { params: { seriesId: string } }) {
   const session = await auth();
-  const series = await prisma.series.findFirst({
-    where: { id: params.seriesId, ...PUBLIC_SERIES_WHERE },
-    include: {
-      author: {
-        // Picture, and role + writer level for the default avatar and its ring.
-        select: { name: true, image: true, role: true, writerStatus: true },
-      },
-      // Metadata only; `body` is read here solely to build the preview and
-      // is never passed to client components.
-      episodes: {
-        where: { status: "PUBLISHED" },
-        orderBy: { episodeNumber: "asc" },
-        select: {
-          id: true,
-          title: true,
-          episodeNumber: true,
-          teaser: true,
-          body: true,
-          aiUsageTag: true,
-          readTime: true,
-          readerCount: true,
-          locked: true,
-        },
-      },
-    },
-  });
+  const viewerId = session?.user?.id ?? null;
+  const page = await getSeriesPage(params.seriesId, viewerId);
+  if (!page) notFound();
 
-  if (!series) {
-    return <div className="px-6 py-10">Series not found.</div>;
-  }
+  const { series, rating, episodes, seasons, totalMinutes, resume, rails } = page;
+  const first = episodes[0] ?? null;
+  const main = resume
+    ? {
+        href: `/episode/${resume.episodeId}`,
+        label: resume.kind === "again" ? "Read again" : `Continue episode ${resume.episodeNumber}`,
+      }
+    : first
+      ? { href: `/episode/${first.id}`, label: "Start reading" }
+      : null;
+  const signInHref = `/sign-up?callbackUrl=${encodeURIComponent(`/series/${series.id}`)}`;
+  const authorName = series.author.name || "Anonymous Author";
 
-  const viewer = createViewerMonetizationState(session?.user?.id);
-  const [viewerFollows, rating] = await Promise.all([
-    session?.user?.id ? isFollowingSeries(session.user.id, series.id) : false,
-    // Pooled across every rating of its published episodes; null below the minimum count.
-    seriesRating(series.id),
-  ]);
-  const authorTier = deriveAuthorTier({
-    totalReads: series.reads,
-    engagementRate: Math.min(0.95, (series.followers / Math.max(series.reads, 1)) * 4),
-    postingConsistency: derivePostingConsistency(
-      series.reads,
-      series.episodes.length,
-      series.followers,
-    ),
-    completionRate: Math.min(0.96, 0.45 + Math.min(series.episodes.length, 12) * 0.03),
-  });
-
-  // The writer's theme color (Writer Studio → series details). Without a valid
-  // one, the genre chip uses the site accent and Start Reading keeps its default.
-  const accent = seriesAccentHex(series.themeColor);
-  const chipColor = accent ?? DEFAULT_SERIES_ACCENT;
-  // The thin border keeps very light or very dark colors visible against either theme.
-  const edge = "0 0 0 1px var(--border-strong)";
+  const cover = (eager: boolean, className: string) => (
+    <CoverImage
+      sources={[series.coverImage]}
+      alt=""
+      eager={eager}
+      className={className}
+      fallback={<PlaceholderArt themeColor={series.themeColor} number={1} title={series.title} size="hero" />}
+    />
+  );
 
   return (
-    <main className="editorial-page overflow-hidden">
-      <section className="reader-paper p-5 sm:p-6 md:p-8">
-        <div className="grid gap-6 md:gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
-          {/* Phones: a contained poster so the title and Start Reading stay near the top.
-              The AI tag banner hangs from its bottom edge. */}
-          <div className="flex flex-col items-center">
-            <div className="mx-auto min-h-0 w-full max-w-[160px] flex-1 overflow-hidden rounded-[22px] border border-[var(--border-color)] bg-[var(--bg-primary)] sm:max-w-[260px] md:rounded-[28px] lg:max-w-none">
-              {series.coverImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={series.coverImage}
-                  alt={series.title}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="theme-meta flex aspect-[4/5] items-center justify-center px-8 text-center text-xs uppercase tracking-[0.32em]">
-                  Series Cover
-                </div>
-              )}
-            </div>
-            <AiTagBanner tag={series.aiUsageTag} className="-mt-px" />
-          </div>
+    <main className="series-accent bg-[var(--paper-bg)] pb-16" style={seriesAccentStyle(series.themeColor)}>
+      {/* Phones and tablets: the cover runs edge to edge and fades into the page. */}
+      <div className="relative h-[min(68vh,520px)] w-full overflow-hidden lg:hidden">
+        {cover(true, "absolute inset-0 h-full w-full object-cover")}
+        <div aria-hidden className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-b from-transparent via-[color-mix(in_srgb,var(--paper-bg)_55%,transparent)] to-[var(--paper-bg)]" />
+      </div>
 
-          <div className="flex flex-col justify-center">
-            <p
-              className="inline-flex self-start rounded-full px-3 py-1 font-mono-df text-[0.67rem] font-bold uppercase tracking-[0.22em]"
-              style={{ backgroundColor: chipColor, color: readableTextOn(chipColor), boxShadow: edge }}
-            >
-              {series.genre || "Serialized fiction"}
-            </p>
-            <h1 className="editorial-title theme-heading mt-3 text-balance text-4xl font-semibold md:text-6xl">
-              {series.title}
-            </h1>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <p className="theme-meta flex items-center gap-2 text-sm md:text-base">
-                <FramedAvatar user={series.author} size="sm" />
-                Written by{" "}
-                <Link
-                  href={`/author/${series.authorId}`}
-                  className="inline-flex min-h-11 items-center font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 transition hover:decoration-2 focus-visible:decoration-2"
-                >
-                  {series.author.name || "Anonymous Author"}
-                </Link>
-              </p>
-              <AuthorTierBadge tier={authorTier} />
-            </div>
-            {/* Follows the SERIES (Library). Following the author is on the author's page. */}
-            <div className="mt-3">
-              <FollowSeriesButton
-                seriesId={series.id}
-                seriesTitle={series.title}
-                initialFollowing={viewerFollows}
-                initialCount={series.followers}
-                signedIn={Boolean(session?.user?.id)}
-              />
-            </div>
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <ReportAiTagButton subject={series.title} underline />
-            </div>
-            {/* Below desktop the description follows the actions, so Start Reading is reachable sooner. */}
-            <div className="order-last mt-6 max-w-3xl lg:order-none">
+      <div className="relative mx-auto max-w-6xl px-4 lg:grid lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] lg:items-start lg:gap-10 lg:px-8 lg:pt-10">
+        {/* Desktop: the cover as a poster beside the info card. */}
+        <div className="relative hidden aspect-[2/3] overflow-hidden rounded-[28px] border border-[var(--border-color)] shadow-[var(--shadow-card)] lg:block">
+          {cover(true, "absolute inset-0 h-full w-full object-cover")}
+        </div>
+
+        <div className="-mt-28 lg:mt-0">
+          <section
+            aria-labelledby="series-title"
+            className="relative rounded-[28px] border border-[var(--border-color)] bg-[var(--surface-raised)] p-5 shadow-[var(--shadow-raised)] sm:p-7"
+          >
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <span className="inline-flex rounded-full bg-[var(--sa)] px-3 py-1 font-mono-df text-[0.67rem] font-bold uppercase tracking-[0.22em] text-[var(--sa-ink)]">
+                {series.genre || "Serialized fiction"}
+              </span>
               {rating ? (
-                <p className="theme-meta mb-2 flex items-center gap-1.5 text-sm">
+                <span className="theme-meta flex items-center gap-1.5 text-sm">
                   <span className="sr-only">{rating.label}</span>
-                  <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 text-[var(--status-warning)]" fill="currentColor">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" style={{ color: "var(--star-fill)" }} fill="currentColor">
                     <path d="M12 3.2l2.6 5.5 6 .8-4.4 4.1 1.1 5.9L12 16.6l-5.3 2.9 1.1-5.9-4.4-4.1 6-.8z" />
                   </svg>
                   <span aria-hidden>
                     <span className="font-semibold text-[var(--text-primary)]">{rating.value}</span> ({rating.count.toLocaleString()}{" "}
                     {rating.count === 1 ? "rating" : "ratings"})
                   </span>
-                </p>
+                </span>
               ) : null}
-              <p className="theme-body text-base leading-7 md:text-lg">{series.description}</p>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-3 lg:mt-8">
-              {/* Placeholder: seasons are not in the data model yet. */}
-              <SeasonSelector />
+            <h1 id="series-title" className="editorial-title theme-heading mt-3 text-balance text-4xl font-semibold leading-[1.05] md:text-5xl">
+              {series.title}
+            </h1>
 
-              {series.episodes[0] && (
+            <p className="theme-meta mt-3 flex items-center gap-2 text-sm md:text-base">
+              <FramedAvatar user={series.author} size="sm" />
+              <span>
+                by{" "}
                 <Link
-                  href={`/episode/${series.episodes[0].id}`}
-                  className="story-button-primary min-h-11 w-full sm:w-auto"
-                  style={
-                    accent
-                      ? {
-                          background: accent,
-                          color: readableTextOn(accent),
-                          boxShadow: `${edge}, 0 10px 26px ${accent}4d`,
-                        }
-                      : undefined
-                  }
+                  href={`/author/${series.authorId}`}
+                  className="font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 transition hover:decoration-2 focus-visible:decoration-2"
                 >
-                  Start Reading
+                  {authorName}
                 </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
+              </span>
+            </p>
 
-      <section className="mt-8">
-        <EpisodeCarousel
-          viewer={viewer}
-          episodes={series.episodes.map((episode) => ({
-            id: episode.id,
-            title: episode.title,
-            episodeNumber: episode.episodeNumber,
-            teaser: publicEpisodePreview(episode),
-            aiUsageTag: episode.aiUsageTag,
-            readTime: episode.readTime,
-            readerCount: episode.readerCount,
-            monetization: {
-              contentType: "episode",
-              seriesId: series.id,
-              id: episode.id,
-              isFree: !episode.locked,
-              isLocked: episode.locked,
-              price: null,
-              creatorId: series.authorId,
-            },
-          }))}
+            <p className="theme-meta mt-3 text-sm">
+              {episodes.length} {episodes.length === 1 ? "episode" : "episodes"}
+              {totalMinutes > 0 ? <> · {formatMinutes(totalMinutes)}</> : null} · {series.isComplete ? "Complete" : "Ongoing"}
+            </p>
+
+            <div className="mt-5 flex items-center gap-3">
+              {main ? (
+                <Link
+                  href={main.href}
+                  className="inline-flex min-h-12 min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full bg-[var(--sa)] px-5 text-base font-semibold text-[var(--sa-ink)] shadow-[0_0_0_1px_var(--border-strong),0_10px_26px_color-mix(in_srgb,var(--sa)_30%,transparent)] transition hover:brightness-110 sm:flex-none"
+                >
+                  {main.label}
+                </Link>
+              ) : (
+                <p className="theme-meta text-sm">The first episode is coming soon.</p>
+              )}
+              <FollowSeriesButton
+                seriesId={series.id}
+                seriesTitle={series.title}
+                initialFollowing={page.following}
+                initialCount={series.followers}
+                signedIn={Boolean(viewerId)}
+                variant="secondary"
+              />
+            </div>
+            {!viewerId && main ? (
+              <p className="mt-3 text-sm">
+                <Link href={signInHref} className="font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 hover:decoration-2">
+                  Create a free account to save progress
+                </Link>
+              </p>
+            ) : null}
+
+            <ExpandableText text={series.description} className="theme-body mt-5 text-base leading-7" />
+          </section>
+          {/* The AI-use banner hangs from the card's bottom edge. */}
+          <AiTagBanner tag={series.aiUsageTag} className="ml-6 -mt-px" />
+        </div>
+      </div>
+
+      <div className="mx-auto mt-10 max-w-6xl space-y-10 px-4 lg:px-8">
+        <EpisodeStrip
+          seriesId={series.id}
+          seriesTitle={series.title}
+          seriesCover={series.coverImage}
+          themeColor={series.themeColor}
+          episodes={episodes}
+          seasons={seasons}
+          resumeEpisodeId={resume && resume.kind !== "again" ? resume.episodeId : null}
+          signedIn={Boolean(viewerId)}
         />
-      </section>
+
+        <SeriesRail title={`More by ${authorName}`} cards={rails.byAuthor} seeAllHref={`/author/${series.authorId}`} />
+        <SeriesRail
+          title={`More in ${series.genre}`}
+          cards={rails.byGenre}
+          seeAllHref={`/explore?genre=${encodeURIComponent(series.genre)}`}
+        />
+        <SeriesRail title="Because you liked this" cards={rails.because} />
+      </div>
     </main>
   );
 }

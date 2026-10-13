@@ -6,7 +6,7 @@ import { isWriter } from "@/lib/roles";
 export default async function ExplorePage({
   searchParams,
 }: {
-  searchParams?: { q?: string; focus?: string };
+  searchParams?: { q?: string; focus?: string; genre?: string };
 }) {
   const session = await auth().catch(() => null);
   const query = searchParams?.q?.trim() || "";
@@ -22,6 +22,8 @@ export default async function ExplorePage({
   return (
     <ExploreBrowse
       initialQuery={query}
+      // "See all" from a series page's "More in [genre]" rail.
+      initialGenre={searchParams?.genre}
       // The mobile header's search button links here with ?focus=search.
       autoFocusSearch={searchParams?.focus === "search"}
       showBecomeAuthorCta={showBecomeAuthorCta}

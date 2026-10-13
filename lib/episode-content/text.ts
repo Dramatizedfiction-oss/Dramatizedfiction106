@@ -5,7 +5,7 @@ import type { BlockNode, EpisodeDocument, InlineNode } from "./types";
  * import here, so this module stays small enough for the client bundle.
  */
 
-const WORDS_PER_MINUTE = 220;
+export const WORDS_PER_MINUTE = 230;
 
 function inlineText(nodes: InlineNode[]) {
   return nodes.map((node) => (node.type === "text" ? node.text : "\n")).join("");

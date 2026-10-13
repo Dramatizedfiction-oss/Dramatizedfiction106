@@ -8,6 +8,7 @@ import EpisodeReadingView from "@/components/episode-content/EpisodeReadingView"
 import ReportAiTagButton from "@/components/ReportAiTagButton";
 import ReaderChrome from "@/components/ReaderChrome";
 import ReadTracker from "@/components/ReadTracker";
+import ReadingProgressTracker from "@/components/ReadingProgressTracker";
 import BookmarkButton, { BookmarkProvider } from "@/components/engagement/BookmarkButton";
 import CommentsSection from "@/components/engagement/CommentsSection";
 import RatingControl from "@/components/engagement/RatingControl";
@@ -119,6 +120,8 @@ export default async function EpisodeReaderPage({
         actions={<BookmarkButton variant="icon" episodeTitle={episode.title} />}
       >
         {trackRead ? <ReadTracker episodeId={episode.id} /> : null}
+        {/* How far the member has read (series page progress bars); signed-in only. */}
+        {viewerId && canReadEpisode ? <ReadingProgressTracker episodeId={episode.id} targetId="story-body" /> : null}
         <main className="pb-24">
           <EpisodeReadingView
             seriesTitle={episode.series.title}
@@ -133,7 +136,7 @@ export default async function EpisodeReaderPage({
             headerActions={<ReportAiTagButton subject={episode.title} />}
           >
             {canReadEpisode ? (
-              <div className="reading-body">
+              <div id="story-body" className="reading-body">
                 <EpisodeContent content={parseEpisodeHtml(episode.body)} />
               </div>
             ) : (

@@ -77,6 +77,7 @@ export type SeriesInput = {
   coverImage?: string;
   themeColor?: string;
   aiUsageTag?: string;
+  isComplete?: boolean;
 };
 
 export function createSeries(input: SeriesInput) {
