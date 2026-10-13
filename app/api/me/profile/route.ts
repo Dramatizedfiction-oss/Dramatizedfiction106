@@ -3,7 +3,8 @@ import { z } from "zod";
 import { badRequest, serverError } from "@/lib/api/writer-studio-request";
 import { requireApiUser } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
-import { PROFILE_LIMITS, PROFILE_LINK_FIELDS, normalizeProfileLink } from "@/lib/profile";
+import { checkBio } from "@/lib/author-profile-rules";
+import { PROFILE_LINK_FIELDS, normalizeProfileLink } from "@/lib/profile";
 
 /*
  * The signed-in user's own profile text: bio, public links, whether their
@@ -48,9 +49,9 @@ export async function PATCH(request: Request) {
   if (input.activityVisibility) data.activityVisibility = input.activityVisibility;
 
   if (input.bio !== undefined) {
-    const bio = input.bio?.trim() ?? "";
-    if (bio.length > PROFILE_LIMITS.bio) return badRequest(`Bios can be up to ${PROFILE_LIMITS.bio} characters.`);
-    data.bio = bio || null;
+    const bio = checkBio(input.bio);
+    if (!bio.ok) return badRequest(bio.message);
+    data.bio = bio.value;
   }
 
   for (const field of PROFILE_LINK_FIELDS) {

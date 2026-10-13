@@ -6,7 +6,9 @@
 export const PROFILE_LIMITS = {
   // Matches the limit used when becoming a writer (app/api/become-author).
   name: 80,
-  bio: 600,
+  // One bio for the reading profile and the author page (Sweep 14; was 600).
+  // Plain text, no links: checkBio in lib/author-profile-rules.ts.
+  bio: 300,
   link: 300,
 } as const;
 

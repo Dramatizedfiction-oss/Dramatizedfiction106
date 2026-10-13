@@ -103,7 +103,13 @@ export async function deleteAccount(userId: string, password: string): Promise<R
   // Uploaded images to clean up after the rows are gone (library avatars are shared: never deleted).
   const images = await prisma.user.findUnique({
     where: { id: userId },
-    select: { image: true, bannerImage: true, avatarOriginalUrl: true, series: { select: { coverImage: true } } },
+    select: {
+      image: true,
+      bannerImage: true,
+      avatarOriginalUrl: true,
+      series: { select: { coverImage: true } },
+      profileLibraryItems: { where: { coverImage: { not: null } }, select: { coverImage: true } },
+    },
   });
 
   const result = await prisma.$transaction(
@@ -127,7 +133,14 @@ export async function deleteAccount(userId: string, password: string): Promise<R
   );
 
   if (result.ok && images) {
-    const urls = [images.image, images.avatarOriginalUrl, images.bannerImage, ...images.series.map((series) => series.coverImage)];
+    const urls = [
+      images.image,
+      images.avatarOriginalUrl,
+      images.bannerImage,
+      ...images.series.map((series) => series.coverImage),
+      // Library book covers (the rows themselves cascade with the user).
+      ...images.profileLibraryItems.map((item) => item.coverImage),
+    ];
     for (const url of urls) {
       if (url && !isLibraryImagePath(url)) await deleteReplacedImage(url, null);
     }

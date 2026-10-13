@@ -1,28 +1,37 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
-import AiTagBanner from "@/components/AiTagBanner";
+import AuthorProfileEditor from "@/components/author-profile/AuthorProfileEditor";
+import WritingSections from "@/components/author-profile/WritingSections";
 import FramedAvatar from "@/components/avatar/FramedAvatar";
 import FollowAuthorButton from "@/components/follow/FollowAuthorButton";
-import ProfileEditor from "@/components/profile/ProfileEditor";
 import ProfileViewSwitch from "@/components/profile/ProfileViewSwitch";
 import ReadingView, { readingIsVisible } from "@/components/profile/ReadingView";
-import { PUBLIC_EPISODE_WHERE, PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
+import {
+  aboutCards,
+  getLibraryCards,
+  getSeriesOptions,
+  onSiteData,
+  profileLinks,
+  sectionSwitches,
+  writingViewSelect,
+} from "@/lib/author-profile";
 import { prisma } from "@/lib/prisma";
-import { safeProfileLink } from "@/lib/profile";
 import { isWriterRole, parseProfileView, profileHref } from "@/lib/profile-links";
 import { writerStatusLabel } from "@/lib/writer-studio/status";
 
 /*
  * A writer's profile (writers are Writer, Board and CEO; everyone else is sent
  * to their reading profile). Two views, chosen in the URL:
- *   - Writing (default): bio, links, Follow Author, published series and
- *     latest episodes. Always public.
+ *   - Writing (default, Sweep 14): Bio, Library, About me, On site, Links
+ *     (components/author-profile/WritingSections). For visitors a section shows
+ *     only when its switch is on and it has content; the owner sees prompts in
+ *     empty sections and edits everything in AuthorProfileEditor (the pen).
  *   - Reading (?view=reading): the owner's Library, Bookmarks and Activity; for
  *     anyone else only what the owner made public, and the switch only shows
  *     when something is.
- * Everything shown is loaded for the profile's own id; the editor pen shows
- * only to the owner. Drafts are never shown.
+ * Queries (lib/author-profile.ts): one user query with everything the header
+ * and sections need, the Library query in parallel, and for the owner the
+ * series they can add. Drafts are never shown.
  */
 export default async function AuthorProfilePage({
   params,
@@ -32,49 +41,35 @@ export default async function AuthorProfilePage({
   searchParams?: { view?: string };
 }) {
   const session = await auth();
-  const author = await prisma.user.findUnique({
-    where: { id: params.authorId },
-    // Public profile fields only (never email, password hash, Stripe ids).
-    select: {
-      id: true,
-      name: true,
-      bio: true,
-      image: true,
-      role: true,
-      writerStatus: true,
-      bannerImage: true,
-      twitterUrl: true,
-      instagramUrl: true,
-      youtubeUrl: true,
-      websiteUrl: true,
-      discordUrl: true,
-      readingProfileVisibility: true,
-      activityVisibility: true,
-      authorProfile: { select: { id: true } },
-      series: {
-        where: PUBLIC_SERIES_WHERE,
-        orderBy: { updatedAt: "desc" },
-        select: {
-          id: true,
-          title: true,
-          genre: true,
-          aiUsageTag: true,
-          _count: { select: { episodes: { where: { status: "PUBLISHED" } } } },
-        },
+  const isOwner = session?.user?.id === params.authorId;
+  const requested = parseProfileView(searchParams?.view);
+  const wantsWriting = requested !== "reading";
+
+  const [author, libraryLoaded, seriesOptions] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: params.authorId },
+      // Public profile fields only (never email, password hash, Stripe ids).
+      select: {
+        id: true,
+        name: true,
+        bio: true,
+        image: true,
+        role: true,
+        writerStatus: true,
+        bannerImage: true,
+        readingProfileVisibility: true,
+        activityVisibility: true,
+        ...writingViewSelect,
       },
-      episodes: {
-        where: { ...PUBLIC_EPISODE_WHERE, locked: false },
-        orderBy: { updatedAt: "desc" },
-        take: 6,
-        select: { id: true, title: true, episodeNumber: true, aiUsageTag: true, series: { select: { title: true } } },
-      },
-    },
-  });
+    }),
+    // The owner's editor always needs the full Library (saving replaces it).
+    wantsWriting || isOwner ? getLibraryCards(params.authorId, isOwner) : null,
+    isOwner ? getSeriesOptions(params.authorId) : [],
+  ]);
   if (!author) notFound();
   // Not a writer: their profile is the reading profile.
   if (!isWriterRole(author.role)) redirect(profileHref(author));
 
-  const isOwner = session?.user?.id === author.id;
   // A writer always has an author record; create it if it's somehow missing (owner only).
   if (isOwner && !author.authorProfile) {
     await prisma.authorProfile.createMany({
@@ -84,18 +79,16 @@ export default async function AuthorProfilePage({
   }
 
   const canSeeReading = isOwner || readingIsVisible(author);
-  const requested = parseProfileView(searchParams?.view);
   const view = requested === "reading" && canSeeReading ? "reading" : "writing";
   const basePath = `/author/${author.id}`;
-
   const displayName = author.name?.trim() || "Dramatized Fiction Author";
-  const socialLinks = [
-    { label: "Twitter", href: safeProfileLink(author.twitterUrl) },
-    { label: "Instagram", href: safeProfileLink(author.instagramUrl) },
-    { label: "YouTube", href: safeProfileLink(author.youtubeUrl) },
-    { label: "Website", href: safeProfileLink(author.websiteUrl) },
-    { label: "Discord", href: safeProfileLink(author.discordUrl) },
-  ].filter((item) => Boolean(item.href));
+
+  const sections = sectionSwitches(author);
+  const about = aboutCards(author);
+  const links = profileLinks(author);
+  const onSite = onSiteData(author);
+  // Asked for Reading but can't see it: the Writing view still needs its Library.
+  const library = view === "writing" ? (libraryLoaded ?? (await getLibraryCards(author.id, isOwner))) : [];
 
   return (
     <main className="overflow-hidden md:px-6 md:py-6 lg:px-8">
@@ -113,23 +106,17 @@ export default async function AuthorProfilePage({
           {/* The owner's profile editor (pen), on either view. */}
           {isOwner ? (
             <div className="absolute right-4 top-3 z-10 sm:right-6 md:right-8">
-              <ProfileEditor
+              <AuthorProfileEditor
+                authorId={author.id}
+                displayName={displayName}
                 role={author.role}
-                isWriter
-                initial={{
-                  bio: author.bio ?? "",
-                  image: author.image ?? "",
-                  bannerImage: author.bannerImage ?? "",
-                  readingProfileVisibility: author.readingProfileVisibility,
-                  activityVisibility: author.activityVisibility,
-                  links: {
-                    websiteUrl: author.websiteUrl ?? "",
-                    twitterUrl: author.twitterUrl ?? "",
-                    instagramUrl: author.instagramUrl ?? "",
-                    youtubeUrl: author.youtubeUrl ?? "",
-                    discordUrl: author.discordUrl ?? "",
-                  },
-                }}
+                image={author.image ?? ""}
+                bannerImage={author.bannerImage ?? ""}
+                readingProfileVisibility={author.readingProfileVisibility}
+                activityVisibility={author.activityVisibility}
+                doc={{ bio: author.bio ?? "", sections, library: libraryLoaded ?? [], about, links }}
+                seriesOptions={seriesOptions}
+                onSite={onSite}
               />
             </div>
           ) : null}
@@ -146,90 +133,29 @@ export default async function AuthorProfilePage({
             </div>
           </div>
 
-          {canSeeReading ? (
-            <div className="mt-5">
-              <ProfileViewSwitch basePath={basePath} current={view} />
+          {!isOwner || canSeeReading ? (
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              {isOwner ? null : <FollowAuthorButton authorId={author.id} authorName={displayName} />}
+              {canSeeReading ? <ProfileViewSwitch basePath={basePath} current={view} /> : null}
             </div>
           ) : null}
         </div>
       </section>
 
-      <div className="px-4 pt-6 md:px-0 md:pt-8">
+      <div className="px-4 pb-10 pt-6 md:px-0 md:pt-8">
         {view === "reading" ? (
           <ReadingView member={author} isOwner={isOwner} />
         ) : (
-          <div className="space-y-8">
-            <section aria-label="About" className="max-w-3xl">
-              <p className="theme-body text-base leading-7 md:text-lg">
-                {author.bio?.trim() || `${displayName} is writing on Dramatized Fiction.`}
-              </p>
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                {isOwner ? null : <FollowAuthorButton authorId={author.id} authorName={displayName} />}
-                {socialLinks.map((link) => (
-                  <a key={link.label} href={link.href!} target="_blank" rel="noreferrer" className="story-button-secondary min-h-11">
-                    {link.label}
-                  </a>
-                ))}
-              </div>
-            </section>
-
-            <section aria-labelledby="series-heading">
-              <h2 id="series-heading" className="font-heading theme-heading text-2xl font-semibold">
-                Series
-              </h2>
-              {author.series.length === 0 ? (
-                <p className="theme-meta mt-3 text-sm">Published series will appear here.</p>
-              ) : (
-                <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {author.series.map((series) => (
-                    <li key={series.id} className="min-w-0">
-                      <Link
-                        href={`/series/${series.id}`}
-                        className="theme-panel-hover flex min-h-[72px] items-center justify-between gap-3 rounded-[20px] border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3"
-                      >
-                        <span className="min-w-0">
-                          <span className="theme-heading block truncate font-medium">{series.title}</span>
-                          <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                            <AiTagBanner tag={series.aiUsageTag} />
-                            <span className="theme-meta text-sm">{series.genre}</span>
-                          </span>
-                        </span>
-                        <span className="theme-meta shrink-0 text-xs">
-                          {series._count.episodes} episode{series._count.episodes === 1 ? "" : "s"}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            {author.episodes.length > 0 ? (
-              <section aria-labelledby="latest-heading">
-                <h2 id="latest-heading" className="font-heading theme-heading text-2xl font-semibold">
-                  Latest episodes
-                </h2>
-                <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {author.episodes.map((episode) => (
-                    <li key={episode.id} className="min-w-0">
-                      <Link
-                        href={`/episode/${episode.id}`}
-                        className="theme-panel-hover block rounded-[20px] border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3"
-                      >
-                        <span className="theme-heading block truncate font-medium">{episode.title}</span>
-                        <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                          <AiTagBanner tag={episode.aiUsageTag} />
-                          <span className="theme-meta text-sm">
-                            {episode.series.title} · Episode {episode.episodeNumber}
-                          </span>
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-          </div>
+          <WritingSections
+            mode={isOwner ? "owner" : "visitor"}
+            authorId={author.id}
+            bio={author.bio}
+            sections={sections}
+            library={library}
+            about={about}
+            links={links}
+            onSite={onSite}
+          />
         )}
       </div>
     </main>

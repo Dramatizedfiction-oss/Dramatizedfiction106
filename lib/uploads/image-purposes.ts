@@ -18,6 +18,9 @@ export const IMAGE_PURPOSES = {
   "profile-image": { label: "Profile picture", maxWidth: 800, maxHeight: 800, needsTarget: false },
   "profile-original": { label: "Profile photo original", maxWidth: 1024, maxHeight: 1024, needsTarget: false },
   "profile-banner": { label: "Profile banner", maxWidth: 2400, maxHeight: 1200, needsTarget: false },
+  // A book cover in a writer's profile Library: the server cuts a 600x900 crop
+  // from the upload (POST /api/me/author-profile/book-cover), never the general route.
+  "profile-book-cover": { label: "Book cover", maxWidth: 1200, maxHeight: 1800, needsTarget: false },
   // Administration's shared avatar library (BOARD and CEO only).
   "platform-avatar": { label: "Platform avatar", maxWidth: 800, maxHeight: 800, needsTarget: false },
 } as const;

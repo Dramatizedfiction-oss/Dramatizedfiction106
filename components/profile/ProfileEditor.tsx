@@ -245,7 +245,7 @@ export default function ProfileEditor({
   );
 }
 
-function VisibilitySwitch({
+export function VisibilitySwitch({
   name,
   value,
   onChange,
@@ -292,7 +292,7 @@ function VisibilitySwitch({
   );
 }
 
-function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+export function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
     <section>
       <h3 className="theme-heading text-base font-semibold">{title}</h3>
@@ -302,7 +302,7 @@ function Section({ title, description, children }: { title: string; description?
   );
 }
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block">
       <span className="theme-heading mb-2 block text-sm font-semibold">{label}</span>
@@ -312,7 +312,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   );
 }
 
-function PenIcon() {
+export function PenIcon() {
   return (
     <svg aria-hidden="true" viewBox="0 0 20 20" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M13.5 3.5l3 3L7 16H4v-3z" />

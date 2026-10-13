@@ -23,12 +23,22 @@ export const CENTERED_CROP: AvatarCrop = { x: 0.5, y: 0.5, zoom: 1 };
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
-/** The crop made valid for a W x H photo: zoom in range, circle fully inside. */
-export function clampCrop(crop: AvatarCrop, width: number, height: number): AvatarCrop {
+// Other frames (Sweep 14: 2:3 book covers) pass `aspect` = frame width /
+// height; the default 1 is the avatar circle. At zoom 1 the frame is the
+// largest of that shape that fits the photo.
+
+/** Frame size in original pixels at this zoom. */
+function frameSize(zoom: number, width: number, height: number, aspect: number) {
+  const frameHeight = Math.min(height, width / aspect) / zoom;
+  return { frameWidth: frameHeight * aspect, frameHeight };
+}
+
+/** The crop made valid for a W x H photo: zoom in range, frame fully inside. */
+export function clampCrop(crop: AvatarCrop, width: number, height: number, aspect = 1): AvatarCrop {
   const zoom = clamp(Number.isFinite(crop.zoom) ? crop.zoom : 1, AVATAR_MIN_ZOOM, AVATAR_MAX_ZOOM);
-  const diameter = Math.min(width, height) / zoom;
-  const halfX = diameter / 2 / width;
-  const halfY = diameter / 2 / height;
+  const { frameWidth, frameHeight } = frameSize(zoom, width, height, aspect);
+  const halfX = frameWidth / 2 / width;
+  const halfY = frameHeight / 2 / height;
   return {
     x: clamp(Number.isFinite(crop.x) ? crop.x : 0.5, halfX, 1 - halfX),
     y: clamp(Number.isFinite(crop.y) ? crop.y : 0.5, halfY, 1 - halfY),
@@ -36,13 +46,15 @@ export function clampCrop(crop: AvatarCrop, width: number, height: number): Avat
   };
 }
 
-/** The square of the original (whole pixels, inside the photo) that becomes the avatar. */
-export function cropRect(crop: AvatarCrop, width: number, height: number) {
-  const valid = clampCrop(crop, width, height);
-  const size = Math.max(1, Math.min(width, height, Math.round(Math.min(width, height) / valid.zoom)));
-  const left = clamp(Math.round(valid.x * width - size / 2), 0, width - size);
-  const top = clamp(Math.round(valid.y * height - size / 2), 0, height - size);
-  return { left, top, width: size, height: size };
+/** The rectangle of the original (whole pixels, inside the photo) that becomes the image. */
+export function cropRect(crop: AvatarCrop, width: number, height: number, aspect = 1) {
+  const valid = clampCrop(crop, width, height, aspect);
+  const frame = frameSize(valid.zoom, width, height, aspect);
+  const rectWidth = Math.max(1, Math.min(width, Math.round(frame.frameWidth)));
+  const rectHeight = Math.max(1, Math.min(height, Math.round(frame.frameHeight)));
+  const left = clamp(Math.round(valid.x * width - rectWidth / 2), 0, width - rectWidth);
+  const top = clamp(Math.round(valid.y * height - rectHeight / 2), 0, height - rectHeight);
+  return { left, top, width: rectWidth, height: rectHeight };
 }
 
 /** Parses a crop from untrusted input; null when it isn't three finite numbers. */
@@ -54,28 +66,29 @@ export function parseCrop(value: unknown): AvatarCrop | null {
 }
 
 /**
- * How the editor draws the photo inside a circle `viewport` pixels wide:
- * the displayed image size and its offset from the circle's top-left corner.
+ * How the editor draws the photo inside a frame `viewport` pixels wide (and
+ * viewport / aspect tall): the displayed image size and its offset from the
+ * frame's top-left corner.
  */
-export function cropLayout(crop: AvatarCrop, width: number, height: number, viewport: number) {
-  const valid = clampCrop(crop, width, height);
-  const scale = (viewport * valid.zoom) / Math.min(width, height);
+export function cropLayout(crop: AvatarCrop, width: number, height: number, viewport: number, aspect = 1) {
+  const valid = clampCrop(crop, width, height, aspect);
+  const scale = viewport / frameSize(valid.zoom, width, height, aspect).frameWidth;
   return {
     scale,
     width: width * scale,
     height: height * scale,
     left: viewport / 2 - valid.x * width * scale,
-    top: viewport / 2 - valid.y * height * scale,
+    top: viewport / aspect / 2 - valid.y * height * scale,
   };
 }
 
-/** Moves the crop by a drag of (dx, dy) screen pixels in a `viewport`-wide circle. */
-export function dragCrop(crop: AvatarCrop, dx: number, dy: number, width: number, height: number, viewport: number) {
-  const { scale } = cropLayout(crop, width, height, viewport);
-  return clampCrop({ ...crop, x: crop.x - dx / (width * scale), y: crop.y - dy / (height * scale) }, width, height);
+/** Moves the crop by a drag of (dx, dy) screen pixels in a `viewport`-wide frame. */
+export function dragCrop(crop: AvatarCrop, dx: number, dy: number, width: number, height: number, viewport: number, aspect = 1) {
+  const { scale } = cropLayout(crop, width, height, viewport, aspect);
+  return clampCrop({ ...crop, x: crop.x - dx / (width * scale), y: crop.y - dy / (height * scale) }, width, height, aspect);
 }
 
-/** Changes the zoom, keeping the circle's center where it is (then clamped). */
-export function zoomCrop(crop: AvatarCrop, zoom: number, width: number, height: number) {
-  return clampCrop({ ...crop, zoom }, width, height);
+/** Changes the zoom, keeping the frame's center where it is (then clamped). */
+export function zoomCrop(crop: AvatarCrop, zoom: number, width: number, height: number, aspect = 1) {
+  return clampCrop({ ...crop, zoom }, width, height, aspect);
 }

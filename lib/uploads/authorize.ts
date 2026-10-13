@@ -12,6 +12,7 @@ import type { ImagePurpose } from "./image-purposes";
  *   series-cover / episode-cover  WRITER+ and author of that series/episode
  *   profile-banner                  any signed-in user, for their own account
  *   profile-image / profile-original  never here: made by /api/me/avatar/photo
+ *   profile-book-cover              never here: made by /api/me/author-profile/book-cover
  *   platform-avatar                 BOARD and CEO (Administration's avatar library)
  */
 export async function authorizeImageUpload(
@@ -40,6 +41,12 @@ export async function authorizeImageUpload(
       const guard = await requireApiUser();
       if (!guard.ok) return guard;
       return { ok: false, response: apiError("FORBIDDEN", "Use the avatar editor to add a profile photo.") };
+    }
+    case "profile-book-cover": {
+      // Cropped on the server by the profile editor's own route.
+      const guard = await requireApiRole("WRITER");
+      if (!guard.ok) return guard;
+      return { ok: false, response: apiError("FORBIDDEN", "Add book covers from your profile editor.") };
     }
     case "platform-avatar":
       return requireApiRole("BOARD");

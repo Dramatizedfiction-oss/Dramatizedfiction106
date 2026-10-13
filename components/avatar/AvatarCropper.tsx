@@ -19,7 +19,10 @@ import {
  * the whole circle; the server applies the same rules again on save.
  */
 
-const VIEWPORT = 272;
+const CIRCLE_VIEWPORT = 272;
+/** Book covers (Sweep 14): a 2:3 frame, 200 x 300 on screen. */
+const PORTRAIT_VIEWPORT = 200;
+const PORTRAIT_ASPECT = 2 / 3;
 const PREVIEWS = [
   { size: 80, label: "Profile" },
   { size: 40, label: "Comments" },
@@ -33,7 +36,10 @@ export default function AvatarCropper({
   error,
   onSave,
   onCancel,
+  frame = "circle",
 }: {
+  /** "circle" for avatars (default); "portrait" for 2:3 book covers. */
+  frame?: "circle" | "portrait";
   src: string;
   initial: AvatarCrop | null;
   busy: boolean;
@@ -41,6 +47,9 @@ export default function AvatarCropper({
   onSave: (crop: AvatarCrop) => void;
   onCancel: () => void;
 }) {
+  const portrait = frame === "portrait";
+  const VIEWPORT = portrait ? PORTRAIT_VIEWPORT : CIRCLE_VIEWPORT;
+  const aspect = portrait ? PORTRAIT_ASPECT : 1;
   const [natural, setNatural] = useState<{ width: number; height: number } | null>(null);
   const [crop, setCrop] = useState<AvatarCrop>(initial ?? CENTERED_CROP);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -52,7 +61,7 @@ export default function AvatarCropper({
     image.onload = () => {
       if (!alive) return;
       setNatural({ width: image.naturalWidth, height: image.naturalHeight });
-      setCrop((current) => clampCrop(current, image.naturalWidth, image.naturalHeight));
+      setCrop((current) => clampCrop(current, image.naturalWidth, image.naturalHeight, aspect));
     };
     image.src = src;
     return () => {
@@ -65,7 +74,7 @@ export default function AvatarCropper({
   const height = natural?.height ?? 1;
 
   function setZoom(zoom: number) {
-    setCrop((current) => zoomCrop(current, zoom, width, height));
+    setCrop((current) => zoomCrop(current, zoom, width, height, aspect));
   }
 
   function onPointerDown(event: PointerEvent<HTMLDivElement>) {
@@ -90,7 +99,7 @@ export default function AvatarCropper({
     }
     const dx = event.clientX - previous.x;
     const dy = event.clientY - previous.y;
-    setCrop((current) => dragCrop(current, dx, dy, width, height, VIEWPORT));
+    setCrop((current) => dragCrop(current, dx, dy, width, height, VIEWPORT, aspect));
   }
 
   function onPointerUp(event: PointerEvent<HTMLDivElement>) {
@@ -105,7 +114,7 @@ export default function AvatarCropper({
     if (!element || !natural) return;
     function onWheel(event: globalThis.WheelEvent) {
       event.preventDefault();
-      setCrop((current) => zoomCrop(current, current.zoom * Math.exp(-event.deltaY * 0.0015), natural!.width, natural!.height));
+      setCrop((current) => zoomCrop(current, current.zoom * Math.exp(-event.deltaY * 0.0015), natural!.width, natural!.height, aspect));
     }
     element.addEventListener("wheel", onWheel, { passive: false });
     return () => element.removeEventListener("wheel", onWheel);
@@ -122,7 +131,7 @@ export default function AvatarCropper({
     if (moves[event.key]) {
       event.preventDefault();
       const [dx, dy] = moves[event.key];
-      setCrop((current) => dragCrop(current, dx, dy, width, height, VIEWPORT));
+      setCrop((current) => dragCrop(current, dx, dy, width, height, VIEWPORT, aspect));
     } else if (event.key === "+" || event.key === "=") {
       event.preventDefault();
       setZoom(crop.zoom + 0.1);
@@ -132,7 +141,7 @@ export default function AvatarCropper({
     }
   }
 
-  const layout = cropLayout(crop, width, height, VIEWPORT);
+  const layout = cropLayout(crop, width, height, VIEWPORT, aspect);
 
   return (
     <div className="flex flex-col items-center">
@@ -148,8 +157,8 @@ export default function AvatarCropper({
         onPointerCancel={onPointerUp}
         onKeyDown={onKeyDown}
         ref={viewportRef}
-        className="relative mt-4 cursor-grab touch-none select-none overflow-hidden rounded-[28px] bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--series-accent))] active:cursor-grabbing"
-        style={{ width: VIEWPORT, height: VIEWPORT }}
+        className={`relative mt-4 cursor-grab touch-none select-none overflow-hidden ${portrait ? "rounded-xl" : "rounded-[28px]"} bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--series-accent))] active:cursor-grabbing`}
+        style={{ width: VIEWPORT, height: VIEWPORT / aspect }}
       >
         {ready ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -163,8 +172,12 @@ export default function AvatarCropper({
         ) : (
           <p className="absolute inset-0 flex items-center justify-center text-sm text-white/80">Loading photo…</p>
         )}
-        {/* The circle: everything outside it is dimmed. */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 rounded-full shadow-[0_0_0_9999px_rgba(0,0,0,0.6)] ring-2 ring-white/90" />
+        {/* The circle: everything outside it is dimmed. (A portrait frame is the whole viewport.) */}
+        {portrait ? (
+          <div aria-hidden className="pointer-events-none absolute inset-0 rounded-xl ring-2 ring-inset ring-white/90" />
+        ) : (
+          <div aria-hidden className="pointer-events-none absolute inset-0 rounded-full shadow-[0_0_0_9999px_rgba(0,0,0,0.6)] ring-2 ring-white/90" />
+        )}
       </div>
 
       <label className="mt-5 flex w-full max-w-[320px] items-center gap-3">
@@ -182,6 +195,7 @@ export default function AvatarCropper({
         />
       </label>
 
+      {portrait ? null : (
       <div className="mt-4 flex items-end gap-5" aria-label="Preview">
         {PREVIEWS.map((preview) => {
           const small = cropLayout(crop, width, height, preview.size);
@@ -201,6 +215,7 @@ export default function AvatarCropper({
           );
         })}
       </div>
+      )}
 
       {error ? (
         <p role="alert" className="mt-4 text-center text-sm text-[var(--status-danger)]">
@@ -209,7 +224,7 @@ export default function AvatarCropper({
       ) : null}
 
       <div className="mt-6 grid w-full max-w-[360px] grid-cols-3 gap-2">
-        <button type="button" onClick={() => setCrop(clampCrop(CENTERED_CROP, width, height))} disabled={!ready || busy} className="story-button-secondary min-h-11 justify-center disabled:opacity-50">
+        <button type="button" onClick={() => setCrop(clampCrop(CENTERED_CROP, width, height, aspect))} disabled={!ready || busy} className="story-button-secondary min-h-11 justify-center disabled:opacity-50">
           Reset
         </button>
         <button type="button" onClick={onCancel} disabled={busy} className="story-button-secondary min-h-11 justify-center disabled:opacity-50">

@@ -13,12 +13,15 @@ export default function Sheet({
   onRequestClose,
   children,
   footer,
+  wide = false,
 }: {
   open: boolean;
   title: string;
   onRequestClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  /** A wider desktop panel (still full screen on phones). */
+  wide?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -34,7 +37,7 @@ export default function Sheet({
     <dialog
       ref={ref}
       aria-labelledby={titleId}
-      className="studio-sheet"
+      className={wide ? "studio-sheet md:w-[600px]" : "studio-sheet"}
       onCancel={(event) => {
         event.preventDefault();
         onRequestClose();

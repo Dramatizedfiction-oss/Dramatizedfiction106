@@ -78,6 +78,9 @@ model User {
   reportsResolved          ContentReport[] @relation("ReportResolver")
   aiTagReportsFiled        AiTagReport[]   @relation("AiTagReportFiler")
   aiTagReportsResolved     AiTagReport[]   @relation("AiTagReportResolver")
+  profileLibraryItems      ProfileLibraryItem[]
+  profileAboutCards        ProfileAboutCard[]
+  profileLinks             ProfileLink[]
 }
 
 model AuthorProfile {
@@ -87,9 +90,70 @@ model AuthorProfile {
   bio           String?
   profileImage  String?
   creatorTagline String?
+  /// Owner switches for the sections of the author page's Writing view. A
+  /// section shows to visitors only when its switch is on AND it has content.
+  showBio       Boolean  @default(true)
+  showLibrary   Boolean  @default(true)
+  showAbout     Boolean  @default(true)
+  showOnSite    Boolean  @default(true)
+  showLinks     Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// A card in a writer's profile Library (max 12, lib/author-profile-rules.ts):
+/// a BOOK (title, cover, note, link) or one of their own SERIES chosen by hand.
+/// Saved only through PUT /api/me/author-profile.
+model ProfileLibraryItem {
+  id         String             @id @default(cuid())
+  userId     String
+  position   Int
+  kind       ProfileLibraryKind
+  seriesId   String?
+  title      String?
+  note       String?
+  url        String?
+  /// 600x900 WebP made on the server (POST /api/me/author-profile/book-cover).
+  coverImage String?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  series     Series?            @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, seriesId])
+  @@index([userId, position])
+  @@index([seriesId])
+}
+
+/// A prompt-and-answer card in a writer's Author area (max 10).
+model ProfileAboutCard {
+  id        String   @id @default(cuid())
+  userId    String
+  position  Int
+  prompt    String
+  answer    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, position])
+}
+
+/// A link on a writer's profile (max 10). http(s) only; the icon comes from
+/// the domain at render time (lib/author-profile-rules.ts).
+model ProfileLink {
+  id        String   @id @default(cuid())
+  userId    String
+  position  Int
+  label     String
+  url       String
+  subtext   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, position])
 }
 
 model Studio {
@@ -171,6 +235,7 @@ model Series {
   author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   follows     SeriesFollow[]
   aiTagReports AiTagReport[]
+  profileLibraryItems ProfileLibraryItem[]
 }
 
 /// A member following a series (separate from following an author). Their
@@ -492,6 +557,11 @@ enum Role {
   WRITER
   BOARD
   CEO
+}
+
+enum ProfileLibraryKind {
+  BOOK
+  SERIES
 }
 
 enum ProfileVisibility {
