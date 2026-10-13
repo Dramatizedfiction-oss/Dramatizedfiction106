@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import FramedAvatar from "@/components/avatar/FramedAvatar";
+import { profileHref } from "@/lib/profile-links";
 import type { CommentView } from "@/lib/comments";
 import { COMMENT_MAX_LENGTH, REPORT_NOTE_MAX_LENGTH, REPORT_REASONS, timeAgo } from "@/lib/engagement-rules";
 
@@ -302,13 +303,13 @@ function CommentItem({
   return (
     <li className="py-4">
       <div className="flex items-start gap-3">
-        <Link href={`/reader/${comment.author.id}`} className="shrink-0" tabIndex={-1} aria-hidden>
+        <Link href={profileHref(comment.author)} className="shrink-0" tabIndex={-1} aria-hidden>
           <FramedAvatar user={comment.author} size="md" />
         </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-start gap-2">
             <p className="min-w-0 flex-1 text-sm leading-6">
-              <Link href={`/reader/${comment.author.id}`} className="font-semibold text-[var(--paper-ink)] hover:underline">
+              <Link href={profileHref(comment.author)} className="font-semibold text-[var(--paper-ink)] hover:underline">
                 {name}
               </Link>
               <span className="reader-meta">

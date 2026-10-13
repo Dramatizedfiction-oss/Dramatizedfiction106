@@ -135,9 +135,12 @@ describe("engagement routes", () => {
   });
 
   test("the public profile only lists bookmarks through Activity, and only when it is public", () => {
-    const page = read("app/reader/[readerId]/page.tsx");
-    assert.doesNotMatch(page, /listBookmarks|ReaderBookmarks/);
-    assert.match(page, /activityPublic \? listActivity\(reader\.id\) : null/);
+    // The public page always uses the visitor's Reading view, which lists bookmarks only for the owner.
+    assert.match(read("app/reader/[readerId]/page.tsx"), /<ReadingView member=\{reader\} isOwner=\{false\} \/>/);
+    const view = read("components/profile/ReadingView.tsx");
+    const visitorPart = view.slice(view.indexOf("const libraryPublic"));
+    assert.doesNotMatch(visitorPart, /listBookmarks|ReaderBookmarks/);
+    assert.match(visitorPart, /activityPublic \? listActivity\(member\.id\) : null/);
   });
 
   test("no hearts and no fake ratings remain", () => {

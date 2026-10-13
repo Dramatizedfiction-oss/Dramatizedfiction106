@@ -41,6 +41,14 @@ export async function sessionCookie(userId: string) {
 export async function cleanup() {
   if (created.length === 0) return;
   await prisma.adminAuditLog.deleteMany({ where: { OR: [{ actorId: { in: created } }, { targetUserId: { in: created } }] } });
+  // Reports first: deleting several test users at once would otherwise both
+  // cascade-delete and set-null the same report rows, which Postgres refuses.
+  await prisma.aiTagReport.deleteMany({
+    where: { OR: [{ reporterId: { in: created } }, { resolvedById: { in: created } }, { series: { authorId: { in: created } } }] },
+  });
+  await prisma.contentReport.deleteMany({
+    where: { OR: [{ reporterId: { in: created } }, { resolvedById: { in: created } }, { comment: { userId: { in: created } } }] },
+  });
   await prisma.user.deleteMany({ where: { id: { in: created } } }); // cascades sessions, restrictions, series
   created.length = 0;
 }

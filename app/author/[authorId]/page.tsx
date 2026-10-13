@@ -1,37 +1,46 @@
 import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import AiTagBanner from "@/components/AiTagBanner";
-import AuthorTierBadge from "@/components/AuthorTierBadge";
-import AuthorWorksCarousel from "@/components/AuthorWorksCarousel";
+import FramedAvatar from "@/components/avatar/FramedAvatar";
 import FollowAuthorButton from "@/components/follow/FollowAuthorButton";
 import ProfileEditor from "@/components/profile/ProfileEditor";
-import FramedAvatar from "@/components/avatar/FramedAvatar";
-import { safeProfileLink } from "@/lib/profile";
-import { hasRoleAccess } from "@/lib/roles";
-import { deriveAuthorTier, derivePostingConsistency } from "@/lib/author-tier";
+import ProfileViewSwitch from "@/components/profile/ProfileViewSwitch";
+import ReadingView, { readingIsVisible } from "@/components/profile/ReadingView";
 import { PUBLIC_EPISODE_WHERE, PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
-import { createViewerMonetizationState } from "@/lib/monetization";
 import { prisma } from "@/lib/prisma";
+import { safeProfileLink } from "@/lib/profile";
+import { isWriterRole, parseProfileView, profileHref } from "@/lib/profile-links";
+import { writerStatusLabel } from "@/lib/writer-studio/status";
 
-const completedBookStatuses = ["PUBLISHED", "PUBLISHED ", "COMPLETED", "FINISHED"];
-
+/*
+ * A writer's profile (writers are Writer, Board and CEO; everyone else is sent
+ * to their reading profile). Two views, chosen in the URL:
+ *   - Writing (default): bio, links, Follow Author, published series and
+ *     latest episodes. Always public.
+ *   - Reading (?view=reading): the owner's Library, Bookmarks and Activity; for
+ *     anyone else only what the owner made public, and the switch only shows
+ *     when something is.
+ * Everything shown is loaded for the profile's own id; the editor pen shows
+ * only to the owner. Drafts are never shown.
+ */
 export default async function AuthorProfilePage({
   params,
+  searchParams,
 }: {
   params: { authorId: string };
+  searchParams?: { view?: string };
 }) {
   const session = await auth();
   const author = await prisma.user.findUnique({
     where: { id: params.authorId },
     // Public profile fields only (never email, password hash, Stripe ids).
-    // `role` is read only to pick the default picture; it is never displayed.
     select: {
       id: true,
       name: true,
       bio: true,
       image: true,
       role: true,
-      // Picks the avatar frame (writer level); never displayed as data.
       writerStatus: true,
       bannerImage: true,
       twitterUrl: true,
@@ -39,65 +48,47 @@ export default async function AuthorProfilePage({
       youtubeUrl: true,
       websiteUrl: true,
       discordUrl: true,
-      // Only passed on to the owner's profile editor; never shown here.
       readingProfileVisibility: true,
       activityVisibility: true,
-      // Public profile: published work only.
+      authorProfile: { select: { id: true } },
       series: {
         where: PUBLIC_SERIES_WHERE,
         orderBy: { updatedAt: "desc" },
-        include: {
-          episodes: {
-            where: { status: "PUBLISHED" },
-            orderBy: { episodeNumber: "asc" },
-            take: 1,
-            select: { id: true },
-          },
+        select: {
+          id: true,
+          title: true,
+          genre: true,
+          aiUsageTag: true,
+          _count: { select: { episodes: { where: { status: "PUBLISHED" } } } },
         },
-      },
-      books: {
-        orderBy: { createdAt: "desc" },
       },
       episodes: {
-        where: {
-          ...PUBLIC_EPISODE_WHERE,
-          locked: false,
-        },
+        where: { ...PUBLIC_EPISODE_WHERE, locked: false },
         orderBy: { updatedAt: "desc" },
         take: 6,
-        include: {
-          series: {
-            select: {
-              title: true,
-            },
-          },
-        },
+        select: { id: true, title: true, episodeNumber: true, aiUsageTag: true, series: { select: { title: true } } },
       },
     },
   });
+  if (!author) notFound();
+  // Not a writer: their profile is the reading profile.
+  if (!isWriterRole(author.role)) redirect(profileHref(author));
 
-  if (!author) {
-    return <p className="theme-body p-8">Author not found.</p>;
+  const isOwner = session?.user?.id === author.id;
+  // A writer always has an author record; create it if it's somehow missing (owner only).
+  if (isOwner && !author.authorProfile) {
+    await prisma.authorProfile.createMany({
+      data: [{ userId: author.id, displayName: author.name?.trim() || "Writer", bio: author.bio, profileImage: author.image }],
+      skipDuplicates: true,
+    });
   }
 
-  const viewer = createViewerMonetizationState(session?.user?.id);
-  const totalReads = author.series.reduce((sum, series) => sum + series.reads, 0);
-  const totalFollowers = author.series.reduce((sum, series) => sum + series.followers, 0);
-  const totalEpisodes = author.series.reduce((sum, series) => sum + series.episodes.length, 0);
-  const engagementRate = Math.min(0.95, (totalFollowers / Math.max(totalReads, 1)) * 4);
-  const authorTier = deriveAuthorTier({
-    totalReads,
-    engagementRate,
-    postingConsistency: derivePostingConsistency(totalReads, totalEpisodes, totalFollowers),
-    completionRate: Math.min(0.96, 0.42 + Math.min(totalEpisodes, 16) * 0.025),
-  });
+  const canSeeReading = isOwner || readingIsVisible(author);
+  const requested = parseProfileView(searchParams?.view);
+  const view = requested === "reading" && canSeeReading ? "reading" : "writing";
+  const basePath = `/author/${author.id}`;
 
   const displayName = author.name?.trim() || "Dramatized Fiction Author";
-  const bio =
-    author.bio?.trim() ||
-    "This author is building stories on Dramatized Fiction. More identity details can be added over time without leaving the page feeling empty.";
-
-  // Only http(s) addresses become links.
   const socialLinks = [
     { label: "Twitter", href: safeProfileLink(author.twitterUrl) },
     { label: "Instagram", href: safeProfileLink(author.instagramUrl) },
@@ -106,78 +97,25 @@ export default async function AuthorProfilePage({
     { label: "Discord", href: safeProfileLink(author.discordUrl) },
   ].filter((item) => Boolean(item.href));
 
-  const completedBooks = author.books.filter((book) =>
-    completedBookStatuses.includes(book.status.toUpperCase()),
-  );
-  const wipBooks = author.books.filter(
-    (book) => !completedBookStatuses.includes(book.status.toUpperCase()),
-  );
-
-  const wipWorks = [
-    ...author.series.map((series) => ({
-      id: `series-${series.id}`,
-      title: series.title,
-      description: series.description,
-      coverImage: series.coverImage,
-      href: `/series/${series.id}`,
-      meta: `${series.genre || "Series"} | ${series.episodes.length} episode${series.episodes.length === 1 ? "" : "s"}`,
-      badge: "Series",
-      aiUsageTag: series.aiUsageTag,
-      monetization: {
-        contentType: "series" as const,
-        id: series.id,
-        isFree: true,
-        isLocked: false,
-        price: null,
-        creatorId: series.authorId,
-      },
-    })),
-    ...wipBooks.map((book) => ({
-      id: `book-${book.id}`,
-      title: book.title,
-      description: book.description,
-      coverImage: book.coverUrl,
-      href: `/author/${author.id}`,
-      meta: book.status || "WIP",
-      badge: "Book",
-      aiUsageTag: null,
-    })),
-  ];
-
-  const completedWorks = completedBooks.map((book) => ({
-    id: `completed-${book.id}`,
-    title: book.title,
-    description: book.description,
-    coverImage: book.coverUrl,
-    href: `/author/${author.id}`,
-    meta: "Book",
-    badge: "Completed",
-    aiUsageTag: null,
-  }));
-
   return (
     <main className="overflow-hidden md:px-6 md:py-6 lg:px-8">
       <section className="overflow-hidden rounded-[32px] border border-[var(--border-color)] bg-[var(--bg-secondary)]">
         <div className="relative h-36 sm:h-48 md:h-72">
           {author.bannerImage ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={author.bannerImage}
-              alt={`${displayName} banner`}
-              className="h-full w-full object-cover"
-            />
+            <img src={author.bannerImage} alt="" className="h-full w-full object-cover" />
           ) : (
             <div className="h-full w-full bg-[radial-gradient(circle_at_12%_0%,rgba(124,58,237,0.3),transparent_45%),linear-gradient(135deg,var(--accent-soft),var(--bg-primary))]" />
           )}
         </div>
 
-        <div className="relative px-5 pb-8 sm:px-6 md:px-8">
-          {/* The owner's profile editor (pen). Author pages are always public. */}
-          {session?.user?.id === author.id ? (
+        <div className="relative px-5 pb-6 sm:px-6 md:px-8">
+          {/* The owner's profile editor (pen), on either view. */}
+          {isOwner ? (
             <div className="absolute right-4 top-3 z-10 sm:right-6 md:right-8">
               <ProfileEditor
                 role={author.role}
-                isWriter={hasRoleAccess(author.role, "WRITER")}
+                isWriter
                 initial={{
                   bio: author.bio ?? "",
                   image: author.image ?? "",
@@ -195,127 +133,104 @@ export default async function AuthorProfilePage({
               />
             </div>
           ) : null}
-          <div className="-mt-12 flex flex-col gap-6 md:-mt-16 md:flex-row md:items-end md:justify-between">
-            {/* Phones: the avatar overlaps the banner and the name sits below it. */}
-            <div className="flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-end sm:gap-4">
-              <FramedAvatar
-                user={{ image: author.image, role: author.role, writerStatus: author.writerStatus }}
-                size="2xl"
-                eager
-                className="rounded-full bg-[var(--bg-secondary)] p-1"
-              />
-
-              <div className="min-w-0 pb-2">
-                <p className="eyebrow">Author Profile</p>
-                <h1 className="font-heading theme-heading mt-2 break-words text-3xl font-semibold sm:text-4xl md:text-5xl">
-                  {displayName}
-                </h1>
-                <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <AuthorTierBadge tier={authorTier} />
-                  <FollowAuthorButton authorId={author.id} authorName={displayName} />
-                </div>
-              </div>
+          <div className="-mt-12 flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-end sm:gap-4 md:-mt-16">
+            <FramedAvatar
+              user={{ image: author.image, role: author.role, writerStatus: author.writerStatus }}
+              size="2xl"
+              eager
+              className="rounded-full bg-[var(--bg-secondary)] p-1"
+            />
+            <div className="min-w-0 pb-2">
+              <p className="eyebrow">{writerStatusLabel(author.writerStatus)}</p>
+              <h1 className="font-heading theme-heading mt-2 break-words text-3xl font-semibold sm:text-4xl md:text-5xl">{displayName}</h1>
             </div>
+          </div>
 
-            {socialLinks.length > 0 && (
-              <div className="flex flex-wrap gap-2 pb-2">
+          {canSeeReading ? (
+            <div className="mt-5">
+              <ProfileViewSwitch basePath={basePath} current={view} />
+            </div>
+          ) : null}
+        </div>
+      </section>
+
+      <div className="px-4 pt-6 md:px-0 md:pt-8">
+        {view === "reading" ? (
+          <ReadingView member={author} isOwner={isOwner} />
+        ) : (
+          <div className="space-y-8">
+            <section aria-label="About" className="max-w-3xl">
+              <p className="theme-body text-base leading-7 md:text-lg">
+                {author.bio?.trim() || `${displayName} is writing on Dramatized Fiction.`}
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                {isOwner ? null : <FollowAuthorButton authorId={author.id} authorName={displayName} />}
                 {socialLinks.map((link) => (
-                  <a
-                    key={link.label}
-                    href={link.href!}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="story-button-secondary"
-                  >
+                  <a key={link.label} href={link.href!} target="_blank" rel="noreferrer" className="story-button-secondary min-h-11">
                     {link.label}
                   </a>
                 ))}
               </div>
-            )}
+            </section>
+
+            <section aria-labelledby="series-heading">
+              <h2 id="series-heading" className="font-heading theme-heading text-2xl font-semibold">
+                Series
+              </h2>
+              {author.series.length === 0 ? (
+                <p className="theme-meta mt-3 text-sm">Published series will appear here.</p>
+              ) : (
+                <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {author.series.map((series) => (
+                    <li key={series.id} className="min-w-0">
+                      <Link
+                        href={`/series/${series.id}`}
+                        className="theme-panel-hover flex min-h-[72px] items-center justify-between gap-3 rounded-[20px] border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3"
+                      >
+                        <span className="min-w-0">
+                          <span className="theme-heading block truncate font-medium">{series.title}</span>
+                          <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <AiTagBanner tag={series.aiUsageTag} />
+                            <span className="theme-meta text-sm">{series.genre}</span>
+                          </span>
+                        </span>
+                        <span className="theme-meta shrink-0 text-xs">
+                          {series._count.episodes} episode{series._count.episodes === 1 ? "" : "s"}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            {author.episodes.length > 0 ? (
+              <section aria-labelledby="latest-heading">
+                <h2 id="latest-heading" className="font-heading theme-heading text-2xl font-semibold">
+                  Latest episodes
+                </h2>
+                <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {author.episodes.map((episode) => (
+                    <li key={episode.id} className="min-w-0">
+                      <Link
+                        href={`/episode/${episode.id}`}
+                        className="theme-panel-hover block rounded-[20px] border border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3"
+                      >
+                        <span className="theme-heading block truncate font-medium">{episode.title}</span>
+                        <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                          <AiTagBanner tag={episode.aiUsageTag} />
+                          <span className="theme-meta text-sm">
+                            {episode.series.title} · Episode {episode.episodeNumber}
+                          </span>
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
           </div>
-
-          <p className="theme-body mt-6 max-w-3xl text-base leading-7 md:text-lg">
-            {bio}
-          </p>
-        </div>
-      </section>
-
-      <div className="mt-8 space-y-8">
-        <AuthorWorksCarousel
-          eyebrow="Works"
-          title="WIP Works"
-          items={wipWorks}
-          emptyTitle="Work in progress shelf is quiet for now"
-          emptyDescription="This author has not added active series or WIP books yet, but the shelf is already ready for future work."
-          viewer={viewer}
-        />
-
-        <AuthorWorksCarousel
-          eyebrow="Archive"
-          title="Completed Works"
-          items={completedWorks}
-          emptyTitle="No completed works yet"
-          emptyDescription="Finished books and completed releases will appear here when this author publishes them."
-          viewer={viewer}
-        />
-
-        <section className="glass-panel rounded-[28px] border border-[var(--border-color)] p-6">
-          <p className="eyebrow">Platform Content</p>
-          <h2 className="font-heading theme-heading mt-3 text-3xl font-semibold">
-            Published on Dramatized Fiction
-          </h2>
-
-          {author.series.length > 0 || author.episodes.length > 0 ? (
-            <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-              <div className="space-y-3">
-                <h3 className="theme-heading text-xl font-semibold">Series</h3>
-                {author.series.map((series) => (
-                  <Link
-                    key={series.id}
-                    href={`/series/${series.id}`}
-                    className="theme-panel-hover flex items-center justify-between rounded-[20px] border border-[var(--border-color)] px-4 py-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="theme-heading font-medium">{series.title}</p>
-                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <AiTagBanner tag={series.aiUsageTag} />
-                        <p className="theme-meta text-sm">{series.genre}</p>
-                      </div>
-                    </div>
-                    <span className="theme-meta text-xs">
-                      {series.episodes.length} episode{series.episodes.length === 1 ? "" : "s"}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="theme-heading text-xl font-semibold">Latest Episodes</h3>
-                {author.episodes.map((episode) => (
-                  <Link
-                    key={episode.id}
-                    href={`/episode/${episode.id}`}
-                    className="theme-panel-hover block rounded-[20px] border border-[var(--border-color)] px-4 py-3"
-                  >
-                    <p className="theme-heading font-medium">{episode.title}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                      <AiTagBanner tag={episode.aiUsageTag} />
-                      <p className="theme-meta text-sm">
-                        {episode.series.title} | Episode {episode.episodeNumber}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="theme-panel mt-6 rounded-[24px] border border-dashed border-[var(--border-color)] p-6">
-              <p className="theme-meta text-sm">
-                Published series and episodes will appear here once this author starts releasing work on the platform.
-              </p>
-            </div>
-          )}
-        </section>
+        )}
       </div>
     </main>
   );

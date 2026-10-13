@@ -115,6 +115,11 @@ export async function deleteAccount(userId: string, password: string): Promise<R
         return fail(409, "LAST_CEO", "You're the only CEO, so this account can't be deleted. Make someone else CEO first.");
       }
       await tx.studio.deleteMany({ where: { ownerId: userId, kind: "PERSONAL" } });
+      // Reports on the member's own stories and comments go with them anyway.
+      // Removing them first means no report row is both cascade-deleted and
+      // set-null (e.g. one this member also reviewed), which Postgres refuses.
+      await tx.aiTagReport.deleteMany({ where: { series: { authorId: userId } } });
+      await tx.contentReport.deleteMany({ where: { comment: { userId } } });
       await tx.user.delete({ where: { id: userId } });
       return { ok: true } as Result;
     },

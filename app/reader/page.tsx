@@ -2,23 +2,19 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import ProfileEditor from "@/components/profile/ProfileEditor";
-import ReaderActivity from "@/components/reader/ReaderActivity";
-import ReaderBookmarks from "@/components/reader/ReaderBookmarks";
-import ReaderLibrary from "@/components/reader/ReaderLibrary";
-import { listActivity } from "@/lib/activity";
-import { listBookmarks } from "@/lib/bookmarks";
+import ReadingView from "@/components/profile/ReadingView";
 import ReaderProfileHeader, { LockIcon } from "@/components/reader/ReaderProfileHeader";
-import ReaderProfileTabs from "@/components/reader/ReaderProfileTabs";
 import { prisma } from "@/lib/prisma";
+import { isWriterRole, profileHref } from "@/lib/profile-links";
 import { hasRoleAccess } from "@/lib/roles";
-import { getLibrary } from "@/lib/series-follows";
 import { requireRole } from "@/lib/utils";
 
 /*
- * The signed-in member's own reading profile, with the profile editor (pen).
+ * A reader's own reading profile, with the profile editor (pen). Writers are
+ * sent to their author profile's Reading view instead (lib/profile-links.ts).
  * Others see it at /reader/[id]: the header always, the Library when
  * readingProfileVisibility is PUBLIC, Activity when activityVisibility is
- * PUBLIC. Bookmarks are only ever shown here, to their owner.
+ * PUBLIC. Bookmarks are only ever shown to their owner.
  */
 export default async function ReaderProfilePage() {
   const session = await auth();
@@ -48,13 +44,9 @@ export default async function ReaderProfilePage() {
     },
   });
   if (!reader) redirect("/sign-in?callbackUrl=/reader");
+  // A writer's profile is their author profile; their reading lives in its Reading view.
+  if (isWriterRole(reader.role)) redirect(profileHref(reader, "reading"));
 
-  // Only the signed-in member's own follows, bookmarks and activity; never another member's.
-  const [library, bookmarks, activity] = await Promise.all([
-    getLibrary(session.user.id),
-    listBookmarks(session.user.id),
-    listActivity(session.user.id),
-  ]);
   const isPublic = reader.readingProfileVisibility === "PUBLIC";
   const activityPublic = reader.activityVisibility === "PUBLIC";
 
@@ -103,13 +95,8 @@ export default async function ReaderProfilePage() {
         }
       />
       <div className="px-4 pt-6 md:px-0 md:pt-8">
-        <ReaderProfileTabs
-          panels={{
-            library: <ReaderLibrary entries={library} />,
-            bookmarks: <ReaderBookmarks initial={bookmarks} />,
-            activity: <ReaderActivity readerId={reader.id} initial={activity} />,
-          }}
-        />
+        {/* Only the signed-in member's own follows, bookmarks and activity; never another member's. */}
+        <ReadingView member={reader} isOwner />
       </div>
     </main>
   );

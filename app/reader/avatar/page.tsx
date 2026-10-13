@@ -5,6 +5,7 @@ import AvatarPlace from "@/components/avatar/AvatarPlace";
 import { listLibraryAvatars } from "@/lib/avatar-library";
 import { photoState } from "@/lib/avatar-photo";
 import { prisma } from "@/lib/prisma";
+import { ownProfileHref } from "@/lib/profile-links";
 import { requireRole } from "@/lib/utils";
 
 /*
@@ -23,6 +24,7 @@ export default async function AvatarPage() {
     prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
+        id: true,
         name: true,
         role: true,
         writerStatus: true,
@@ -41,7 +43,7 @@ export default async function AvatarPage() {
     <main className="min-h-[calc(100dvh-4rem)] px-4 py-5 md:px-6 md:py-10">
       <div className="mx-auto max-w-2xl md:rounded-[32px] md:border md:border-[var(--border-color)] md:bg-[var(--bg-secondary)] md:p-10 md:shadow-[var(--shadow-card)]">
         <Link
-          href="/reader"
+          href={ownProfileHref(member)}
           className="theme-meta -ml-2 inline-flex min-h-11 items-center gap-1 rounded-full px-2 text-sm transition hover:text-[var(--text-primary)]"
         >
           <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -51,7 +53,7 @@ export default async function AvatarPage() {
         </Link>
         <h1 className="font-heading theme-heading mb-6 mt-1 text-3xl font-semibold md:text-4xl">Your avatar</h1>
         <AvatarPlace
-          member={{ name: member.name?.trim() || "Member", role: member.role, writerStatus: member.writerStatus }}
+          member={{ id: member.id, name: member.name?.trim() || "Member", role: member.role, writerStatus: member.writerStatus }}
           initial={photoState(member)}
           library={library}
         />

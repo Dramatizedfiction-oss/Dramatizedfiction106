@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import AiTagBanner from "@/components/AiTagBanner";
 import FramedAvatar from "@/components/avatar/FramedAvatar";
 import FollowSeriesButton from "@/components/follow/FollowSeriesButton";
+import ReportAiTagButton from "@/components/ReportAiTagButton";
 import CoverImage from "@/components/series/CoverImage";
 import EpisodeStrip from "@/components/series/EpisodeStrip";
 import ExpandableText from "@/components/series/ExpandableText";
@@ -147,8 +148,11 @@ export default async function SeriesPage({ params }: { params: { seriesId: strin
 
             <ExpandableText text={series.description} className="theme-body mt-5 text-base leading-7" />
           </section>
-          {/* The AI-use banner hangs from the card's bottom edge. */}
-          <AiTagBanner tag={series.aiUsageTag} className="ml-6 -mt-px" />
+          {/* The AI-use banner hangs from the card's bottom edge; reports go to Administration › Reports. */}
+          <div className="flex items-start justify-between gap-3 pr-2">
+            <AiTagBanner tag={series.aiUsageTag} className="ml-6 -mt-px" />
+            <ReportAiTagButton target={{ seriesId: series.id }} currentTag={series.aiUsageTag} subject={series.title} underline />
+          </div>
         </div>
       </div>
 

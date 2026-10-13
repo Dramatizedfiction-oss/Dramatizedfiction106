@@ -76,6 +76,8 @@ model User {
   commentsRemoved          Comment[]       @relation("CommentRemover")
   reportsFiled             ContentReport[] @relation("ReportFiler")
   reportsResolved          ContentReport[] @relation("ReportResolver")
+  aiTagReportsFiled        AiTagReport[]   @relation("AiTagReportFiler")
+  aiTagReportsResolved     AiTagReport[]   @relation("AiTagReportResolver")
 }
 
 model AuthorProfile {
@@ -168,6 +170,7 @@ model Series {
   episodes    Episode[]
   author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   follows     SeriesFollow[]
+  aiTagReports AiTagReport[]
 }
 
 /// A member following a series (separate from following an author). Their
@@ -214,6 +217,7 @@ model Episode {
   ratings       Rating[]
   comments      Comment[]
   progress      ReadingProgress[]
+  aiTagReports  AiTagReport[]
 
   @@unique([seriesId, episodeNumber])
 }
@@ -283,6 +287,29 @@ model Comment {
 
   @@index([episodeId, createdAt, id])
   @@index([userId, createdAt])
+}
+
+/// A member reporting a series' or episode's AI usage tag as wrong, reviewed in
+/// Administration > Reports (AI tags). episodeId is set for an episode report.
+model AiTagReport {
+  id           String       @id @default(cuid())
+  seriesId     String
+  episodeId    String?
+  reporterId   String?
+  /// What the reporter thinks it should be (null = not sure).
+  suggestedTag AiUsageTag?
+  note         String?
+  status       ReportStatus @default(OPEN)
+  createdAt    DateTime     @default(now())
+  resolvedAt   DateTime?
+  resolvedById String?
+  series       Series       @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  episode      Episode?     @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  reporter     User?        @relation("AiTagReportFiler", fields: [reporterId], references: [id], onDelete: SetNull)
+  resolvedBy   User?        @relation("AiTagReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([reporterId, seriesId])
 }
 
 /// A member reporting a comment, reviewed in Administration > Reports.

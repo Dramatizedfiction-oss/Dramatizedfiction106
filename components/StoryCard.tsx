@@ -135,7 +135,10 @@ export default function StoryCard({
         )}
 
         <div className="mt-4 flex justify-end">
-          <ReportAiTagButton subject={title} compact />
+          {/* Only for a series card (a custom href means something else, e.g. a book). */}
+          {story.aiUsageTag && !href ? (
+            <ReportAiTagButton target={{ seriesId: story.id }} currentTag={story.aiUsageTag} subject={title} compact />
+          ) : null}
         </div>
       </div>
     </Link>

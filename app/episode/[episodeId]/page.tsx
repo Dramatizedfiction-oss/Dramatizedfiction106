@@ -133,7 +133,7 @@ export default async function EpisodeReaderPage({
             title={episode.title}
             aiUsageTag={episode.aiUsageTag}
             contentWarning={episode.contentWarning}
-            headerActions={<ReportAiTagButton subject={episode.title} />}
+            headerActions={<ReportAiTagButton target={{ episodeId: episode.id }} currentTag={episode.aiUsageTag} subject={episode.title} />}
           >
             {canReadEpisode ? (
               <div id="story-body" className="reading-body">

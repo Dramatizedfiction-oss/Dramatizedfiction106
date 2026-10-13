@@ -8,6 +8,7 @@ import FramedAvatar from "@/components/avatar/FramedAvatar";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import type { AvatarCrop } from "@/lib/avatar-crop";
 import { defaultAvatarFor } from "@/lib/avatars";
+import { ownProfileHref } from "@/lib/profile-links";
 import { prepareFile } from "@/lib/uploads/client-upload";
 import { MAX_ORIGINAL_BYTES, MAX_UPLOAD_BYTES } from "@/lib/uploads/image-purposes";
 
@@ -32,7 +33,7 @@ export default function AvatarPlace({
   initial,
   library,
 }: {
-  member: { name: string; role: string; writerStatus: string | null };
+  member: { id: string; name: string; role: string; writerStatus: string | null };
   initial: PhotoState;
   library: LibraryAvatar[];
 }) {
@@ -313,7 +314,7 @@ export default function AvatarPlace({
         >
           {hasPhoto ? "Remove photo, use default" : "Use the default avatar"}
         </button>
-        <Link href="/reader" className="story-button-secondary min-h-11">
+        <Link href={ownProfileHref(member)} className="story-button-secondary min-h-11">
           Done
         </Link>
       </div>

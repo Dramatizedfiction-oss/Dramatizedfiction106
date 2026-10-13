@@ -5,24 +5,40 @@ import { Badge, Panel } from "@/components/admin/ui";
 import UserAvatar from "@/components/UserAvatar";
 import { formatDate } from "@/lib/admin/format";
 import { reportReasonLabel } from "@/lib/engagement-rules";
-import { REPORT_PAGE_SIZE, listReports, parseReportFilter } from "@/lib/reports";
+import { AI_TAG_REPORT_PAGE_SIZE, listAiTagReports, openAiTagReportCount } from "@/lib/ai-tag-reports";
+import AiTagReportList from "@/components/admin/AiTagReportList";
+import { REPORT_PAGE_SIZE, listReports, openReportCount, parseReportFilter } from "@/lib/reports";
 import { requireAdministrationPage } from "@/lib/utils";
 
 /*
- * Comment reports from members. Open reports oldest first; closed ones newest
- * first. Board and CEO remove the comment (hidden, the author is not told) or
- * dismiss the report. Both are audited.
+ * Reports from members, in two kinds: Comments (Board and CEO remove the
+ * comment, hidden and the author is not told, or dismiss the report) and AI
+ * tags (mark reviewed or dismiss; the tag itself isn't changed here). Open
+ * reports oldest first; closed ones newest first. Every decision is audited.
  */
-export default async function ReportsPage({ searchParams }: { searchParams?: { status?: string; page?: string } }) {
+export default async function ReportsPage({
+  searchParams,
+}: {
+  searchParams?: { status?: string; page?: string; kind?: string };
+}) {
   requireAdministrationPage(await auth(), "/administration/reports");
 
+  const kind = searchParams?.kind === "ai-tags" ? "ai-tags" : "comments";
   const filter = parseReportFilter(searchParams?.status);
   const page = Math.max(1, Number.parseInt(searchParams?.page ?? "1", 10) || 1);
-  const { reports, total } = await listReports(filter, page);
-  const pageCount = Math.max(1, Math.ceil(total / REPORT_PAGE_SIZE));
-  const href = (next: { status?: string; page?: number }) => {
+  const [{ reports, total }, aiTags, openComments, openAiTags] = await Promise.all([
+    kind === "comments" ? listReports(filter, page) : Promise.resolve({ reports: [], total: 0 }),
+    kind === "ai-tags" ? listAiTagReports(filter, page) : null,
+    openReportCount(),
+    openAiTagReportCount(),
+  ]);
+  const shownTotal = kind === "ai-tags" ? aiTags!.total : total;
+  const pageCount = Math.max(1, Math.ceil(shownTotal / (kind === "ai-tags" ? AI_TAG_REPORT_PAGE_SIZE : REPORT_PAGE_SIZE)));
+  const href = (next: { status?: string; page?: number; kind?: string }) => {
     const params = new URLSearchParams();
-    const status = next.status ?? filter;
+    const nextKind = next.kind ?? kind;
+    const status = next.status ?? (next.kind ? "open" : filter);
+    if (nextKind !== "comments") params.set("kind", nextKind);
     if (status !== "open") params.set("status", status);
     if (next.page && next.page > 1) params.set("page", String(next.page));
     const search = params.toString();
@@ -31,6 +47,29 @@ export default async function ReportsPage({ searchParams }: { searchParams?: { s
 
   return (
     <div className="space-y-6">
+      <nav aria-label="Report kind" className="grid grid-cols-2 gap-1 rounded-full border border-[var(--border-color)] bg-[var(--bg-primary)] p-1 sm:inline-grid sm:min-w-[340px]">
+        {([
+          { value: "comments", label: "Comments", open: openComments },
+          { value: "ai-tags", label: "AI tags", open: openAiTags },
+        ] as const).map((item) => (
+          <Link
+            key={item.value}
+            href={href({ kind: item.value })}
+            aria-current={kind === item.value ? "page" : undefined}
+            className={`flex min-h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold transition ${
+              kind === item.value
+                ? "bg-[var(--surface-raised)] text-[var(--text-primary)] shadow-[var(--shadow-card)] ring-1 ring-[var(--border-strong)]"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            }`}
+          >
+            {item.label}
+            {item.open > 0 ? (
+              <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-xs text-[var(--accent)]">{item.open}</span>
+            ) : null}
+          </Link>
+        ))}
+      </nav>
+
       <nav aria-label="Report status" className="flex gap-2">
         {(["open", "closed"] as const).map((status) => (
           <Link
@@ -48,6 +87,9 @@ export default async function ReportsPage({ searchParams }: { searchParams?: { s
         ))}
       </nav>
 
+      {kind === "ai-tags" ? (
+        <AiTagReportList reports={aiTags!.reports} total={aiTags!.total} filter={filter} />
+      ) : (
       <Panel
         title={`${total.toLocaleString()} ${filter} report${total === 1 ? "" : "s"}`}
         description="Members report comments from the episode reader. Removing a comment hides it everywhere and closes its other open reports."
@@ -106,6 +148,8 @@ export default async function ReportsPage({ searchParams }: { searchParams?: { s
             })}
           </ul>
         )}
+      </Panel>
+      )}
 
         {pageCount > 1 ? (
           <nav aria-label="Pages" className="mt-4 flex items-center justify-between text-sm">
@@ -128,7 +172,6 @@ export default async function ReportsPage({ searchParams }: { searchParams?: { s
             )}
           </nav>
         ) : null}
-      </Panel>
     </div>
   );
 }

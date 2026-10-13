@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { LogOutIcon, MailIcon, SettingsIcon, UserIcon } from "@/components/icons";
 import UserAvatar from "@/components/UserAvatar";
+import { ownProfileHref } from "@/lib/profile-links";
 
 export type ProfileMenuUser = {
   id?: string | null;
@@ -173,9 +174,9 @@ export default function ProfileMenu({
           ) : null}
 
           <div className="space-y-0.5 pt-1">
-            {/* Everyone's "Profile" is their reading profile (/reader). A writer's
-                public author page is reached from Writer Studio ("Public profile"). */}
-            <Link href="/reader" onClick={choose} className="sidebar-link">
+            {/* "Profile" is your own profile: a writer's author profile, a
+                reader's reading profile (lib/profile-links.ts). */}
+            <Link href={ownProfileHref(user)} onClick={choose} className="sidebar-link">
               <UserIcon size={16} className="shrink-0" />
               <span>Profile</span>
             </Link>
