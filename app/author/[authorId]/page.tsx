@@ -19,6 +19,8 @@ import { prisma } from "@/lib/prisma";
 import { isWriterRole, parseProfileView, profileHref } from "@/lib/profile-links";
 import { writerStatusLabel } from "@/lib/writer-studio/status";
 
+const EMPTY_ON_SITE = { series: [], seriesTotal: 0, episodes: [], episodesTotal: 0 };
+
 /*
  * A writer's profile (writers are Writer, Board and CEO; everyone else is sent
  * to their reading profile). Two views, chosen in the URL:
@@ -116,7 +118,8 @@ export default async function AuthorProfilePage({
                 activityVisibility={author.activityVisibility}
                 doc={{ bio: author.bio ?? "", sections, library: libraryLoaded ?? [], about, links }}
                 seriesOptions={seriesOptions}
-                onSite={onSite}
+                // Only the Writing view sends its published work along (for the preview).
+                onSite={view === "writing" ? onSite : EMPTY_ON_SITE}
               />
             </div>
           ) : null}
