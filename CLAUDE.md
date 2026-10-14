@@ -19,7 +19,11 @@ npm run db:dev:check       # read-only: connect, list tables/row counts and migr
 npm run db:dev:status      # prisma migrate status against the scratch copy
 npm run db:dev:migrate     # prisma migrate deploy against the scratch copy
 npx prisma generate        # runs automatically on postinstall
+npm run seed:test          # Sweep 17 test catalogue -> MAIN db (.env); :scratch variant -> .env.local
+npm run seed:test:clear    # removes it (and everything attached); :scratch variant too
 ```
+
+**Test catalogue (Sweep 17).** `scripts/seed-test.ts` seeds 5 writers + 8 readers (emails `@test.dramatizedfiction.invalid`, the only marker; shared password from `SEED_TEST_PASSWORD`, 12+ chars, in `.env`/`.env.local`), 12 series / 74 episodes of original prose (`scripts/seed-test/content/`), and ratings, bookmarks, follows, comments, reads and progress from `scripts/seed-test/catalogue.ts`; idempotent (activity is rebuilt each run, counts recomputed like `lib/read-tracking.ts`). Covers are static files in `public/test-covers/` (`scripts/seed-test/make-covers.ts`), not Blob uploads. `scripts/seed-test-clear.ts` deletes the test users and everything hanging off them, plus their read events, revenue rows, reports and personal studios, then checks nothing is left. Both require `--db=main|scratch` (set by the npm scripts) and print the host first. `scripts/seed-test/report.ts` is a read-only summary. Genres are mapped onto `lib/genres.ts` (no "drama", which an engagement integration test relies on).
 
 The Prisma CLI (`npx prisma …`) reads `.env`, the **main** database, which is where schema changes go (see "Working rule" below). The `db:dev:*` scripts (`scripts/db-dev.mjs`) target the `.env.local` scratch copy, refuse to run if it names the same database as `.env`, and block destructive commands (`migrate reset`, `migrate dev`, `db push`, `--force-reset`, `--accept-data-loss`). Both `package-lock.json` and `pnpm-lock.yaml` are committed; npm is what README documents.
 

@@ -14,7 +14,11 @@
     "db:dev:status": "node scripts/db-dev.mjs migrate status",
     "db:dev:migrate": "node scripts/db-dev.mjs migrate deploy",
     "test": "node --test --import ./tests/setup/register.mjs \"tests/unit/*.test.ts\"",
-    "test:integration": "node scripts/test-integration.mjs"
+    "test:integration": "node scripts/test-integration.mjs",
+    "seed:test": "node --import ./tests/setup/register.mjs scripts/seed-test.ts --db=main",
+    "seed:test:clear": "node --import ./tests/setup/register.mjs scripts/seed-test-clear.ts --db=main",
+    "seed:test:scratch": "node --import ./tests/setup/register.mjs scripts/seed-test.ts --db=scratch",
+    "seed:test:clear:scratch": "node --import ./tests/setup/register.mjs scripts/seed-test-clear.ts --db=scratch"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
