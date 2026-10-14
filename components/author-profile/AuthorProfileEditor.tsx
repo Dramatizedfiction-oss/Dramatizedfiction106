@@ -122,7 +122,10 @@ export default function AuthorProfileEditor({
   doc,
   seriesOptions,
   onSite,
+  openOnLoad = false,
 }: {
+  /** Open straight away (the "Edit profile" link from the visitor preview, ?edit=1). */
+  openOnLoad?: boolean;
   authorId: string;
   displayName: string;
   role: string | null;
@@ -158,6 +161,16 @@ export default function AuthorProfileEditor({
     setStatus({ kind: "idle" });
     setOpen(true);
   }
+
+  // ?edit=1: open once, then drop the flag so a refresh doesn't reopen it.
+  useEffect(() => {
+    if (!openOnLoad) return;
+    openEditor();
+    const url = new URL(window.location.href);
+    url.searchParams.delete("edit");
+    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Empty-section prompts on the page open the editor at their tab.
   useEffect(() => {

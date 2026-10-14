@@ -42,7 +42,7 @@ function EpisodeRow({ episode, showSeries }: { episode: StudioEpisodeRow; showSe
               <AiTagBanner tag={episode.aiUsageTag} />
             </span>
             {showSeries ? <span className="truncate">{episode.series.title}</span> : null}
-            <span>Edited {formatRelative(episode.updatedAt)}</span>
+            <span>Edited {formatRelative(episode.lastSavedAt)}</span>
             <span>{episode.readTime} min</span>
             {live ? <span>{plural(episode.readerCount, "reader")}</span> : null}
           </span>

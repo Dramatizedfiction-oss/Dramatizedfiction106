@@ -50,6 +50,7 @@ export default async function GrowSharePage() {
               : "Your page is public now, but it will look empty until you publish your first series."
           }
           path={`/author/${user.id}`}
+          openPath={`/author/${user.id}?as=visitor`}
         />
       </GrowSection>
 

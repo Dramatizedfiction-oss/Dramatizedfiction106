@@ -9,7 +9,8 @@ import type { ProfileView } from "@/lib/profile-links";
 export default function ProfileViewSwitch({ basePath, current }: { basePath: string; current: ProfileView }) {
   const items: { view: ProfileView; label: string; href: string }[] = [
     { view: "writing", label: "Writing", href: basePath },
-    { view: "reading", label: "Reading", href: `${basePath}?view=reading` },
+    // basePath may already carry a query (the owner's ?as=visitor preview).
+    { view: "reading", label: "Reading", href: `${basePath}${basePath.includes("?") ? "&" : "?"}view=reading` },
   ];
   return (
     <nav aria-label="Profile view" className="grid grid-cols-2 gap-1 rounded-full border border-[var(--border-color)] bg-[var(--bg-primary)] p-1 sm:inline-grid sm:min-w-[320px]">

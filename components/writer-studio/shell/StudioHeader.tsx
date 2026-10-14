@@ -27,7 +27,8 @@ export default function StudioHeader({
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
           <WriterStatusBadge status={writerStatus} />
-          <Link href={`/author/${userId}`} className="theme-meta transition hover:text-[var(--text-primary)]">
+          {/* Opens the profile exactly as visitors see it (no pen, no owner prompts). */}
+          <Link href={`/author/${userId}?as=visitor`} className="theme-meta transition hover:text-[var(--text-primary)]">
             Public profile
           </Link>
           <Link href="/" className="theme-meta transition hover:text-[var(--text-primary)]">

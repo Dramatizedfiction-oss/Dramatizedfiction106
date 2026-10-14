@@ -3,6 +3,7 @@ import { deserializeAiUsageTag } from "@/lib/ai-usage";
 import { PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
 import { analyzeEpisodeHtml, normalizeEpisodeHtml } from "@/lib/episode-content";
 import { prisma } from "@/lib/prisma";
+import { decideContinueBlock } from "@/lib/writer-studio/continue-block";
 
 /*
  * Server-side reads for the Writer Studio. Every query is scoped to the
@@ -23,6 +24,8 @@ const episodeRowSelect = {
   readTime: true,
   readerCount: true,
   updatedAt: true,
+  /** When the writer last saved it (creation, editor saves, publish); updatedAt also moves on reads. */
+  lastSavedAt: true,
   publishedAt: true,
   seriesId: true,
   series: { select: { title: true } },
@@ -40,6 +43,7 @@ const seriesCardSelect = {
   status: true,
   aiUsageTag: true,
   reads: true,
+  createdAt: true,
   updatedAt: true,
   episodes: { select: { status: true, updatedAt: true } },
 } satisfies Prisma.SeriesSelect;
@@ -97,17 +101,20 @@ export async function getWriterProfile(userId: string) {
 export async function getStudioHome(userId: string) {
   const since30 = new Date(Date.now() - 30 * DAY_MS);
 
-  const [lastEdited, drafts, series, publishedCount, readerTotals, reads30] = await Promise.all([
-    prisma.episode.findFirst({
-      where: { authorId: userId },
-      orderBy: { updatedAt: "desc" },
-      select: episodeRowSelect,
-    }),
+  const continueSeries = { select: { id: true, title: true, status: true } } as const;
+  const [drafts, draftCount, lastWritten, series, publishedCount, readerTotals, reads30] = await Promise.all([
+    // Newest first by the writer's own saves; drafts[0] is the "Continue writing" draft.
     prisma.episode.findMany({
       where: { authorId: userId, status: { in: DRAFT_STATUSES } },
-      orderBy: { updatedAt: "desc" },
+      orderBy: { lastSavedAt: "desc" },
       take: 5,
-      select: episodeRowSelect,
+      select: { ...episodeRowSelect, series: continueSeries },
+    }),
+    prisma.episode.count({ where: { authorId: userId, status: { in: DRAFT_STATUSES } } }),
+    prisma.episode.findFirst({
+      where: { authorId: userId },
+      orderBy: { lastSavedAt: "desc" },
+      select: { lastSavedAt: true, series: continueSeries },
     }),
     prisma.series.findMany({
       where: { authorId: userId },
@@ -123,8 +130,22 @@ export async function getStudioHome(userId: string) {
     .map(summarizeSeries)
     .sort((left, right) => right.lastActivity.getTime() - left.lastActivity.getTime());
 
+  const newestSeries = series.reduce<(typeof series)[number] | null>(
+    (newest, item) => (!newest || item.createdAt > newest.createdAt ? item : newest),
+    null,
+  );
+  const continueBlock = decideContinueBlock({
+    now: new Date(),
+    latestDraft: drafts[0] ?? null,
+    draftCount,
+    lastWritten,
+    newestSeries: newestSeries
+      ? { id: newestSeries.id, title: newestSeries.title, status: newestSeries.status, createdAt: newestSeries.createdAt }
+      : null,
+  });
+
   return {
-    lastEdited,
+    continueBlock,
     drafts,
     series: summaries,
     totals: {

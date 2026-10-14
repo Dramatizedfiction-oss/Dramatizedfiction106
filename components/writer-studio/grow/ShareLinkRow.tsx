@@ -12,11 +12,14 @@ export default function ShareLinkRow({
   label,
   description,
   path,
+  openPath,
   shareTitle,
 }: {
   label: string;
   description?: string;
   path: string;
+  /** Where "Open" goes when it should differ from the shared link (e.g. the owner's visitor preview). */
+  openPath?: string;
   shareTitle?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -78,7 +81,7 @@ export default function ShareLinkRow({
             </button>
           ) : null}
           <a
-            href={path}
+            href={openPath ?? path}
             target="_blank"
             rel="noopener noreferrer"
             className="story-button-secondary flex-1 px-4 py-2.5 sm:flex-none"

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import AuthorProfileEditor from "@/components/author-profile/AuthorProfileEditor";
@@ -40,10 +41,15 @@ export default async function AuthorProfilePage({
   searchParams,
 }: {
   params: { authorId: string };
-  searchParams?: { view?: string };
+  searchParams?: { view?: string; as?: string; edit?: string };
 }) {
   const session = await auth();
-  const isOwner = session?.user?.id === params.authorId;
+  const signedInOwner = session?.user?.id === params.authorId;
+  // ?as=visitor (Writer Studio's "Public profile"): the owner sees exactly what
+  // visitors see, plus a small bar back to the Studio. For anyone else it
+  // changes nothing. Everything below treats a previewing owner as a visitor.
+  const previewing = signedInOwner && searchParams?.as === "visitor";
+  const isOwner = signedInOwner && !previewing;
   const requested = parseProfileView(searchParams?.view);
   const wantsWriting = requested !== "reading";
 
@@ -82,7 +88,8 @@ export default async function AuthorProfilePage({
 
   const canSeeReading = isOwner || readingIsVisible(author);
   const view = requested === "reading" && canSeeReading ? "reading" : "writing";
-  const basePath = `/author/${author.id}`;
+  const ownPath = `/author/${author.id}`;
+  const basePath = previewing ? `${ownPath}?as=visitor` : ownPath;
   const displayName = author.name?.trim() || "Dramatized Fiction Author";
 
   const sections = sectionSwitches(author);
@@ -94,6 +101,20 @@ export default async function AuthorProfilePage({
 
   return (
     <main className="overflow-hidden md:px-6 md:py-6 lg:px-8">
+      {previewing ? (
+        <nav
+          aria-label="Visitor preview"
+          className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-2 text-sm md:mb-4 md:rounded-2xl md:border"
+        >
+          <span className="theme-meta mr-auto basis-full sm:basis-auto">You&apos;re seeing your profile as visitors do.</span>
+          <Link href="/writer-studio" className="inline-flex min-h-11 items-center font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4">
+            ‹ Back to Studio
+          </Link>
+          <Link href={`${ownPath}?edit=1`} className="inline-flex min-h-11 items-center font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4">
+            Edit profile
+          </Link>
+        </nav>
+      ) : null}
       <section className="overflow-hidden rounded-[32px] border border-[var(--border-color)] bg-[var(--bg-secondary)]">
         <div className="relative h-36 sm:h-48 md:h-72">
           {author.bannerImage ? (
@@ -120,6 +141,7 @@ export default async function AuthorProfilePage({
                 seriesOptions={seriesOptions}
                 // Only the Writing view sends its published work along (for the preview).
                 onSite={view === "writing" ? onSite : EMPTY_ON_SITE}
+                openOnLoad={searchParams?.edit === "1"}
               />
             </div>
           ) : null}
