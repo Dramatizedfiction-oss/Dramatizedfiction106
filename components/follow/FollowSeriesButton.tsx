@@ -1,11 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /*
- * Follow / unfollow a SERIES (it goes into the member's Library). Optimistic:
- * the state and count flip immediately and revert if the request fails.
+ * Follow / unfollow a SERIES (it goes into the member's Library; stored on the
+ * account as SeriesFollow rows). Optimistic: the state and count flip
+ * immediately and revert if the request fails. The button always says
+ * "Following" when followed; tapping it unfollows and shows "Unfollowed · Undo"
+ * for a few seconds.
  * Signed-out visitors are sent to sign in and brought back to this series.
  * Following an author is a separate control on the author's page.
  */
@@ -30,21 +33,39 @@ export default function FollowSeriesButton({
   const [count, setCount] = useState(initialCount);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [undo, setUndo] = useState(false);
+
+  // The undo offer disappears after a few seconds.
+  useEffect(() => {
+    if (!undo) return;
+    const timer = window.setTimeout(() => setUndo(false), 6000);
+    return () => window.clearTimeout(timer);
+  }, [undo]);
 
   const signInHref = `/sign-in?callbackUrl=${encodeURIComponent(`/series/${seriesId}`)}`;
 
-  async function toggle() {
+  // A change asked for while a request is still running (e.g. Undo tapped
+  // before the unfollow finished); applied as soon as that request ends.
+  const queued = useRef<boolean | null>(null);
+
+  async function apply(next: boolean) {
     if (!signedIn) {
       router.push(signInHref);
       return;
     }
-    if (pending) return;
+    if (pending) {
+      queued.current = next;
+      setFollowing(next);
+      setUndo(!next);
+      return;
+    }
 
-    const next = !following;
     const previous = { following, count };
     setFollowing(next);
     setCount((value) => Math.max(0, value + (next ? 1 : -1)));
     setError(null);
+    // Offer Undo straight away; a slow connection shouldn't delay it.
+    setUndo(!next);
     setPending(true);
 
     try {
@@ -62,26 +83,39 @@ export default function FollowSeriesButton({
         throw new Error(data?.error || "Couldn't update. Please try again.");
       }
       // The server's numbers are the truth (someone else may have followed meanwhile).
-      setFollowing(data.following);
-      if (typeof data.followerCount === "number") setCount(data.followerCount);
+      if (queued.current === null) {
+        setFollowing(data.following);
+        if (typeof data.followerCount === "number") setCount(data.followerCount);
+      }
     } catch (caught) {
-      setFollowing(previous.following);
+      // The request didn't happen, so the state is the opposite of what was asked.
+      setFollowing(!next);
       setCount(previous.count);
+      setUndo(false);
       setError(caught instanceof Error ? caught.message : "Couldn't update. Please try again.");
     } finally {
       setPending(false);
     }
   }
 
+  // Run a queued change once the running request is done.
+  useEffect(() => {
+    if (pending || queued.current === null) return;
+    const next = queued.current;
+    queued.current = null;
+    void apply(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pending]);
+
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
       <button
         type="button"
-        onClick={() => void toggle()}
+        onClick={() => void apply(!following)}
         aria-pressed={signedIn ? following : undefined}
         aria-label={`${following ? "Unfollow" : "Follow"} the series ${seriesTitle}`}
         className={`${following || variant === "secondary" ? "story-button-secondary" : "story-button-primary"} min-h-11 gap-2 ${
-          variant === "secondary" ? "min-h-12 max-[420px]:w-12 max-[420px]:px-0" : ""
+          variant === "secondary" ? "min-h-12 shrink-0 px-4" : ""
         }`}
       >
         {following ? (
@@ -93,8 +127,7 @@ export default function FollowSeriesButton({
             <path d="M10 4v12M4 10h12" />
           </svg>
         )}
-        {/* The secondary button is icon-only on narrow phones; its aria-label keeps the name. */}
-        <span className={variant === "secondary" ? "max-[420px]:sr-only" : undefined}>
+        <span>
           {following ? "Following" : variant === "secondary" ? "Follow" : "Follow Series"}
         </span>
       </button>
@@ -106,6 +139,24 @@ export default function FollowSeriesButton({
           {error}
         </p>
       ) : null}
+      {/* Unfollow confirmation with undo, above the bottom of the screen (thumb reach on phones). */}
+      <div aria-live="polite" className="pointer-events-none fixed inset-x-4 bottom-4 z-50 flex justify-center">
+        {undo ? (
+          <div className="pointer-events-auto flex min-h-12 max-w-md min-w-0 items-center gap-3 rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-raised)] py-1 pl-4 pr-1 text-sm text-[var(--text-primary)] shadow-[var(--shadow-raised)]">
+            <span className="min-w-0 truncate">Unfollowed {seriesTitle}</span>
+            <button
+              type="button"
+              onClick={() => {
+                setUndo(false);
+                void apply(true);
+              }}
+              className="min-h-11 rounded-xl px-3 font-semibold underline decoration-1 underline-offset-4 hover:bg-[var(--panel-hover)]"
+            >
+              Undo
+            </button>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

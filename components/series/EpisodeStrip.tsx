@@ -10,7 +10,12 @@ import { coverThumbUrl } from "@/lib/cover-thumbs";
 
 /*
  * The series page's episode strip: a snap-scrolling row of cards with the next
- * card peeking in. A Continue card comes first for a member who has started.
+ * card peeking in. Episodes are always in order (episode 1 first); for a member
+ * who has started, the card to resume wears a "Continue" badge in its own place
+ * and the row scrolls to it. Progress bars only show progress. Every card is
+ * the same size: the title area always takes two lines (longer titles end in
+ * "…") and the progress track is always there. The ⋯ menu has its own 48px
+ * button beside the title, outside the card's link.
  * The season pill (and its bottom sheet) only appears when the series has more
  * than one season. Each card's menu: Bookmark (signed-in) and Share.
  */
@@ -58,8 +63,15 @@ export default function EpisodeStrip({
   const [notice, setNotice] = useState<string | null>(null);
   const router = useRouter();
 
-  const inSeason = episodes.filter((episode) => episode.season === season);
-  const shown = resume ? [resume, ...inSeason.filter((episode) => episode.id !== resume.id)] : inSeason;
+  const shown = episodes.filter((episode) => episode.season === season);
+
+  // Bring the Continue card into view (instantly: the page has only just loaded).
+  const listRef = useRef<HTMLUListElement>(null);
+  useEffect(() => {
+    const list = listRef.current;
+    const card = resume ? list?.querySelector<HTMLElement>(`[data-episode-id="${resume.id}"]`) : null;
+    if (list && card) list.scrollLeft = card.offsetLeft - list.offsetLeft - Number.parseFloat(getComputedStyle(list).paddingLeft || "0");
+  }, [resume, season]);
 
   async function toggleBookmark(episode: StripEpisode) {
     setMenu(null);
@@ -134,17 +146,17 @@ export default function EpisodeStrip({
       {episodes.length === 0 ? (
         <p className="theme-meta mt-4 text-sm">The first episode is coming soon.</p>
       ) : (
-        <ul className="scrollbar-hide -mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-4 px-4 pb-2 lg:mx-0 lg:scroll-px-0 lg:px-0">
-          {shown.map((episode, index) => (
-            <li key={`${episode.id}-${index}`} className="relative w-[72%] max-w-[300px] shrink-0 snap-start sm:w-[260px]">
+        <ul ref={listRef} className="scrollbar-hide -mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-4 px-4 pb-2 lg:mx-0 lg:scroll-px-0 lg:px-0">
+          {shown.map((episode) => (
+            <li key={episode.id} data-episode-id={episode.id} className="flex w-[72%] max-w-[300px] shrink-0 snap-start sm:w-[260px]">
               <StripCard
                 episode={episode}
-                continueCard={Boolean(resume) && index === 0}
+                continueCard={episode.id === resume?.id}
                 label={episodeLabel(episode, multiSeason)}
                 seriesCover={seriesCover}
                 themeColor={themeColor}
-                menuOpen={menu === `${episode.id}-${index}`}
-                onMenu={(open) => setMenu(open ? `${episode.id}-${index}` : null)}
+                menuOpen={menu === episode.id}
+                onMenu={(open) => setMenu(open ? episode.id : null)}
                 bookmarked={bookmarks.has(episode.id)}
                 signedIn={signedIn}
                 onBookmark={() => void toggleBookmark(episode)}
@@ -226,9 +238,11 @@ function StripCard({
   }, [menuOpen, onMenu]);
 
   const progress = episode.progress ?? 0;
+  const href = `/episode/${episode.id}`;
   return (
-    <article className="overflow-hidden rounded-[20px] border border-[var(--border-color)] bg-[var(--surface-raised)] shadow-[var(--shadow-card)]">
-      <Link href={`/episode/${episode.id}`} className="block">
+    <article className="flex w-full flex-col overflow-hidden rounded-[20px] border border-[var(--border-color)] bg-[var(--surface-raised)] shadow-[var(--shadow-card)]">
+      {/* The picture is a second way into the episode for pointers; keyboards use the title link. */}
+      <Link href={href} tabIndex={-1} aria-hidden="true" className="block">
         <div className="relative aspect-[16/10] overflow-hidden bg-[var(--bg-primary)]">
           <CoverImage
             sources={[coverThumbUrl(episode.coverImage), episode.coverImage, coverThumbUrl(seriesCover), seriesCover]}
@@ -241,54 +255,61 @@ function StripCard({
             </span>
           ) : null}
         </div>
-        {/* Progress: how far this member has read (signed-in only). */}
-        {signedIn ? (
-          <div
-            role="progressbar"
-            aria-label={`${label} reading progress`}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={progress}
-            className="h-1 bg-[var(--border-color)]"
-          >
-            <div className="h-full bg-[var(--sa)]" style={{ width: `${progress}%` }} />
-          </div>
-        ) : null}
-        <div className="p-4 pr-12">
+      </Link>
+      {/* Progress (context only): how far this member is in this episode. The track is always there so every card is the same size. */}
+      {signedIn ? (
+        <div
+          role="progressbar"
+          aria-label={`${label} reading progress`}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={progress}
+          className="h-1 bg-[var(--border-color)]"
+        >
+          <div className="h-full bg-[var(--sa)]" style={{ width: `${progress}%` }} />
+        </div>
+      ) : (
+        <div aria-hidden="true" className="h-1" />
+      )}
+      <div className="flex flex-1 items-start">
+        <Link href={href} className="block min-w-0 flex-1 py-4 pl-4 pr-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus-ring)]">
           <p className="theme-meta font-mono-df text-[11px] uppercase tracking-[0.16em]">{label}</p>
-          <h3 className="theme-heading mt-1 line-clamp-2 font-heading text-lg font-semibold leading-snug">{episode.title}</h3>
+          {/* Always two lines tall (1.375 line height × 2), so short and long titles make the same card. */}
+          <h3 className="theme-heading mt-1 line-clamp-2 min-h-[2.75em] break-words font-heading text-lg font-semibold leading-snug" title={episode.title}>
+            {episode.title}
+          </h3>
           <p className="theme-meta mt-1 text-sm">
             {episode.readTime} min read
             {progress >= 95 ? " · Read" : progress > 0 ? ` · ${progress}%` : ""}
           </p>
-        </div>
-      </Link>
+        </Link>
 
-      <div ref={menuRef} className="absolute bottom-2 right-1">
-        <button
-          type="button"
-          onClick={() => onMenu(!menuOpen)}
-          aria-haspopup="menu"
-          aria-expanded={menuOpen}
-          aria-label={`More for ${episode.title}`}
-          className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--text-secondary)] transition hover:bg-[var(--panel-hover)] hover:text-[var(--text-primary)]"
-        >
-          <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5" fill="currentColor">
-            <circle cx="4.5" cy="10" r="1.6" />
-            <circle cx="10" cy="10" r="1.6" />
-            <circle cx="15.5" cy="10" r="1.6" />
-          </svg>
-        </button>
-        {menuOpen ? (
-          <div role="menu" className="theme-panel absolute bottom-full right-0 z-20 mb-1 w-48 overflow-hidden rounded-2xl border border-[var(--border-color)] py-1 shadow-2xl">
-            <button type="button" role="menuitem" onClick={onBookmark} className="flex min-h-11 w-full items-center px-4 text-left text-sm text-[var(--text-primary)] hover:bg-[var(--panel-hover)]">
-              {!signedIn ? "Sign in to bookmark" : bookmarked ? "Remove bookmark" : "Bookmark"}
-            </button>
-            <button type="button" role="menuitem" onClick={onShare} className="flex min-h-11 w-full items-center px-4 text-left text-sm text-[var(--text-primary)] hover:bg-[var(--panel-hover)]">
-              Share
-            </button>
-          </div>
-        ) : null}
+        <div ref={menuRef} className="relative shrink-0 p-1 pt-2">
+          <button
+            type="button"
+            onClick={() => onMenu(!menuOpen)}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            aria-label={`More for ${episode.title}`}
+            className="flex h-12 w-12 items-center justify-center rounded-full text-[var(--text-secondary)] transition hover:bg-[var(--panel-hover)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+          >
+            <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5" fill="currentColor">
+              <circle cx="4.5" cy="10" r="1.6" />
+              <circle cx="10" cy="10" r="1.6" />
+              <circle cx="15.5" cy="10" r="1.6" />
+            </svg>
+          </button>
+          {menuOpen ? (
+            <div role="menu" className="theme-panel absolute bottom-full right-1 z-20 mb-1 w-48 overflow-hidden rounded-2xl border border-[var(--border-color)] py-1 shadow-2xl">
+              <button type="button" role="menuitem" onClick={onBookmark} className="flex min-h-11 w-full items-center px-4 text-left text-sm text-[var(--text-primary)] hover:bg-[var(--panel-hover)]">
+                {!signedIn ? "Sign in to bookmark" : bookmarked ? "Remove bookmark" : "Bookmark"}
+              </button>
+              <button type="button" role="menuitem" onClick={onShare} className="flex min-h-11 w-full items-center px-4 text-left text-sm text-[var(--text-primary)] hover:bg-[var(--panel-hover)]">
+                Share
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
     </article>
   );

@@ -79,6 +79,7 @@ export type SeriesDef = {
   author: WriterKey;
   /** One of lib/genres.ts. */
   genre: string;
+  /** Sub tags from lib/series-tags.ts (max 3). */
   tags: string[];
   description: string;
   aiUsageTag: AiTag;
@@ -99,7 +100,7 @@ export const SERIES: SeriesDef[] = [
     title: "The Salt Crown",
     author: "A",
     genre: "fantasy",
-    tags: ["epic", "sea", "court"],
+    tags: ["Royalty & court", "Sea & coast", "Political intrigue"],
     description:
       "When the tide-bound crown of Merrow Isle chooses a fishmonger's daughter, Isla Brack must survive a court that wanted anyone else, and a sea that remembers every oath.",
     aiUsageTag: "AI_FREE",
@@ -115,7 +116,7 @@ export const SERIES: SeriesDef[] = [
     title: "Tidecaller",
     author: "B",
     genre: "fantasy",
-    tags: ["adventure", "sea", "magic"],
+    tags: ["Sea & coast", "Magic", "Found family"],
     description:
       "Corin can call the tide, but only a little, and only when he's scared. Which is a problem, because the ship he has stowed away on is sailing for the edge of the map.",
     aiUsageTag: "AI_CORRECTED",
@@ -131,7 +132,7 @@ export const SERIES: SeriesDef[] = [
     title: "Orbit Nine",
     author: "A",
     genre: "sci-fi",
-    tags: ["space station", "mystery", "found family"],
+    tags: ["Space", "Found family", "Psychological"],
     description:
       "Station Nine was built to watch a dead planet. Then the planet started sending messages, and the seven people aboard have to decide whether to answer.",
     aiUsageTag: "AI_CORRECTED",
@@ -147,7 +148,7 @@ export const SERIES: SeriesDef[] = [
     title: "Letters to the Lighthouse Keeper",
     author: "C",
     genre: "romance",
-    tags: ["epistolary", "slow burn", "coast"],
+    tags: ["Epistolary", "Slow burn", "Sea & coast"],
     description:
       "A misdirected letter reaches the keeper of a remote lighthouse. She writes back. Six letters later, neither of them is sure who is keeping whom afloat.",
     aiUsageTag: "AI_FREE",
@@ -163,7 +164,7 @@ export const SERIES: SeriesDef[] = [
     title: "The Ninth Floor Alibi",
     author: "D",
     genre: "mystery",
-    tags: ["whodunit", "office", "detective"],
+    tags: ["Whodunit", "Detective", "Workplace"],
     description:
       "Everyone on the ninth floor was in the meeting when the safe was emptied. Inspector Dara Quell has a room full of perfect alibis and one coffee cup too many.",
     aiUsageTag: "AI_FREE",
@@ -179,7 +180,7 @@ export const SERIES: SeriesDef[] = [
     title: "What the Fog Keeps",
     author: "E",
     genre: "horror",
-    tags: ["atmospheric", "small town", "folk horror"],
+    tags: ["Folk horror", "Small town", "Ghosts"],
     description:
       "Every autumn the fog comes into Wrenhaven and stays for three days. This year, when it lifts, the church bell is ringing one more time than it should.",
     aiUsageTag: "AI_HEAVY",
@@ -195,7 +196,7 @@ export const SERIES: SeriesDef[] = [
     title: "Zero Hour Courier",
     author: "D",
     genre: "thriller",
-    tags: ["chase", "city", "conspiracy"],
+    tags: ["Political intrigue", "Survival", "Workplace"],
     description:
       "Bike courier Tamsin Roe has one rule: never look inside the package. Tonight the package is looking for her.",
     aiUsageTag: "AI_WRITTEN",
@@ -211,7 +212,7 @@ export const SERIES: SeriesDef[] = [
     title: "The Cartographer's Daughter",
     author: "C",
     genre: "historical",
-    tags: ["maps", "1700s", "family secrets"],
+    tags: ["Sea & coast", "Political intrigue", "Redemption"],
     description:
       "Her father drew the coastline for a king. When he dies with one map unfinished, Elinor Vane follows its blank edge to find out what he refused to draw.",
     aiUsageTag: "AI_CORRECTED",
@@ -227,7 +228,7 @@ export const SERIES: SeriesDef[] = [
     title: "Night Shift at Mabel's",
     author: "B",
     genre: "comedy",
-    tags: ["slice of life", "diner", "ensemble"],
+    tags: ["Cosy", "Workplace", "Found family"],
     description:
       "Mabel's Diner never closes, which means somebody has to be there at 3 a.m. Usually that's Gus, a cook with opinions, and whoever wanders in from the rain.",
     aiUsageTag: "AI_FREE",
@@ -243,7 +244,7 @@ export const SERIES: SeriesDef[] = [
     title: "Seventeen Minutes Late",
     author: "E",
     genre: "literary",
-    tags: ["young adult", "coming of age", "school"],
+    tags: ["Coming of age", "Second chance", "Small town"],
     description:
       "Noa misses the bus by seventeen minutes and ends up walking to school with the one person she has avoided all year. It becomes a habit. It becomes a lot of things.",
     aiUsageTag: "AI_CORRECTED",
@@ -259,7 +260,7 @@ export const SERIES: SeriesDef[] = [
     title: "The Quiet Ration",
     author: "A",
     genre: "sci-fi",
-    tags: ["dystopian", "short"],
+    tags: ["Dystopian"],
     description: "In the city of measured words, every citizen gets two hundred a day. Wren has saved hers for a year.",
     aiUsageTag: "AI_HEAVY",
     themeColor: "#334155",
@@ -274,7 +275,7 @@ export const SERIES: SeriesDef[] = [
     title: "Ghost Tax",
     author: "C",
     genre: "fantasy",
-    tags: ["urban fantasy", "paranormal", "comedy"],
+    tags: ["Ghosts", "Paranormal", "Workplace"],
     description: "The city has started taxing hauntings. Junior assessor Priya Lal has to collect from a ghost who insists he's merely visiting.",
     aiUsageTag: "AI_FREE",
     themeColor: "#6d28d9",

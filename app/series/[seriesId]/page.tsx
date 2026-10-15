@@ -12,6 +12,7 @@ import PlaceholderArt from "@/components/series/PlaceholderArt";
 import SeriesRail from "@/components/series/SeriesRail";
 import { seriesAccentStyle } from "@/lib/series-accent";
 import { getSeriesPage } from "@/lib/series-page";
+import { knownSeriesTags } from "@/lib/series-tags";
 
 /*
  * The series page. Phone, top to bottom: an edge-to-edge cover that fades
@@ -48,6 +49,7 @@ export default async function SeriesPage({ params }: { params: { seriesId: strin
       : null;
   const signInHref = `/sign-up?callbackUrl=${encodeURIComponent(`/series/${series.id}`)}`;
   const authorName = series.author.name || "Anonymous Author";
+  const tags = knownSeriesTags(series.tags);
 
   const cover = (eager: boolean, className: string) => (
     <CoverImage
@@ -118,6 +120,16 @@ export default async function SeriesPage({ params }: { params: { seriesId: strin
               {totalMinutes > 0 ? <> · {formatMinutes(totalMinutes)}</> : null} · {series.isComplete ? "Complete" : "Ongoing"}
             </p>
 
+            {tags.length ? (
+              <ul aria-label="Tags" className="mt-3 flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <li key={tag} className="rounded-full border border-[var(--border-strong)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary)]">
+                    {tag}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+
             <div className="mt-5 flex items-center gap-3">
               {main ? (
                 <Link
@@ -168,13 +180,15 @@ export default async function SeriesPage({ params }: { params: { seriesId: strin
           signedIn={Boolean(viewerId)}
         />
 
+        {/* Row 1 (same genre, else "Like this one", else "More for you") and Row 2 (the author); empty rows hide. */}
+        {rails.primary ? (
+          <SeriesRail
+            title={rails.primary.title}
+            cards={rails.primary.cards}
+            seeAllHref={rails.primary.kind === "genre" ? `/explore?genre=${encodeURIComponent(series.genre)}` : undefined}
+          />
+        ) : null}
         <SeriesRail title={`More by ${authorName}`} cards={rails.byAuthor} seeAllHref={`/author/${series.authorId}`} />
-        <SeriesRail
-          title={`More in ${series.genre}`}
-          cards={rails.byGenre}
-          seeAllHref={`/explore?genre=${encodeURIComponent(series.genre)}`}
-        />
-        <SeriesRail title="Because you liked this" cards={rails.because} />
       </div>
     </main>
   );

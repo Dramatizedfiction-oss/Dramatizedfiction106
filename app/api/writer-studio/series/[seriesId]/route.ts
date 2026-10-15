@@ -10,6 +10,7 @@ import {
 } from "@/lib/api/writer-studio-request";
 import { requireApiRole, requireOwnedSeries } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
+import { parseSeriesTags } from "@/lib/series-tags";
 import { decideImageField, deleteReplacedImage } from "@/lib/uploads/image-storage";
 
 // Editing is not publishing: `status` is not accepted here (a series becomes
@@ -23,6 +24,8 @@ const updateSeriesSchema = z.object({
   themeColor: optionalText,
   aiUsageTag: optionalText,
   isComplete: z.boolean().optional(),
+  // Sub tags: checked against the fixed list in lib/series-tags.ts below.
+  tags: z.array(z.string().max(60)).max(10).optional(),
 });
 
 export async function PATCH(
@@ -48,6 +51,9 @@ export async function PATCH(
   const cover = decideImageField(input.coverImage, owned.series.coverImage);
   if (!cover.ok) return badRequest(cover.message);
 
+  const tags = input.tags === undefined ? null : parseSeriesTags(input.tags);
+  if (tags && !tags.ok) return badRequest(tags.message);
+
   try {
     const updated = await prisma.series.update({
       where: { id: owned.series.id },
@@ -59,6 +65,7 @@ export async function PATCH(
         themeColor: has("themeColor") ? cleanOptionalText(input.themeColor) : undefined,
         aiUsageTag: input.aiUsageTag ? serializeAiUsageTag(input.aiUsageTag) : undefined,
         isComplete: input.isComplete,
+        tags: tags?.ok ? tags.tags : undefined,
       },
     });
 

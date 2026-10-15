@@ -4,6 +4,7 @@ import AiUsageSelector from "@/components/AiUsageSelector";
 import ImageUploadField from "@/components/uploads/ImageUploadField";
 import type { AiUsageTag } from "@/lib/ai-usage";
 import { GENRES } from "@/lib/genres";
+import { MAX_SERIES_TAGS, SERIES_TAGS } from "@/lib/series-tags";
 import { safeHexColor } from "@/lib/writer-studio/format";
 
 export type SeriesFormValues = {
@@ -15,6 +16,8 @@ export type SeriesFormValues = {
   themeColor: string;
   /** Shown to readers as Complete instead of Ongoing (series details only). */
   isComplete?: boolean;
+  /** Sub tags from the fixed list (series details only). */
+  tags?: string[];
 };
 
 const THEME_SWATCHES = ["#7c3aed", "#2563eb", "#0891b2", "#059669", "#ca8a04", "#ea580c", "#dc2626", "#db2777", "#475569"];
@@ -138,6 +141,8 @@ export default function SeriesFields({
             </div>
           </fieldset>
 
+          {values.tags !== undefined ? <TagPicker value={values.tags} onChange={(tags) => set("tags", tags)} /> : null}
+
           {values.isComplete !== undefined ? (
             <label className="flex min-h-11 cursor-pointer items-start gap-3">
               <input
@@ -157,5 +162,46 @@ export default function SeriesFields({
         </>
       ) : null}
     </div>
+  );
+}
+
+/** Up to MAX_SERIES_TAGS sub tags from the fixed list; they help readers find similar series. */
+function TagPicker({ value, onChange }: { value: string[]; onChange: (tags: string[]) => void }) {
+  const full = value.length >= MAX_SERIES_TAGS;
+  return (
+    <fieldset>
+      <legend className={labelClass}>
+        Tags{" "}
+        <span className="font-normal text-[var(--studio-muted)]">
+          ({value.length} of {MAX_SERIES_TAGS})
+        </span>
+      </legend>
+      <p className="-mt-1 mb-3 text-xs text-[var(--studio-muted)]">
+        Pick up to {MAX_SERIES_TAGS}. They appear on your series page and help readers who liked similar stories find this one.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {SERIES_TAGS.map((tag) => {
+          const selected = value.includes(tag);
+          const disabled = !selected && full;
+          return (
+            <button
+              key={tag}
+              type="button"
+              aria-pressed={selected}
+              disabled={disabled}
+              onClick={() => onChange(selected ? value.filter((item) => item !== tag) : [...value, tag])}
+              className={`min-h-11 rounded-full border px-3.5 text-sm transition disabled:opacity-40 ${
+                selected
+                  ? "border-transparent bg-[var(--accent-solid)] font-semibold text-[var(--accent-fg)]"
+                  : "border-[var(--studio-border)] text-[var(--studio-text)] hover:bg-[var(--panel-hover)]"
+              }`}
+            >
+              {selected ? "✓ " : ""}
+              {tag}
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
   );
 }

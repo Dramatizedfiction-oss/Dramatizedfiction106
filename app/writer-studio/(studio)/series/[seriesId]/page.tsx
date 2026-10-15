@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { knownSeriesTags } from "@/lib/series-tags";
 import { notFound } from "next/navigation";
 import AiTagBanner from "@/components/AiTagBanner";
 import EpisodeList from "@/components/writer-studio/episodes/EpisodeList";
@@ -77,6 +78,7 @@ export default async function SeriesHubPage({
                 coverImage: series.coverImage ?? "",
                 themeColor: series.themeColor ?? "",
                 isComplete: series.isComplete,
+                tags: knownSeriesTags(series.tags),
               }}
             />
             {live ? (

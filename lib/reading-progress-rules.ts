@@ -11,31 +11,27 @@ export function parsePercent(value: unknown): number | null {
 export type EpisodeProgress = { episodeId: string; percent: number; updatedAt: Date };
 
 /**
- * Where to pick up in a series: the most recently read unfinished episode, or
- * the episode after the furthest finished one ("again" when all are finished).
- * Null when nothing is started. `episodes` are the published episodes in
- * reading order.
+ * Where to pick up in a series (Sweep A): the episode the member read most
+ * recently. If they finished it, the next episode instead ("next"); if it was
+ * the last one, the first episode ("again"). Null when nothing is started.
+ * `episodes` are the published episodes in reading order. Progress elsewhere
+ * in the series (older reads, other percentages) doesn't change the answer.
  */
 export function continuePoint(
   episodes: { id: string; episodeNumber: number }[],
   progress: EpisodeProgress[],
 ): { episodeId: string; episodeNumber: number; kind: "continue" | "next" | "again" } | null {
   if (progress.length === 0 || episodes.length === 0) return null;
-  const known = new Set(episodes.map((episode) => episode.id));
-  const mine = progress.filter((row) => known.has(row.episodeId));
-  if (mine.length === 0) return null;
-
-  const unfinished = mine
-    .filter((row) => row.percent < FINISHED_PERCENT)
+  const index = new Map(episodes.map((episode, position) => [episode.id, position]));
+  const latest = progress
+    .filter((row) => index.has(row.episodeId))
     .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())[0];
-  if (unfinished) {
-    const episode = episodes.find((item) => item.id === unfinished.episodeId)!;
-    return { episodeId: episode.id, episodeNumber: episode.episodeNumber, kind: "continue" };
-  }
+  if (!latest) return null;
 
-  const finished = new Set(mine.map((row) => row.episodeId));
-  const furthest = episodes.reduce((last, episode, index) => (finished.has(episode.id) ? index : last), -1);
-  const next = episodes[furthest + 1];
+  const position = index.get(latest.episodeId)!;
+  const episode = episodes[position];
+  if (latest.percent < FINISHED_PERCENT) return { episodeId: episode.id, episodeNumber: episode.episodeNumber, kind: "continue" };
+  const next = episodes[position + 1];
   if (next) return { episodeId: next.id, episodeNumber: next.episodeNumber, kind: "next" };
   return { episodeId: episodes[0].id, episodeNumber: episodes[0].episodeNumber, kind: "again" };
 }

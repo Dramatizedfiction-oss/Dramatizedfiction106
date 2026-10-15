@@ -146,34 +146,76 @@ describe("series page", () => {
   });
 });
 
-describe("rails", () => {
-  test("More by the author and More in the genre: never the current or unpublished series", async (t) => {
+describe("recommendation rows (Sweep A)", () => {
+  test("Row 1 is the same genre when there is one; Row 2 is the author; never the current or unpublished series", async (t) => {
     if (!requireServer(t)) return;
     const page = await (await call(`/series/${main.id}`, undefined)).text();
+    assert.match(page, /More in Mystery/);
+    assert.match(page, new RegExp(`${TAG} same genre`));
     assert.match(page, /More by/);
     assert.match(page, new RegExp(`${TAG} same author`));
-    assert.match(page, /More in mystery/);
-    assert.match(page, new RegExp(`${TAG} same genre`));
     assert.doesNotMatch(page, new RegExp(`${TAG} draft`), "unpublished series never appear");
     assert.match(page, /href="\/explore\?genre=mystery"/);
-    assert.doesNotMatch(page, /Because you liked this/, "signed out: no personal rail");
+    assert.ok(page.indexOf("More in Mystery") < page.indexOf("More by"), "Row 1 comes before Row 2");
+    assert.doesNotMatch(page, /Because you liked this|Like this one|More for you/, "one Row 1 only");
   });
 
-  test("Because you liked this: only with signals and at least 3 results", async (t) => {
+  test("no other series in the genre: Like this one (shared tags), else More for you", async (t) => {
     if (!requireServer(t)) return;
-    assert.doesNotMatch(await (await call(`/series/${main.id}`, fresh)).text(), /Because you liked this/, "no signals");
+    const lonely = await makeSeries(author, "lonely", `${TAG.toLowerCase()}-genre`, 1);
+    const twin = await makeSeries(otherAuthor, "tag twin", "thriller", 1);
+    // Tags no other series uses (the scratch copy may hold the test catalogue).
+    await prisma.series.update({ where: { id: lonely.id }, data: { tags: ["Heist", "Sports"] } });
+    await prisma.series.update({ where: { id: twin.id }, data: { tags: ["Sports"] } });
 
-    // fresh follows one mystery series by the other author: the other mystery series qualify.
-    assert.equal((await call(`/api/me/follows/${extra.liked}`, fresh, "PUT")).status, 200);
-    const page = await (await call(`/series/${main.id}`, fresh)).text();
-    assert.match(page, /Because you liked this/);
-    // Just that rail's section (later markup and Next's page data mention other series).
-    const start = page.indexOf("Because you liked this");
-    const because = page.slice(start, page.indexOf("</section>", start));
-    assert.doesNotMatch(because, new RegExp(`${TAG} liked<`), "series already followed are left out");
-    assert.match(because, new RegExp(`${TAG} genre two`));
+    const like = await (await call(`/series/${lonely.id}`, undefined)).text();
+    assert.match(like, /Like this one/);
+    const start = like.indexOf("Like this one");
+    assert.match(like.slice(start, like.indexOf("</section>", start)), new RegExp(`${TAG} tag twin`));
+
+    await prisma.series.update({ where: { id: twin.id }, data: { tags: [] } });
+    const forYou = await (await call(`/series/${lonely.id}`, undefined)).text();
+    assert.match(forYou, /More for you/);
+    assert.doesNotMatch(forYou, /Like this one/);
   });
+});
 
+describe("sub tags (Sweep A)", () => {
+  test("the writer picks up to 3 from the list; the series page shows them", async (t) => {
+    if (!requireServer(t)) return;
+    const path = `/api/writer-studio/series/${main.id}`;
+    assert.equal((await call(path, author, "PATCH", { tags: ["Not a real tag"] })).status, 400);
+    assert.equal((await call(path, author, "PATCH", { tags: ["Heist", "Ghosts", "Cosy", "Space"] })).status, 400);
+    assert.equal((await call(path, otherAuthor, "PATCH", { tags: ["Heist"] })).status, 404, "only the author");
+    assert.equal((await call(path, author, "PATCH", { tags: ["whodunit", "Detective"] })).status, 200);
+    const saved = await prisma.series.findUniqueOrThrow({ where: { id: main.id }, select: { tags: true } });
+    assert.deepEqual(saved.tags, ["Whodunit", "Detective"], "stored in the list's spelling");
+    const page = await (await call(`/series/${main.id}`, undefined)).text();
+    assert.match(page, /aria-label="Tags"/);
+    assert.match(page, />Whodunit</);
+  });
+});
+
+describe("episode order and Continue (Sweep A)", () => {
+  test("episodes stay in order with the Continue badge in place; Continue follows the latest read", async (t) => {
+    if (!requireServer(t)) return;
+    // reader finished ep 1 earlier and is 30% into ep 2 (tests above): Continue episode 2.
+    let page = await (await call(`/series/${main.id}`, reader)).text();
+    const strip = page.slice(page.indexOf('id="episodes-heading"'));
+    const one = strip.indexOf(`${TAG} main ep 1`);
+    const two = strip.indexOf(`${TAG} main ep 2`);
+    const three = strip.indexOf(`${TAG} main ep 3`);
+    assert.ok(one > -1 && one < two && two < three, "episode 1 first, in order");
+    assert.match(strip, /Continue/);
+
+    // Finishing the last episode most recently: Read again (even though ep 2 is unfinished).
+    await call(`/api/me/progress/${main.episodes[2]}`, reader, "PUT", { percent: 100 });
+    page = await (await call(`/series/${main.id}`, reader)).text();
+    assert.match(page, /Read again/);
+  });
+});
+
+describe("explore", () => {
   test("Explore preselects ?genre=", async (t) => {
     if (!requireServer(t)) return;
     assert.equal((await call("/explore?genre=mystery", undefined)).status, 200);

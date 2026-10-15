@@ -48,6 +48,7 @@ export default function SeriesDetailsSheet({
       coverImage: values.coverImage.trim(),
       themeColor: values.themeColor.trim(),
       ...(values.isComplete !== undefined ? { isComplete: values.isComplete } : {}),
+      ...(values.tags !== undefined ? { tags: values.tags } : {}),
     });
 
     setPending(false);

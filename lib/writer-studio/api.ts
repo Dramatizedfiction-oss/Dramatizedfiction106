@@ -78,6 +78,8 @@ export type SeriesInput = {
   themeColor?: string;
   aiUsageTag?: string;
   isComplete?: boolean;
+  /** Sub tags from lib/series-tags.ts (max 3). */
+  tags?: string[];
 };
 
 export function createSeries(input: SeriesInput) {

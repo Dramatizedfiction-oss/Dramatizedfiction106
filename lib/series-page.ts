@@ -4,6 +4,8 @@ import { seriesRatingSummary } from "@/lib/engagement-rules";
 import { prisma } from "@/lib/prisma";
 import { seriesRating } from "@/lib/ratings";
 import { continuePoint } from "@/lib/reading-progress-rules";
+import { primaryRow, type RowKind } from "@/lib/series-rows-rules";
+import { SERIES_TAGS, knownSeriesTags } from "@/lib/series-tags";
 
 /*
  * Data for the series page (app/series/[seriesId]). Server-only. Story text
@@ -25,6 +27,7 @@ export async function getSeriesPage(seriesId: string, viewerId: string | null) {
       title: true,
       description: true,
       genre: true,
+      tags: true,
       coverImage: true,
       themeColor: true,
       aiUsageTag: true,
@@ -46,9 +49,9 @@ export async function getSeriesPage(seriesId: string, viewerId: string | null) {
     seriesRating(series.id),
     viewerId ? viewerState(viewerId, series.id, episodeIds) : null,
     // Rails are extras: if they fail, the page still shows without them.
-    getSeriesRails(series, viewerId).catch((error): SeriesRails => {
-      console.error("Series rails failed; showing the page without them.", error);
-      return { byAuthor: [], byGenre: [], because: [] };
+    getSeriesRows(series, viewerId).catch((error): SeriesRows => {
+      console.error("Series rows failed; showing the page without them.", error);
+      return { primary: null, byAuthor: [] };
     }),
   ]);
 
@@ -93,8 +96,6 @@ async function viewerState(userId: string, seriesId: string, episodeIds: string[
 // ------------------------------------------------------------------ rails
 
 export const RAIL_LIMIT = 12;
-/** "Because you liked this" is shown only with at least this many results. */
-export const BECAUSE_MIN_RESULTS = 3;
 
 export type RailCard = {
   id: string;
@@ -106,10 +107,15 @@ export type RailCard = {
   rating: ReturnType<typeof seriesRatingSummary>;
 };
 
-export type SeriesRails = { byAuthor: RailCard[]; byGenre: RailCard[]; because: RailCard[] };
+export type SeriesRows = {
+  /** Row 1: same genre, else "Like this one", else "More for you" (lib/series-rows-rules.ts). */
+  primary: { kind: RowKind; title: string; cards: RailCard[] } | null;
+  /** Row 2: the author's other series. */
+  byAuthor: RailCard[];
+};
 
 /**
- * Which series may appear in any rail. The one place to add the mature-content
+ * Which series may appear in any row. The one place to add the mature-content
  * cap and moderation filters (held/removed series) when they exist.
  */
 function railVisibility() {
@@ -117,7 +123,7 @@ function railVisibility() {
 }
 
 type RailRow = {
-  rail: "author" | "genre" | "because";
+  rail: "author" | "genre" | "like" | "forYou";
   id: string;
   title: string;
   coverImage: string | null;
@@ -129,25 +135,32 @@ type RailRow = {
 };
 
 /**
- * All three rails in one SQL round trip. Every rail excludes the current
- * series and anything railVisibility() hides; each is capped at RAIL_LIMIT.
- *   - More by [author]: the author's other series, most recently updated.
- *   - More in [genre]: same genre by other authors, most followed first.
- *   - Because you liked this (signed-in only): signals are series the member
- *     follows, and series of episodes they bookmarked or rated 4+. Candidates
- *     are series they don't follow or write, scored +2 for a liked author and
- *     +1 per liked series in the same genre; ties by followers. Hidden below
- *     BECAUSE_MIN_RESULTS.
+ * Every candidate row in one SQL round trip (each capped at RAIL_LIMIT, the
+ * current series and anything railVisibility() hides excluded), then
+ * primaryRow() picks Row 1:
+ *   - author:  the author's other series, most recently updated.
+ *   - genre:   same genre by other authors, most followed first.
+ *   - like:    other authors' series sharing sub tags with this one, most
+ *              shared tags first, then followers.
+ *   - forYou:  signed in: series the member doesn't follow or write, scored
+ *              from their follows, bookmarks and 4+ ratings (+2 a liked
+ *              author, +1 per liked series in the same genre, +1 per sub tag
+ *              shared with a liked series). Signed out (or no signals): the
+ *              most followed series.
+ * Sub tags count only when on the fixed list (lib/series-tags.ts).
  */
-export async function getSeriesRails(
-  current: { id: string; authorId: string; genre: string },
+export async function getSeriesRows(
+  current: { id: string; authorId: string; genre: string; tags: string[] },
   viewerId: string | null,
-): Promise<SeriesRails> {
+): Promise<SeriesRows> {
   const viewer = viewerId ?? "";
+  const tags = knownSeriesTags(current.tags).map((tag) => tag.toLowerCase());
+  const known = SERIES_TAGS.map((tag) => tag.toLowerCase());
   const rows = await prisma.$queryRaw<RailRow[]>`
     WITH base AS (
       SELECT s.id, s.title, s."coverImage", s."themeColor", s."aiUsageTag"::text AS "aiUsageTag", s.genre,
-             s."authorId", s.followers, s.reads, s."updatedAt", u.name AS "authorName"
+             s."authorId", s.followers, s.reads, s."updatedAt", u.name AS "authorName",
+             ARRAY(SELECT lower(t) FROM unnest(s.tags) t WHERE lower(t) = ANY(${known}::text[])) AS tags
       FROM "Series" s JOIN "User" u ON u.id = s."authorId"
       WHERE ${railVisibility()} AND s.id <> ${current.id}
     ),
@@ -159,6 +172,19 @@ export async function getSeriesRails(
     liked_meta AS (
       SELECT s."authorId", lower(s.genre) AS genre FROM "Series" s WHERE s.id IN (SELECT id FROM liked)
     ),
+    liked_tags AS (
+      SELECT lower(t) AS tag FROM "Series" s, unnest(s.tags) t WHERE s.id IN (SELECT id FROM liked)
+    ),
+    personal AS (
+      SELECT b.*,
+             (CASE WHEN b."authorId" IN (SELECT "authorId" FROM liked_meta) THEN 2 ELSE 0 END
+              + (SELECT count(*) FROM liked_meta m WHERE m.genre = lower(b.genre))
+              + (SELECT count(*) FROM liked_tags lt WHERE lt.tag = ANY(b.tags))) AS score
+      FROM base b
+      WHERE ${viewer} <> ''
+        AND b."authorId" <> ${viewer}
+        AND b.id NOT IN (SELECT f."seriesId" FROM "SeriesFollow" f WHERE f."userId" = ${viewer})
+    ),
     picked AS (
       (SELECT 'author' AS rail, b.* FROM base b WHERE b."authorId" = ${current.authorId}
         ORDER BY b."updatedAt" DESC LIMIT ${RAIL_LIMIT})
@@ -166,19 +192,18 @@ export async function getSeriesRails(
       (SELECT 'genre', b.* FROM base b WHERE lower(b.genre) = lower(${current.genre}) AND b."authorId" <> ${current.authorId}
         ORDER BY b.followers DESC, b.reads DESC LIMIT ${RAIL_LIMIT})
       UNION ALL
-      (SELECT 'because', scored.id, scored.title, scored."coverImage", scored."themeColor", scored."aiUsageTag", scored.genre,
-              scored."authorId", scored.followers, scored.reads, scored."updatedAt", scored."authorName"
-        FROM (
-          SELECT b.*,
-                 (CASE WHEN b."authorId" IN (SELECT "authorId" FROM liked_meta) THEN 2 ELSE 0 END
-                  + (SELECT count(*) FROM liked_meta m WHERE m.genre = lower(b.genre))) AS score
-          FROM base b
-          WHERE ${viewer} <> ''
-            AND b."authorId" <> ${viewer}
-            AND b.id NOT IN (SELECT f."seriesId" FROM "SeriesFollow" f WHERE f."userId" = ${viewer})
-        ) scored
-        WHERE scored.score > 0
-        ORDER BY scored.score DESC, scored.followers DESC LIMIT ${RAIL_LIMIT})
+      (SELECT 'like', b.* FROM base b
+        WHERE b."authorId" <> ${current.authorId} AND b.tags && ${tags}::text[]
+        ORDER BY cardinality(ARRAY(SELECT unnest(b.tags) INTERSECT SELECT unnest(${tags}::text[]))) DESC, b.followers DESC
+        LIMIT ${RAIL_LIMIT})
+      UNION ALL
+      (SELECT 'forYou', p.id, p.title, p."coverImage", p."themeColor", p."aiUsageTag", p.genre, p."authorId",
+              p.followers, p.reads, p."updatedAt", p."authorName", p.tags
+        FROM personal p WHERE p.score > 0
+        ORDER BY p.score DESC, p.followers DESC LIMIT ${RAIL_LIMIT})
+      UNION ALL
+      (SELECT 'popular', b.* FROM base b WHERE b."authorId" <> ${viewer}
+        ORDER BY b.followers DESC, b.reads DESC LIMIT ${RAIL_LIMIT})
     )
     SELECT p.rail, p.id, p.title, p."coverImage", p."themeColor", p."aiUsageTag", p."authorName",
            r.avg::float AS "ratingAvg", COALESCE(r.count, 0) AS "ratingCount"
@@ -198,11 +223,13 @@ export async function getSeriesRails(
     authorName: row.authorName,
     rating: seriesRatingSummary(row.ratingAvg, Number(row.ratingCount)),
   });
-  const of = (rail: RailRow["rail"]) => rows.filter((row) => row.rail === rail).map(toCard);
-  const because = of("because");
-  return { byAuthor: of("author"), byGenre: of("genre"), because: because.length >= BECAUSE_MIN_RESULTS ? because : [] };
+  const of = (rail: string) => rows.filter((row) => row.rail === rail).map(toCard);
+  const personal = of("forYou");
+  return {
+    primary: primaryRow({ genre: of("genre"), like: of("like"), forYou: personal.length ? personal : of("popular") }, current.genre),
+    byAuthor: of("author"),
+  };
 }
-
 /** Every published episode of a public series, for the full list page. */
 export async function getEpisodeList(seriesId: string, viewerId: string | null) {
   const series = await prisma.series.findFirst({
