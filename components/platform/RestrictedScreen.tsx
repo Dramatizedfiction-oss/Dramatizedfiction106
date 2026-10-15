@@ -13,7 +13,7 @@ import { formatRestrictionEnd } from "@/lib/admin/format";
  */
 export default function RestrictedScreen({ restriction }: { restriction: AuthRestriction }) {
   const router = useRouter();
-  const { signOut } = useAuthSession();
+  const { signOutAndGoHome } = useAuthSession();
   const [signingOut, setSigningOut] = useState(false);
   const banned = restriction.kind === "BAN";
 
@@ -44,11 +44,11 @@ export default function RestrictedScreen({ restriction }: { restriction: AuthRes
           <button
             type="button"
             disabled={signingOut}
-            onClick={async () => {
+            onClick={() => {
+              if (signingOut) return;
               setSigningOut(true);
-              await signOut();
-              router.refresh();
-              router.push("/");
+              // Always ends on the home page with a full load, even if the request fails.
+              void signOutAndGoHome();
             }}
             className="story-button-primary disabled:opacity-60"
           >

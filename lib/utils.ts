@@ -8,6 +8,9 @@ import { hasRoleAccess, isCEO, type AppRole } from "@/lib/roles";
 /** Where members with an active ban or discipline action are sent. */
 export const RESTRICTED_PATH = "/account-restricted";
 
+/** Signed in, but this page isn't for their role: the themed 403 page (Sweep B1). */
+export const FORBIDDEN_PATH = "/status/403";
+
 function rejectRestricted(session: AuthSession) {
   if (session.user.restriction) redirect(RESTRICTED_PATH);
 }
@@ -22,7 +25,7 @@ export function requireRole(session: AuthSession | null, roles: AppRole[]) {
   const allowed = roles.some((role) => hasRoleAccess(session.user.role, role));
 
   if (!allowed) {
-    redirect("/explore");
+    redirect(FORBIDDEN_PATH);
   }
 }
 
@@ -46,7 +49,7 @@ export function requireAdministrationPage(session: AuthSession | null, callbackU
   }
   rejectRestricted(session);
   if (!hasRoleAccess(session.user.role, "BOARD")) {
-    redirect("/explore");
+    redirect(FORBIDDEN_PATH);
   }
   return session.user;
 }
@@ -58,7 +61,7 @@ export function requireCEOPage(session: AuthSession | null, callbackUrl = "/ceo-
   }
   rejectRestricted(session);
   if (!isCEO(session.user.role)) {
-    redirect(hasRoleAccess(session.user.role, "BOARD") ? "/administration" : "/explore");
+    redirect(FORBIDDEN_PATH);
   }
   return session.user;
 }

@@ -14,6 +14,34 @@ import { PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
 import { getPlatformSettings } from "@/lib/phases";
 import { prisma } from "@/lib/prisma";
 import { getAccessibleStudiosForUser } from "@/lib/studios";
+import type { Metadata, Viewport } from "next";
+
+/** Absolute base for link-preview images (app/opengraph-image.png etc.). */
+function siteUrl() {
+  const configured = process.env.NEXT_PUBLIC_BASE_URL?.trim();
+  if (configured) return configured;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
+
+// Icons, the home-screen manifest and the link-preview image come from the
+// file conventions in app/ (icon.png, favicon.ico, apple-icon.png,
+// manifest.ts, opengraph-image.png, twitter-image.png): scripts/make-brand-assets.ts.
+export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
+  title: { default: "Dramatized Fiction", template: "%s · Dramatized Fiction" },
+  description: "Serialized stories, one episode at a time.",
+  applicationName: "Dramatized Fiction",
+  openGraph: { siteName: "Dramatized Fiction", type: "website" },
+  twitter: { card: "summary_large_image" },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0b0a10" },
+    { media: "(prefers-color-scheme: light)", color: "#f4f4f7" },
+  ],
+};
 
 export default async function RootLayout({
   children,

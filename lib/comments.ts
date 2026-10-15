@@ -1,3 +1,4 @@
+import { ERROR_COPY } from "@/lib/error-copy";
 import type { Prisma } from "@prisma/client";
 import { AUDIT, recordAudit } from "@/lib/admin/audit";
 import { PUBLIC_EPISODE_WHERE } from "@/lib/content-visibility";
@@ -109,7 +110,7 @@ export async function postComment(userId: string, episodeId: unknown, rawBody: u
   }
 
   if (commentRateLimited(recent.map((comment) => comment.createdAt), now.getTime())) {
-    return failure(429, "RATE_LIMITED", "You're commenting very quickly. Wait a few minutes and try again.");
+    return failure(429, "RATE_LIMITED", `${ERROR_COPY[429].title} Wait a few minutes, then try again.`);
   }
 
   const created = await prisma.comment.create({

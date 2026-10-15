@@ -69,7 +69,7 @@ describe("Administration and CEO Studio pages", () => {
     if (!requireServer(t)) return;
     for (const actor of [actors.reader, actors.writer]) {
       for (const path of ["/administration", "/administration/members", "/ceo-studio", "/ceo-studio/phases/2"]) {
-        await expectRedirect(await call(path, actor), /^\/explore/, path);
+        await expectRedirect(await call(path, actor), /^\/status\/403/, path);
       }
     }
   });
@@ -79,8 +79,8 @@ describe("Administration and CEO Studio pages", () => {
     const members = await call("/administration/members", actors.board);
     assert.equal(members.status, 200);
     assert.match(await members.text(), /Search by name or exact email/);
-    await expectRedirect(await call("/ceo-studio", actors.board), /^\/administration/, "/ceo-studio");
-    await expectRedirect(await call("/ceo-studio/phases/2", actors.board), /^\/administration/, "/ceo-studio/phases/2");
+    await expectRedirect(await call("/ceo-studio", actors.board), /^\/status\/403/, "/ceo-studio");
+    await expectRedirect(await call("/ceo-studio/phases/2", actors.board), /^\/status\/403/, "/ceo-studio/phases/2");
   });
 
   test("the CEO can open both", async (t) => {
@@ -174,7 +174,7 @@ describe("Renovation Mode", () => {
       const anonymous = await call("/explore");
       const html = await anonymous.text();
       assert.match(html, /setting the stage/);
-      assert.doesNotMatch(html, /Trending Now/); // the real page isn't sent
+      assert.doesNotMatch(html, /Trending now/i); // the real page isn't sent
 
       assert.match(await (await call("/explore", actors.writer)).text(), /setting the stage/);
       assert.equal((await post("/api/writer-studio/series", actors.writer, {})).status, 503);

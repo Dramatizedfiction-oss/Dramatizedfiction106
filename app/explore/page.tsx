@@ -1,20 +1,24 @@
+import { cookies } from "next/headers";
 import ExploreBrowse from "@/components/explore/ExploreBrowse";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { getExploreCatalogue } from "@/lib/explore-catalogue";
+import { EXPLORE_SORT_COOKIE, parseExploreSort, type ExploreSort } from "@/lib/explore-ranking";
 import { isWriter } from "@/lib/roles";
 
 export default async function ExplorePage({
   searchParams,
 }: {
-  searchParams?: { q?: string; focus?: string; genre?: string };
+  searchParams?: { q?: string; focus?: string; genre?: string; sort?: string };
 }) {
   const session = await auth().catch(() => null);
   const query = searchParams?.q?.trim() || "";
   const showBecomeAuthorCta = Boolean(session?.user) && !isWriter(session?.user.role);
+  // Trending or Newest: the URL wins, then the choice made earlier this visit.
+  const initialSort = parseExploreSort(searchParams?.sort ?? cookies().get(EXPLORE_SORT_COOKIE)?.value);
 
-  let stories: Awaited<ReturnType<typeof loadStories>> = [];
+  let catalogue: Awaited<ReturnType<typeof getExploreCatalogue>> = { series: [], orders: { trending: [], newest: [] } as Record<ExploreSort, string[]> };
   try {
-    stories = await loadStories();
+    catalogue = await getExploreCatalogue();
   } catch (error) {
     console.error("Explore stories failed.", error);
   }
@@ -27,38 +31,19 @@ export default async function ExplorePage({
       // The mobile header's search button links here with ?focus=search.
       autoFocusSearch={searchParams?.focus === "search"}
       showBecomeAuthorCta={showBecomeAuthorCta}
-      stories={stories.map((series) => ({
+      initialSort={initialSort}
+      orders={catalogue.orders}
+      stories={catalogue.series.map((series) => ({
         id: series.id,
         title: series.title,
         description: series.description,
         coverImage: series.coverImage,
         genre: series.genre,
         themeColor: series.themeColor,
-        authorName: series.author.name,
+        authorName: series.authorName,
         reads: series.reads,
         createdAt: series.createdAt.toISOString(),
       }))}
     />
   );
-}
-
-function loadStories() {
-  return prisma.series.findMany({
-    where: { status: "PUBLISHED" },
-    orderBy: [{ reads: "desc" }, { updatedAt: "desc" }],
-    take: 80,
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      coverImage: true,
-      genre: true,
-      themeColor: true,
-      reads: true,
-      createdAt: true,
-      author: {
-        select: { name: true },
-      },
-    },
-  });
 }

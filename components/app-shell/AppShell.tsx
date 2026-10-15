@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import BrandMark from "@/components/brand/BrandMark";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { AuthRestriction } from "@/auth";
 import AppSidebar, { type AppSidebarSeries } from "@/components/app-shell/AppSidebar";
 import ProfileMenu from "@/components/app-shell/ProfileMenu";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { useTheme } from "@/components/providers/ThemeProvider";
-import { BookOpenIcon, MenuIcon, SearchIcon } from "@/components/icons";
+import { MenuIcon, SearchIcon } from "@/components/icons";
 import LegalFooterLinks from "@/components/legal/LegalFooterLinks";
 import type { AppShellUser, StudioLink } from "@/lib/navigation";
 import { getRoleLabel, hasRoleAccess, normalizeRole } from "@/lib/roles";
@@ -23,8 +24,7 @@ type AppShellProps = {
 };
 
 export default function AppShell({ user, studios, trending, renovationMode = false, children }: AppShellProps) {
-  const { session, status, signOut } = useAuthSession();
-  const router = useRouter();
+  const { session, status, signOutAndGoHome } = useAuthSession();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expanded, setExpanded] = useState(true);
@@ -76,12 +76,13 @@ export default function AppShell({ user, studios, trending, renovationMode = fal
     setPreference(theme === "dark" ? "light" : "dark");
   }
 
-  async function handleSignOut() {
+  // Shows "Logging out…" until the page reloads on the home page
+  // (signOutAndGoHome always ends with a full load, even if the request fails).
+  function handleSignOut() {
+    if (isSigningOut) return;
     setIsSigningOut(true);
     setMobileOpen(false);
-    await signOut();
-    router.refresh();
-    router.push("/");
+    void signOutAndGoHome();
   }
 
   const sidebar = (
@@ -156,15 +157,7 @@ export default function AppShell({ user, studios, trending, renovationMode = fal
               <MenuIcon size={20} />
             </button>
             <Link href="/" className="flex min-w-0 items-center gap-2 px-1 py-2" aria-label="Dramatized Fiction home">
-              <span
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm"
-                style={{ background: "linear-gradient(135deg, #7c3aed, #3b82f6)" }}
-              >
-                <BookOpenIcon size={13} className="text-white" />
-              </span>
-              <span className="truncate font-mono-df text-xs uppercase tracking-widest text-[var(--text-secondary)]">
-                Dramatized
-              </span>
+              <BrandMark size={28} compact />
             </Link>
             <div className="ml-auto flex shrink-0 items-center gap-1">
               {/* Search lives on Explore; this opens it with the search box focused. */}
@@ -184,7 +177,7 @@ export default function AppShell({ user, studios, trending, renovationMode = fal
                   variant="header"
                 />
               ) : (
-                <Link href="/sign-in" className="story-button-secondary px-4 py-2">
+                <Link href="/sign-in" className="story-button-secondary shrink-0 px-3 py-2">
                   Sign in
                 </Link>
               )}

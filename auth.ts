@@ -141,11 +141,17 @@ export async function clearSession() {
   const cookieStore = cookies();
   const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
-  if (sessionToken) {
-    await invalidateSession(sessionToken);
-  }
-
+  // The cookie is cleared first, so signing out works even when the database
+  // can't be reached; the session row would then simply expire on its own.
   clearSessionCookie();
+
+  if (sessionToken) {
+    try {
+      await invalidateSession(sessionToken);
+    } catch (error) {
+      console.error("Sign-out: couldn't delete the session row; the cookie was cleared anyway.", error);
+    }
+  }
 }
 
 export function hasSessionCookie() {

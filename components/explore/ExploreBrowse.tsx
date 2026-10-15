@@ -7,6 +7,7 @@ import StyledDropdown, { type StyledOption } from "@/components/explore/StyledDr
 import { SearchIcon } from "@/components/icons";
 import type { CoverSeries } from "@/components/home/CoverSeriesCard";
 import { genreStyle, sortStyle } from "@/lib/filter-styles";
+import { EXPLORE_SORT_COOKIE, parseExploreSort, type ExploreSort } from "@/lib/explore-ranking";
 import { GENRES } from "@/lib/genres";
 
 // Same options and order as before: "All genres" then lib/genres.ts; Trending, Newest.
@@ -30,6 +31,8 @@ export default function ExploreBrowse({
   autoFocusSearch = false,
   showBecomeAuthorCta = false,
   initialGenre,
+  initialSort = "trending",
+  orders,
 }: {
   stories: ExploreStory[];
   initialQuery?: string;
@@ -37,13 +40,32 @@ export default function ExploreBrowse({
   showBecomeAuthorCta?: boolean;
   /** Preselects a genre (?genre=); anything not in the list means all genres. */
   initialGenre?: string;
+  /** Trending or Newest, from the URL or the choice made earlier this visit. */
+  initialSort?: ExploreSort;
+  /** Both orders from rankExplore (lib/explore-ranking.ts), so switching is instant. */
+  orders: Record<ExploreSort, string[]>;
 }) {
   const [search, setSearch] = useState(initialQuery);
   const [activeGenre, setActiveGenre] = useState(() => {
     const wanted = initialGenre?.trim().toLowerCase();
     return wanted && (GENRES as readonly string[]).includes(wanted) ? wanted : "all";
   });
-  const [sortBy, setSortBy] = useState<"trending" | "newest">("trending");
+  const [sortBy, setSortBy] = useState<ExploreSort>(initialSort);
+  const position = useMemo(() => new Map(orders[sortBy].map((id, index) => [id, index])), [orders, sortBy]);
+  const byOrder = (a: ExploreStory, b: ExploreStory) => (position.get(a.id) ?? Infinity) - (position.get(b.id) ?? Infinity);
+
+  // Switching never reloads the page: both orders are already here. The choice
+  // is kept for this visit (a session cookie, read by the server on the next
+  // visit to Explore) and in the URL (?sort=newest), so refresh and sharing keep it.
+  function changeSort(value: string) {
+    const next = parseExploreSort(value);
+    setSortBy(next);
+    document.cookie = `${EXPLORE_SORT_COOKIE}=${next}; path=/; SameSite=Lax`;
+    const url = new URL(window.location.href);
+    if (next === "trending") url.searchParams.delete("sort");
+    else url.searchParams.set("sort", next);
+    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+  }
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Arriving from the header's search button: put the cursor in the box.
@@ -66,14 +88,14 @@ export default function ExploreBrowse({
     if (activeGenre !== "all") {
       list = list.filter((story) => (story.genre || "").toLowerCase() === activeGenre);
     }
-    if (sortBy === "newest") {
-      return [...list].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
-    }
-    return [...list].sort((a, b) => (b.reads || 0) - (a.reads || 0));
-  }, [activeGenre, search, sortBy, stories]);
+    return [...list].sort(byOrder);
+    // byOrder changes exactly when position does.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeGenre, search, position, stories]);
 
   const isFiltering = Boolean(search.trim()) || activeGenre !== "all";
-  const trending = [...stories].sort((a, b) => (b.reads || 0) - (a.reads || 0)).slice(0, 12);
+  // The top row follows the switch: Trending now, or Newest.
+  const topRow = [...stories].sort(byOrder).slice(0, 12);
   const byGenre = useMemo(() => {
     const map: Record<string, ExploreStory[]> = {};
     filtered.forEach((story) => {
@@ -119,7 +141,7 @@ export default function ExploreBrowse({
             label="Sort"
             options={SORT_OPTIONS}
             value={sortBy}
-            onChange={(value) => setSortBy(value === "newest" ? "newest" : "trending")}
+            onChange={changeSort}
             className="flex-1 sm:flex-none"
           />
         </div>
@@ -148,7 +170,7 @@ export default function ExploreBrowse({
           )
         ) : (
           <>
-            <ExploreRow title="Trending Now" series={trending} highlight />
+            <ExploreRow title={sortBy === "newest" ? "Newest" : "Trending now"} series={topRow} highlight />
             {Object.entries(byGenre)
               .filter(([, list]) => list.length >= 1)
               .sort((a, b) => b[1].length - a[1].length)

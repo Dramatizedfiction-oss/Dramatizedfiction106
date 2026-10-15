@@ -1,24 +1,13 @@
 "use client";
 
-export default function GlobalError({
-  error,
-  reset,
-}: {
-  error: Error;
-  reset: () => void;
-}) {
-  return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-8">
-      <h1 className="theme-heading text-3xl font-bold mb-4">Something went wrong</h1>
+import { useEffect } from "react";
+import ErrorPage from "@/components/errors/ErrorPage";
 
-      <p className="theme-meta mb-6">{error.message}</p>
-
-      <button
-        onClick={reset}
-        className="story-button-primary"
-      >
-        Try Again
-      </button>
-    </main>
-  );
+// 500 inside the site layout. The error's own message is never shown to readers
+// (it can contain internals); it goes to the console, with Next's digest.
+export default function RouteError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
+  return <ErrorPage code={500} onRetry={reset} />;
 }

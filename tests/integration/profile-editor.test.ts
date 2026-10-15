@@ -121,7 +121,7 @@ describe("profile editor", () => {
     const missing = await call(`/reader/does-not-exist-${TAG}`);
     assert.ok([200, 404].includes(missing.status));
     const missingBody = await missing.text();
-    assert.match(missingBody, /This page does not exist|NEXT_NOT_FOUND/);
+    assert.match(missingBody, /wandered off the map|NEXT_NOT_FOUND/);
     assert.doesNotMatch(missingBody, /Reader Profile/);
   });
 

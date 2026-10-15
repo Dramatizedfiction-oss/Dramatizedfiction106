@@ -1,9 +1,11 @@
+import { BrandMarkImage } from "@/components/brand/BrandMark";
+
+// Shown while a page loads: the round mark with a soft pulse (still for
+// "reduce motion", from the system or from Settings › Reading & Appearance).
 export default function Loading() {
   return (
-    <main className="min-h-screen flex items-center justify-center">
-      <div className="theme-meta animate-pulse text-xl">
-        Loading...
-      </div>
-    </main>
+    <div role="status" aria-label="Loading" className="flex min-h-[60vh] items-center justify-center">
+      <BrandMarkImage size={64} className="brand-loading" />
+    </div>
   );
 }

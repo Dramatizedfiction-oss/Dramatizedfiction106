@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import BrandMark from "@/components/brand/BrandMark";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import ProfileMenu from "@/components/app-shell/ProfileMenu";
 import {
-  BookOpenIcon,
   ChevronRightIcon,
   CloseIcon,
   CompassIcon,
@@ -139,17 +139,7 @@ export default function AppSidebar({
         }
       >
         <Link href="/" onClick={onClose} className="flex min-h-11 min-w-0 items-center gap-3" aria-label="Dramatized Fiction home">
-          <span
-            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-sm"
-            style={{ background: "linear-gradient(135deg, #7c3aed, #3b82f6)" }}
-          >
-            <BookOpenIcon size={14} className="text-white" />
-          </span>
-          {showLabels ? (
-            <span className="whitespace-nowrap font-mono-df text-xs uppercase tracking-widest text-[var(--text-secondary)]">
-              Dramatized
-            </span>
-          ) : null}
+          <BrandMark size={32} showName={showLabels} compact />
         </Link>
         {isMobile ? (
           onClose ? (

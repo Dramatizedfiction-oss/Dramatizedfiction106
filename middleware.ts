@@ -48,5 +48,8 @@ export default function middleware(request: NextRequest) {
 
 export const config = {
   // Every page and API route; static files and Next.js internals are skipped.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|avatars/|logo-934.png).*)"],
+  // Static files (icons, brand images, test covers, the manifest, link previews) skip the middleware.
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|manifest.webmanifest|opengraph-image|twitter-image|avatars/|brand/|test-covers/).*)",
+  ],
 };
