@@ -21,8 +21,9 @@ export const IMAGE_PURPOSES = {
   // A book cover in a writer's profile Library: the server cuts a 600x900 crop
   // from the upload (POST /api/me/author-profile/book-cover), never the general route.
   "profile-book-cover": { label: "Book cover", maxWidth: 1200, maxHeight: 1800, needsTarget: false },
-  // Administration's shared avatar library (BOARD and CEO only).
-  "platform-avatar": { label: "Platform avatar", maxWidth: 800, maxHeight: 800, needsTarget: false },
+  // Store avatars (Administration › Store, BOARD and CEO only). Kept small to
+  // stay within free storage: avatars show at 160px at most (Sweep B3).
+  "platform-avatar": { label: "Store avatar", maxWidth: 512, maxHeight: 512, quality: 80, needsTarget: false },
 } as const;
 
 export type ImagePurpose = keyof typeof IMAGE_PURPOSES;

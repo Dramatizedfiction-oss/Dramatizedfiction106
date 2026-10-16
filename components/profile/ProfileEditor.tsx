@@ -172,6 +172,18 @@ export default function ProfileEditor({
                 ›
               </span>
             </Link>
+            <Link
+              href="/store"
+              onClick={(event) => {
+                if (dirty && !window.confirm("Leave the editor? Your unsaved changes here will be lost.")) event.preventDefault();
+              }}
+              className="mt-2 flex min-h-11 items-center justify-between gap-3 rounded-2xl px-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[var(--panel-hover)]"
+            >
+              Browse the Store
+              <span aria-hidden className="text-lg text-[var(--text-muted)]">
+                ›
+              </span>
+            </Link>
           </Section>
 
           <ImageUploadField

@@ -26,6 +26,14 @@ export function fillPlaceholders(text: string): string {
   return text.replace(TOKEN, (match, key: string) => LEGAL_PLACEHOLDERS[key] ?? match);
 }
 
+/**
+ * The same, with values from Administration › Content (Legal placeholders,
+ * Sweep B3). An empty value leaves the placeholder as written.
+ */
+export function placeholderFiller(values: Record<string, string | null | undefined>) {
+  return (text: string) => text.replace(TOKEN, (match, key: string) => values[key]?.trim() || LEGAL_PLACEHOLDERS[key] || match);
+}
+
 /** Every distinct placeholder token appearing in the given text (for checks and reports). */
 export function findPlaceholders(text: string): string[] {
   return Array.from(new Set(text.match(TOKEN) ?? []));

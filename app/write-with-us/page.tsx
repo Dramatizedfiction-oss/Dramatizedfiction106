@@ -1,15 +1,10 @@
 import { notFound } from "next/navigation";
+import RenderedMarkdown from "@/components/content/RenderedMarkdown";
 import WriterPolicyAcknowledgment from "@/components/WriterPolicyAcknowledgment";
 import { WRITER_ONBOARDING_SLUG, getCmsArticle } from "@/lib/cms";
+import { parseMarkdown } from "@/lib/content/markdown";
 
 export const dynamic = "force-dynamic";
-
-function renderParagraphs(content: string) {
-  return content
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
-}
 
 export default async function WriterOnboardingPage() {
   const article = await getCmsArticle(WRITER_ONBOARDING_SLUG);
@@ -18,8 +13,8 @@ export default async function WriterOnboardingPage() {
     notFound();
   }
 
-  const quickParagraphs = renderParagraphs(article.quickSectionContent);
-  const deepParagraphs = renderParagraphs(article.deepSectionContent);
+  const quick = parseMarkdown(article.quickSectionContent);
+  const deep = parseMarkdown(article.deepSectionContent);
 
   return (
     <main className="overflow-hidden md:px-6 md:py-6 lg:px-8">
@@ -41,11 +36,7 @@ export default async function WriterOnboardingPage() {
               <h2 className="font-heading theme-heading mt-3 text-3xl font-semibold">
                 Quick overview
               </h2>
-              <div className="theme-body mt-4 space-y-4 text-base leading-7">
-                {quickParagraphs.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
-                ))}
-              </div>
+              <RenderedMarkdown blocks={quick} className="mt-4" />
             </section>
 
             <details className="theme-panel rounded-[28px] border border-[var(--border-color)] p-6">
@@ -61,11 +52,7 @@ export default async function WriterOnboardingPage() {
                 </span>
               </summary>
 
-              <div className="theme-body mt-4 space-y-4 text-base leading-7">
-                {deepParagraphs.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
-                ))}
-              </div>
+              <RenderedMarkdown blocks={deep} className="mt-4" />
             </details>
 
             <WriterPolicyAcknowledgment />

@@ -15,7 +15,7 @@ import { requireRole } from "@/lib/utils";
  */
 export const metadata = { title: "Your avatar" };
 
-export default async function AvatarPage() {
+export default async function AvatarPage({ searchParams }: { searchParams?: { tab?: string } }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/sign-in?callbackUrl=/reader/avatar");
   requireRole(session, ["READER"]);
@@ -56,6 +56,7 @@ export default async function AvatarPage() {
           member={{ id: member.id, name: member.name?.trim() || "Member", role: member.role, writerStatus: member.writerStatus }}
           initial={photoState(member)}
           library={library}
+          initialTab={searchParams?.tab === "photo" ? "photo" : searchParams?.tab === "library" ? "library" : undefined}
         />
       </div>
     </main>

@@ -1,36 +1,49 @@
 import { AUDIT, recordAudit } from "@/lib/admin/audit";
-import { ensurePlatformSettingsId, getPlatformSettings } from "@/lib/phases";
+import { ensurePlatformSettingsId } from "@/lib/phases";
 import { prisma } from "@/lib/prisma";
+import { screenStoreImage } from "@/lib/store/screening";
 import { deleteReplacedImage, isOwnedImageUrl } from "@/lib/uploads/image-storage";
 
 /*
- * Administration's shared avatar library and the Reader/Writer default
- * choices. Defaults are display-time fallbacks only: changing them never
- * touches a member's own picture (User.image).
+ * The avatar library behind Administration › Store (Sweep B3) and the
+ * Reader/Writer default choices. Each library avatar has one StoreItem (its
+ * name, visibility and order in the Store). Defaults are display-time
+ * fallbacks only: changing them never touches a member's own picture
+ * (User.image).
  */
 
-export async function listPlatformAvatars() {
-  const [avatars, settings] = await Promise.all([
-    prisma.platformAvatar.findMany({
-      orderBy: { createdAt: "desc" },
-      select: { id: true, label: true, url: true, createdAt: true, createdBy: { select: { name: true } } },
-    }),
-    getPlatformSettings(),
-  ]);
-  return { avatars, readerDefaultId: settings.defaultReaderAvatarId, writerDefaultId: settings.defaultWriterAvatarId };
-}
-
+/**
+ * Adds an uploaded image as a library avatar and as a Store item (last in the
+ * Store's order, visible). The image must come from the platform-avatar upload.
+ */
 export async function addPlatformAvatar(actorId: string, input: { url: string; label: string }) {
   const url = input.url.trim();
-  const label = input.label.trim().slice(0, 80) || "Avatar";
+  const label = input.label.replace(/\s+/g, " ").trim().slice(0, 80) || "Avatar";
   if (!isOwnedImageUrl(url) || !new URL(url).pathname.startsWith("/images/platform-avatar/")) {
     return { ok: false as const, status: 400, message: "Upload the image with the avatar uploader first." };
   }
-  const avatar = await prisma.platformAvatar.create({
-    data: { url, label, createdById: actorId },
-    select: { id: true, label: true, url: true, createdAt: true },
+  const screened = await screenStoreImage(url);
+  if (!screened.ok) return { ok: false as const, status: 400, message: screened.message };
+  const avatar = await prisma.$transaction(async (tx) => {
+    const created = await tx.platformAvatar.create({
+      data: { url, label, createdById: actorId },
+      select: { id: true, label: true, url: true, createdAt: true },
+    });
+    const last = await tx.storeItem.aggregate({ where: { category: "AVATAR" }, _max: { sortOrder: true } });
+    const item = await tx.storeItem.create({
+      data: {
+        category: "AVATAR",
+        name: label,
+        imageUrl: url,
+        sortOrder: (last._max.sortOrder ?? -1) + 1,
+        platformAvatarId: created.id,
+        createdById: actorId,
+      },
+      select: { id: true },
+    });
+    await recordAudit(tx, { action: AUDIT.AVATAR_ADDED, actorId, details: { avatarId: created.id, storeItemId: item.id } });
+    return created;
   });
-  await recordAudit(prisma, { action: AUDIT.AVATAR_ADDED, actorId, details: { avatarId: avatar.id } });
   return { ok: true as const, avatar };
 }
 

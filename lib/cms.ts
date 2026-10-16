@@ -1,52 +1,38 @@
-import { prisma } from "@/lib/prisma";
+import { getContent } from "@/lib/content/read";
+
+/*
+ * The writer onboarding article, now an Administration › Content item
+ * (article.writer-onboarding, Sweep B3). This keeps the old shape for
+ * existing callers (the pages and GET /api/cms/articles/[slug]); the built-in
+ * text lives in lib/content/registry.ts. The CmsArticle table is no longer
+ * read; its row (if any) seeded the Content item.
+ */
 
 export const WRITER_ONBOARDING_SLUG = "writer-onboarding";
-
-const defaultArticles = {
-  [WRITER_ONBOARDING_SLUG]: {
-    title: "Start Writing With Us",
-    quickSectionContent:
-      "Dramatized Fiction is built for serialized storytellers who want their work to feel premium, alive, and easy to follow. Writers can publish series, release episodes, and build an audience inside a story-first platform.",
-    deepSectionContent:
-      "Writers who join Dramatized Fiction are stepping into a platform designed around long-form worlds, episode flow, and reader retention. This deeper section can explain expectations, editorial standards, release rhythm, and what support the platform offers as it grows.",
-  },
-} as const;
+export const WRITER_ONBOARDING_KEY = "article.writer-onboarding";
 
 export type CmsArticleShape = {
   title: string;
+  /** Content Markdown. */
   quickSectionContent: string;
+  /** Content Markdown. */
   deepSectionContent: string;
   /** null when the article has never been saved (defaults are shown). */
   lastUpdated: Date | null;
 };
 
-export function isKnownCmsSlug(slug: string): slug is keyof typeof defaultArticles {
-  return Object.prototype.hasOwnProperty.call(defaultArticles, slug);
+export function isKnownCmsSlug(slug: string) {
+  return slug === WRITER_ONBOARDING_SLUG;
 }
 
-/**
- * Read-only: safe for GET handlers and rendering. Returns the stored article,
- * the built-in defaults for a known slug that has never been saved, or null
- * for an unknown slug. Rows are only written by the CMS PATCH route.
- */
+/** Read-only. The article (saved or built-in), or null for an unknown slug. Never throws for a known slug. */
 export async function getCmsArticle(slug: string): Promise<CmsArticleShape | null> {
-  const article = await prisma.cmsArticle.findUnique({
-    where: { slug },
-    select: {
-      title: true,
-      quickSectionContent: true,
-      deepSectionContent: true,
-      lastUpdated: true,
-    },
-  });
-
-  if (article) {
-    return article;
-  }
-
-  if (isKnownCmsSlug(slug)) {
-    return { ...defaultArticles[slug], lastUpdated: null };
-  }
-
-  return null;
+  if (!isKnownCmsSlug(slug)) return null;
+  const { values, updatedAt } = await getContent(WRITER_ONBOARDING_KEY);
+  return {
+    title: String(values.title),
+    quickSectionContent: String(values.quick),
+    deepSectionContent: String(values.deep),
+    lastUpdated: updatedAt ? new Date(updatedAt) : null,
+  };
 }

@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import LiquidWordmark from "@/components/home/LiquidWordmark";
 import CoverSeriesCard from "@/components/home/CoverSeriesCard";
 import { MailIcon, SparklesIcon } from "@/components/icons";
+import { getContent } from "@/lib/content/read";
 import { prisma } from "@/lib/prisma";
 
 type FeaturedSeries = {
@@ -46,10 +47,12 @@ async function getPublishedCount() {
 }
 
 export default async function HomePage() {
-  const [session, featured, publishedCount] = await Promise.all([
+  const [session, featured, publishedCount, copy] = await Promise.all([
     auth().catch(() => null),
     getFeaturedSeries(),
     getPublishedCount(),
+    // Administration › Content (copy.home); built-in text when missing.
+    getContent("copy.home"),
   ]);
 
   return (
@@ -60,7 +63,7 @@ export default async function HomePage() {
           <div className="flex justify-center pb-4">
             <Link href="/sign-up" className="story-button-primary gap-2 font-mono-df text-sm">
               <MailIcon size={13} />
-              Join the Story
+              {String(copy.values.joinButton)}
             </Link>
           </div>
         ) : null}
@@ -74,7 +77,7 @@ export default async function HomePage() {
             <div className="mb-6 flex items-center gap-2">
               <SparklesIcon size={14} className="text-[var(--accent)]" />
               <h2 className="font-mono-df text-xs font-bold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
-                Featured Stories
+                {String(copy.values.featuredHeading)}
               </h2>
             </div>
             <div className="mx-auto grid max-w-5xl grid-cols-1 justify-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3">

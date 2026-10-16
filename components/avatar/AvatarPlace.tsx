@@ -32,16 +32,20 @@ export default function AvatarPlace({
   member,
   initial,
   library,
+  initialTab,
 }: {
   member: { id: string; name: string; role: string; writerStatus: string | null };
   initial: PhotoState;
+  /** The Store's active avatars, in Store order (lib/avatar-library.ts). */
   library: LibraryAvatar[];
+  /** ?tab=photo (the Store's "Use your own photo") opens My photo. */
+  initialTab?: "library" | "photo";
 }) {
   const router = useRouter();
   const { refreshSession } = useAuthSession();
   const id = useId();
   const [state, setState] = useState(initial);
-  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>(initial.originalUrl ? "photo" : "library");
+  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>(initialTab ?? (initial.originalUrl ? "photo" : "library"));
   const [editing, setEditing] = useState<Editing | null>(null);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ tone: "saved" | "error"; text: string } | null>(null);
@@ -263,6 +267,11 @@ export default function AvatarPlace({
             {library.length === 0 ? (
               <li className="theme-meta col-span-full text-center text-sm">The library is empty for now. You can upload your own photo instead.</li>
             ) : null}
+            <li className="col-span-full text-center">
+              <Link href="/store" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--text-primary)] underline underline-offset-4">
+                Browse them in the Store
+              </Link>
+            </li>
           </ul>
         ) : (
           <div className="mx-auto flex max-w-sm flex-col items-stretch gap-3 text-center">

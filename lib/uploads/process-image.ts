@@ -92,13 +92,13 @@ export async function processImage(bytes: Buffer, purpose: ImagePurpose) {
     );
   }
 
-  const limits = IMAGE_PURPOSES[purpose];
+  const limits: { maxWidth: number; maxHeight: number; quality?: number } = IMAGE_PURPOSES[purpose];
 
   try {
     const { data, info } = await source
       .rotate()
       .resize({ width: limits.maxWidth, height: limits.maxHeight, fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 82 })
+      .webp({ quality: limits.quality ?? 82 })
       .toBuffer({ resolveWithObject: true });
 
     return { data, width: info.width, height: info.height };

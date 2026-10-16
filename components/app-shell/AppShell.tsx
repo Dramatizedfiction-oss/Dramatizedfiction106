@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import type { AuthRestriction } from "@/auth";
 import AppSidebar, { type AppSidebarSeries } from "@/components/app-shell/AppSidebar";
 import ProfileMenu from "@/components/app-shell/ProfileMenu";
+import AnnouncementBar, { type Announcement } from "@/components/content/AnnouncementBar";
 import DeviceFollowImport from "@/components/follow/DeviceFollowImport";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { useTheme } from "@/components/providers/ThemeProvider";
@@ -21,10 +22,21 @@ type AppShellProps = {
   trending: AppSidebarSeries[];
   /** Only CEO/Board ever see the shell while this is on; they get a reminder banner. */
   renovationMode?: boolean;
+  /** Administration › Content: copy.footer and site.announcement (null when off). */
+  footerTagline?: string;
+  announcement?: Announcement | null;
   children: React.ReactNode;
 };
 
-export default function AppShell({ user, studios, trending, renovationMode = false, children }: AppShellProps) {
+export default function AppShell({
+  user,
+  studios,
+  trending,
+  renovationMode = false,
+  footerTagline = "Stories performed in text",
+  announcement = null,
+  children,
+}: AppShellProps) {
   const { session, status, signOutAndGoHome } = useAuthSession();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -185,6 +197,7 @@ export default function AppShell({ user, studios, trending, renovationMode = fal
             </div>
           </header>
         ) : null}
+        {announcement && !isReaderRoute ? <AnnouncementBar announcement={announcement} /> : null}
         {renovationMode && !isReaderRoute ? (
           <p role="status" className="border-b border-[var(--border-color)] bg-[var(--accent-soft)] px-4 py-2 text-center text-xs text-[var(--text-primary)]">
             Renovation Mode is on. Only the CEO and Board can see the site.{" "}
@@ -209,7 +222,7 @@ export default function AppShell({ user, studios, trending, renovationMode = fal
               <p className="font-mono-df text-xs uppercase tracking-widest text-[var(--text-muted)]">
                 Dramatized Fiction
               </p>
-              <p className="text-xs text-[var(--text-muted)]">Stories performed in text</p>
+              {footerTagline ? <p className="text-xs text-[var(--text-muted)]">{footerTagline}</p> : null}
             </div>
             <LegalFooterLinks className="mt-2 sm:mt-3" />
           </footer>

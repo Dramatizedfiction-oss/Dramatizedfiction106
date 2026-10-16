@@ -18,7 +18,9 @@
     "seed:test": "node --import ./tests/setup/register.mjs scripts/seed-test.ts --db=main",
     "seed:test:clear": "node --import ./tests/setup/register.mjs scripts/seed-test-clear.ts --db=main",
     "seed:test:scratch": "node --import ./tests/setup/register.mjs scripts/seed-test.ts --db=scratch",
-    "seed:test:clear:scratch": "node --import ./tests/setup/register.mjs scripts/seed-test-clear.ts --db=scratch"
+    "seed:test:clear:scratch": "node --import ./tests/setup/register.mjs scripts/seed-test-clear.ts --db=scratch",
+    "seed:content": "node --import ./tests/setup/register.mjs scripts/seed-content.ts --db=main",
+    "seed:content:scratch": "node --import ./tests/setup/register.mjs scripts/seed-content.ts --db=scratch"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",

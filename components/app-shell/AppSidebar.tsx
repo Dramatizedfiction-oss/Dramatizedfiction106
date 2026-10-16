@@ -16,6 +16,7 @@ import {
   PenIcon,
   SettingsIcon,
   ShieldIcon,
+  StoreIcon,
   SunIcon,
   TrendingUpIcon,
   UserIcon,
@@ -187,6 +188,13 @@ export default function AppSidebar({
           label="Explore"
           icon={<CompassIcon size={16} className="flex-shrink-0" />}
           active={pathname.startsWith("/explore")}
+        />
+        <NavItem
+          {...item}
+          href="/store"
+          label="Store"
+          icon={<StoreIcon size={16} className="flex-shrink-0" />}
+          active={pathname.startsWith("/store")}
         />
         {canWrite ? (
           <NavItem

@@ -87,6 +87,9 @@ model User {
   authorFollowsGiven       AuthorFollow[] @relation("AuthorFollowsGiven")
   authorFollowsReceived    AuthorFollow[] @relation("AuthorFollowsReceived")
   rateLimitHits            RateLimitHit[]
+  contentEdits             ContentItem[]
+  contentRevisions         ContentRevision[]
+  storeItemsAdded          StoreItem[]
 }
 
 model AuthorProfile {
@@ -512,6 +515,30 @@ model PlatformAvatar {
   createdBy         User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
   defaultForReaders Settings[] @relation("DefaultReaderAvatar")
   defaultForWriters Settings[] @relation("DefaultWriterAvatar")
+  storeItem         StoreItem?
+}
+
+/// An item in the Store (Sweep B3). Everything is free today: priceCents is
+/// stored for later and never shown or charged. A member's chosen avatar is
+/// User.image, so there are no ownership rows. Avatars are backed by their
+/// PlatformAvatar (defaults and "deleting resets whoever uses it" stay there).
+/// `category` is a code list (lib/store/rules.ts), so new categories need no migration.
+model StoreItem {
+  id               String          @id @default(cuid())
+  category         String
+  name             String
+  imageUrl         String
+  active           Boolean         @default(true)
+  sortOrder        Int             @default(0)
+  priceCents       Int?
+  platformAvatarId String?         @unique
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  createdById      String?
+  platformAvatar   PlatformAvatar? @relation(fields: [platformAvatarId], references: [id], onDelete: Cascade)
+  createdBy        User?           @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([category, active, sortOrder])
 }
 
 model AuthorPayout {
@@ -578,6 +605,36 @@ model Book {
   author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
+/// Administration › Content (Sweep B3): the current saved version of one
+/// item. Items, their fields and built-in defaults are defined in
+/// lib/content/registry.ts; the site falls back to the defaults when an item
+/// is missing or invalid (lib/content/read.ts).
+model ContentItem {
+  key         String   @id
+  data        Json
+  version     Int      @default(1)
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+  updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+}
+
+/// Every saved version of a Content item (SAVE, RESTORE or SEED), for history and restore.
+model ContentRevision {
+  id          String   @id @default(cuid())
+  key         String
+  version     Int
+  data        Json
+  action      String
+  createdAt   DateTime @default(now())
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([key, version])
+  @@index([key, createdAt])
+}
+
+/// Superseded by ContentItem (Sweep B3) and kept unchanged: its writer
+/// onboarding row, if any, seeded article.writer-onboarding.
 model CmsArticle {
   id                  String   @id @default(cuid())
   slug                String   @unique

@@ -1,10 +1,9 @@
-﻿import type { Metadata } from "next";
-import LegalPage from "@/components/legal/LegalPage";
-import { LEGAL_DOCUMENTS } from "@/lib/legal";
+import type { Metadata } from "next";
+import LegalContentPage from "@/components/legal/LegalContentPage";
 
-// Public, static page. Text lives in lib/legal/content/cookies.ts; placeholders in lib/legal/placeholders.ts.
+// Public page. Text from Administration › Content (legal.cookies), falling back to lib/legal/content/cookies.ts.
 export const metadata: Metadata = { title: "Cookie Notice | Dramatized Fiction" };
 
 export default function Page() {
-  return <LegalPage document={LEGAL_DOCUMENTS.cookies} />;
+  return <LegalContentPage slug="cookies" />;
 }

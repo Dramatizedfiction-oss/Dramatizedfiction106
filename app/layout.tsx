@@ -10,6 +10,7 @@ import { canBypassRenovation, isRenovationOpenPath } from "@/lib/admin/policy";
 import { PATHNAME_HEADER } from "@/lib/auth-route-guards";
 import { READING_INIT_SCRIPT } from "@/lib/reading-prefs";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { getContent } from "@/lib/content/read";
 import { PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
 import { getPlatformSettings } from "@/lib/phases";
 import { prisma } from "@/lib/prisma";
@@ -81,6 +82,8 @@ export default async function RootLayout({
   } else {
     let studios: any[] = [];
     let trending: any[] = [];
+    // Administration › Content (cached; falls back to the built-in text, never throws).
+    const [footer, announcement] = await Promise.all([getContent("copy.footer"), getContent("site.announcement")]);
 
     try {
       [studios, trending] = await Promise.all([
@@ -105,7 +108,22 @@ export default async function RootLayout({
     }
 
     content = (
-      <AppShell user={user} studios={studios} trending={trending} renovationMode={renovationMode}>
+      <AppShell
+        user={user}
+        studios={studios}
+        trending={trending}
+        renovationMode={renovationMode}
+        footerTagline={String(footer.values.tagline)}
+        announcement={
+          announcement.values.enabled === true
+            ? {
+                text: String(announcement.values.text),
+                linkLabel: String(announcement.values.linkLabel),
+                linkHref: String(announcement.values.linkHref),
+              }
+            : null
+        }
+      >
         {children}
       </AppShell>
     );

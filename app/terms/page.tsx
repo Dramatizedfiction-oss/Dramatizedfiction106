@@ -1,10 +1,9 @@
-﻿import type { Metadata } from "next";
-import LegalPage from "@/components/legal/LegalPage";
-import { LEGAL_DOCUMENTS } from "@/lib/legal";
+import type { Metadata } from "next";
+import LegalContentPage from "@/components/legal/LegalContentPage";
 
-// Public, static page. Text lives in lib/legal/content/terms.ts; placeholders in lib/legal/placeholders.ts.
+// Public page. Text from Administration › Content (legal.terms), falling back to lib/legal/content/terms.ts.
 export const metadata: Metadata = { title: "Terms of Service | Dramatized Fiction" };
 
 export default function Page() {
-  return <LegalPage document={LEGAL_DOCUMENTS.terms} />;
+  return <LegalContentPage slug="terms" />;
 }

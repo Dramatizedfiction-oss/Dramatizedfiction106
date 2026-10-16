@@ -1,14 +1,9 @@
 import AiTagBanner from "@/components/AiTagBanner";
+import RenderedMarkdown from "@/components/content/RenderedMarkdown";
 import { AI_USAGE_OPTIONS, aiUsageDescription } from "@/lib/ai-usage";
 import { WRITER_ONBOARDING_SLUG, getCmsArticle } from "@/lib/cms";
+import { parseMarkdown } from "@/lib/content/markdown";
 import { requireStudioUser } from "@/lib/writer-studio/session";
-
-function paragraphs(content: string) {
-  return content
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
-}
 
 // How the studio actually behaves; kept in sync with the publish and save code.
 const PUBLISHING_FACTS = [
@@ -30,14 +25,11 @@ export default async function StudioGuidelinesPage() {
         {article ? (
           <section className="rounded-3xl border border-[var(--studio-border)] bg-[var(--studio-surface)] p-6">
             <h2 className="font-heading theme-heading text-2xl font-semibold">{article.title}</h2>
-            <div className="theme-body mt-4 space-y-4 text-sm leading-7">
-              {paragraphs(article.quickSectionContent).map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-              {paragraphs(article.deepSectionContent).map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-            </div>
+            <RenderedMarkdown
+              blocks={[...parseMarkdown(article.quickSectionContent), ...parseMarkdown(article.deepSectionContent)]}
+              variant="plain"
+              className="theme-body mt-4 text-sm leading-7"
+            />
           </section>
         ) : null}
 

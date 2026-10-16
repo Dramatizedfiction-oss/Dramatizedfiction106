@@ -8,9 +8,9 @@ const ITEMS = [
   { href: "/administration/members", label: "Members" },
   { href: "/administration/reports", label: "Reports" },
   { href: "/administration/analytics", label: "Analytics" },
-  { href: "/administration/avatars", label: "Avatars" },
-  { href: "/administration/renovation", label: "Renovation" },
   { href: "/administration/content", label: "Content" },
+  { href: "/administration/store", label: "Store" },
+  { href: "/administration/renovation", label: "Renovation" },
 ];
 
 export default function AdminNav() {
