@@ -14,6 +14,7 @@
 import { comparePassword, hashPassword } from "@/lib/auth-utils";
 import { analyzeEpisodeHtml } from "@/lib/episode-content";
 import {
+  AUTHOR_FOLLOWS,
   BOOKMARKS,
   COMMENTS,
   DRAFT_LAST_SAVED_DAYS_AGO,
@@ -118,8 +119,17 @@ async function main() {
         passwordHash,
         readingProfileVisibility: visibility,
         activityVisibility: visibility,
+        followerListVisibility: visibility,
       },
-      update: { name: reader.name, bio: reader.bio, role: "READER", passwordHash, readingProfileVisibility: visibility, activityVisibility: visibility },
+      update: {
+        name: reader.name,
+        bio: reader.bio,
+        role: "READER",
+        passwordHash,
+        readingProfileVisibility: visibility,
+        activityVisibility: visibility,
+        followerListVisibility: visibility,
+      },
       select: { id: true },
     });
     ids[key as AccountKey] = user.id;
@@ -198,6 +208,7 @@ async function main() {
     prisma.bookmark.deleteMany({ where: { userId: { in: testUserIds } } }),
     prisma.comment.deleteMany({ where: { userId: { in: testUserIds } } }),
     prisma.seriesFollow.deleteMany({ where: { userId: { in: testUserIds } } }),
+    prisma.authorFollow.deleteMany({ where: { followerId: { in: testUserIds } } }),
     prisma.readingProgress.deleteMany({ where: { userId: { in: testUserIds } } }),
     prisma.readEvent.deleteMany({ where: { userId: { in: testUserIds } } }),
   ]);
@@ -234,6 +245,12 @@ async function main() {
   });
   // The SeriesFollow_count trigger keeps Series.followers equal to these rows.
   await prisma.seriesFollow.createMany({ data: FOLLOWS.map((follow) => ({ userId: ids[follow.who], seriesId: seriesIds[follow.series] })) });
+  await prisma.authorFollow.createMany({
+    data: AUTHOR_FOLLOWS.map((follow) => {
+      if (follow.who === follow.writer) throw new Error(`${follow.who} can't follow themselves.`);
+      return { followerId: ids[follow.who], authorId: ids[follow.writer] };
+    }),
+  });
   await prisma.comment.createMany({
     data: COMMENTS.map((comment) => {
       const episode = episodeOf(comment.series, comment.episode);
@@ -291,7 +308,7 @@ async function main() {
   if (!sample.passwordHash || !comparePassword(password, sample.passwordHash)) throw new Error("Password check failed.");
 
   console.log(
-    `Activity: ${readEvents.length} reads, ${progress.length} progress rows, ${ratings.length} ratings, ${BOOKMARKS.length} bookmarks, ${FOLLOWS.length} follows, ${COMMENTS.length} comments`,
+    `Activity: ${readEvents.length} reads, ${progress.length} progress rows, ${ratings.length} ratings, ${BOOKMARKS.length} bookmarks, ${FOLLOWS.length} follows, ${AUTHOR_FOLLOWS.length} writer follows, ${COMMENTS.length} comments`,
   );
   console.log("Password check: ok (the shared SEED_TEST_PASSWORD signs in every test account).");
   console.log("Done. Remove everything with npm run seed:test:clear.\n");

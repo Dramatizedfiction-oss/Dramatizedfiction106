@@ -74,6 +74,8 @@ async function main() {
     prisma.bookmark.count({ where: { OR: [{ userId: { in: userIds } }, { episodeId: { in: episodeIds } }] } }),
     prisma.comment.count({ where: { OR: [{ userId: { in: userIds } }, { episodeId: { in: episodeIds } }] } }),
     prisma.seriesFollow.count({ where: { OR: [{ userId: { in: userIds } }, { seriesId: { in: seriesIds } }] } }),
+    prisma.authorFollow.count({ where: { OR: [{ followerId: { in: userIds } }, { authorId: { in: userIds } }] } }),
+    prisma.rateLimitHit.count({ where: { userId: { in: userIds } } }),
     prisma.readEvent.count({ where: { OR: [{ userId: { in: userIds } }, { episodeId: { in: episodeIds } }] } }),
     prisma.readingProgress.count({ where: { userId: { in: userIds } } }),
     prisma.session.count({ where: { userId: { in: userIds } } }),

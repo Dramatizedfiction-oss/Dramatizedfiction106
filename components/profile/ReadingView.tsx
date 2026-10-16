@@ -1,19 +1,24 @@
+import LibraryShelves from "@/components/reader/LibraryShelves";
 import ReaderActivity from "@/components/reader/ReaderActivity";
-import ReaderBookmarks from "@/components/reader/ReaderBookmarks";
 import ReaderLibrary from "@/components/reader/ReaderLibrary";
 import { LockIcon } from "@/components/reader/ReaderProfileHeader";
 import ReaderProfileTabs from "@/components/reader/ReaderProfileTabs";
 import { listActivity } from "@/lib/activity";
-import { listBookmarks } from "@/lib/bookmarks";
+import { listFollowedAuthors } from "@/lib/author-follows";
+import { countBookmarks, listBookmarks } from "@/lib/bookmarks";
+import type { LibraryShelf } from "@/lib/library-shelves";
 import { getLibrary } from "@/lib/series-follows";
 
 /*
  * A member's Reading view (reading profile and the author profile's Reading
- * view). Only ever loads data for `member`, the profile being shown:
- *   - the owner: Library, Bookmarks and Activity tabs;
- *   - anyone else: the Library if readingProfileVisibility is PUBLIC, Activity
- *     if activityVisibility is PUBLIC, never Bookmarks; otherwise a private
- *     notice.
+ * view). This is where a member's platform interaction lives (Sweep B2): who
+ * and what they follow. Only ever loads data for `member`, the profile shown:
+ *   - the owner: Library (shelves Following, Bookmarks, People, each item
+ *     removable with Undo) and Activity tabs;
+ *   - anyone else: the followed series if readingProfileVisibility is PUBLIC,
+ *     Activity if activityVisibility is PUBLIC, never Bookmarks or People (a
+ *     follower who hid from writers' follower lists stays hidden); otherwise a
+ *     private notice.
  */
 export function readingIsVisible(member: { readingProfileVisibility: string; activityVisibility: string }) {
   return member.readingProfileVisibility === "PUBLIC" || member.activityVisibility === "PUBLIC";
@@ -22,21 +27,27 @@ export function readingIsVisible(member: { readingProfileVisibility: string; act
 export default async function ReadingView({
   member,
   isOwner,
+  shelf = "following",
 }: {
   member: { id: string; readingProfileVisibility: string; activityVisibility: string };
   isOwner: boolean;
+  /** The owner's Library shelf to open (?shelf=). */
+  shelf?: LibraryShelf;
 }) {
   if (isOwner) {
-    const [library, bookmarks, activity] = await Promise.all([
+    const [library, bookmarks, bookmarkTotal, people, activity] = await Promise.all([
       getLibrary(member.id),
       listBookmarks(member.id),
+      countBookmarks(member.id),
+      listFollowedAuthors(member.id),
       listActivity(member.id),
     ]);
     return (
       <ReaderProfileTabs
         panels={{
-          library: <ReaderLibrary entries={library} />,
-          bookmarks: <ReaderBookmarks initial={bookmarks} />,
+          library: (
+            <LibraryShelves initialShelf={shelf} series={library} bookmarks={bookmarks} bookmarkTotal={bookmarkTotal} people={people} />
+          ),
           activity: <ReaderActivity readerId={member.id} initial={activity} />,
         }}
       />

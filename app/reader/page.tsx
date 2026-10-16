@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import ProfileEditor from "@/components/profile/ProfileEditor";
 import ReadingView from "@/components/profile/ReadingView";
 import ReaderProfileHeader, { LockIcon } from "@/components/reader/ReaderProfileHeader";
+import { parseLibraryShelf } from "@/lib/library-shelves";
 import { prisma } from "@/lib/prisma";
 import { isWriterRole, profileHref } from "@/lib/profile-links";
 import { hasRoleAccess } from "@/lib/roles";
@@ -16,7 +17,7 @@ import { requireRole } from "@/lib/utils";
  * readingProfileVisibility is PUBLIC, Activity when activityVisibility is
  * PUBLIC. Bookmarks are only ever shown to their owner.
  */
-export default async function ReaderProfilePage() {
+export default async function ReaderProfilePage({ searchParams }: { searchParams?: { shelf?: string } }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/sign-in?callbackUrl=/reader");
   // Signed in and not restricted (banned/disciplined members go to /account-restricted).
@@ -36,6 +37,7 @@ export default async function ReaderProfilePage() {
       createdAt: true,
       readingProfileVisibility: true,
       activityVisibility: true,
+      followerListVisibility: true,
       websiteUrl: true,
       twitterUrl: true,
       instagramUrl: true,
@@ -64,6 +66,7 @@ export default async function ReaderProfilePage() {
               bannerImage: reader.bannerImage ?? "",
               readingProfileVisibility: reader.readingProfileVisibility,
               activityVisibility: reader.activityVisibility,
+              followerListVisibility: reader.followerListVisibility,
               links: {
                 websiteUrl: reader.websiteUrl ?? "",
                 twitterUrl: reader.twitterUrl ?? "",
@@ -96,7 +99,7 @@ export default async function ReaderProfilePage() {
       />
       <div className="px-4 pt-6 md:px-0 md:pt-8">
         {/* Only the signed-in member's own follows, bookmarks and activity; never another member's. */}
-        <ReadingView member={reader} isOwner />
+        <ReadingView member={reader} isOwner shelf={parseLibraryShelf(searchParams?.shelf)} />
       </div>
     </main>
   );

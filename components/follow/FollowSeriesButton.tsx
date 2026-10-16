@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import UndoToast from "@/components/follow/UndoToast";
 
 /*
  * Follow / unfollow a SERIES (it goes into the member's Library; stored on the
@@ -139,24 +140,13 @@ export default function FollowSeriesButton({
           {error}
         </p>
       ) : null}
-      {/* Unfollow confirmation with undo, above the bottom of the screen (thumb reach on phones). */}
-      <div aria-live="polite" className="pointer-events-none fixed inset-x-4 bottom-4 z-50 flex justify-center">
-        {undo ? (
-          <div className="pointer-events-auto flex min-h-12 max-w-md min-w-0 items-center gap-3 rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-raised)] py-1 pl-4 pr-1 text-sm text-[var(--text-primary)] shadow-[var(--shadow-raised)]">
-            <span className="min-w-0 truncate">Unfollowed {seriesTitle}</span>
-            <button
-              type="button"
-              onClick={() => {
-                setUndo(false);
-                void apply(true);
-              }}
-              className="min-h-11 rounded-xl px-3 font-semibold underline decoration-1 underline-offset-4 hover:bg-[var(--panel-hover)]"
-            >
-              Undo
-            </button>
-          </div>
-        ) : null}
-      </div>
+      <UndoToast
+        message={undo ? `Unfollowed ${seriesTitle}` : null}
+        onUndo={() => {
+          setUndo(false);
+          void apply(true);
+        }}
+      />
     </div>
   );
 }

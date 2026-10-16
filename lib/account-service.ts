@@ -63,11 +63,14 @@ export async function changePassword(
 
 /** What deleting this account would remove (shown on the confirmation screen). */
 export async function deletionSummary(userId: string) {
-  const [series, episodes, follows, followersLosing, bookmarks, ratings, comments, ceoCount, user] = await Promise.all([
+  const [series, episodes, follows, followersLosing, writersFollowed, authorFollowers, bookmarks, ratings, comments, ceoCount, user] = await Promise.all([
     prisma.series.count({ where: { authorId: userId } }),
     prisma.episode.count({ where: { authorId: userId } }),
     prisma.seriesFollow.count({ where: { userId } }),
     prisma.seriesFollow.count({ where: { series: { authorId: userId }, NOT: { userId } } }),
+    // AuthorFollow cascades both ways: the writers they follow, and their place in writers' follower lists.
+    prisma.authorFollow.count({ where: { followerId: userId } }),
+    prisma.authorFollow.count({ where: { authorId: userId } }),
     prisma.bookmark.count({ where: { userId } }),
     prisma.rating.count({ where: { userId } }),
     prisma.comment.count({ where: { userId } }),
@@ -79,6 +82,8 @@ export async function deletionSummary(userId: string) {
     episodes,
     follows,
     followersLosing,
+    writersFollowed,
+    authorFollowers,
     bookmarks,
     ratings,
     comments,
@@ -88,7 +93,8 @@ export async function deletionSummary(userId: string) {
 
 /**
  * Deletes the member immediately, after checking their password. The database
- * cascades sessions, follows, bookmarks, ratings, comments (and the reports on
+ * cascades sessions, follows (series, and writers in both directions, so they
+ * leave other writers' follower lists), rate-limit rows, bookmarks, ratings, comments (and the reports on
  * them), profile, series, episodes, books and memberships (see schema.prisma
  * onDelete rules); reports they filed, and reads/ad views/audit rows they
  * made, are kept unlinked. Their personal studio would be left ownerless, so it is

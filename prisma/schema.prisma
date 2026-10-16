@@ -34,6 +34,9 @@ model User {
   /// this member's reading profile for others. Comments always stay visible
   /// under their episode either way.
   activityVisibility       ProfileVisibility @default(PRIVATE)
+  /// Whether this member appears by name in the follower lists of writers they
+  /// follow (Sweep B2). Follower counts include everyone either way.
+  followerListVisibility   ProfileVisibility @default(PRIVATE)
   /// Voluntary 18+ confirmation (Settings > Account). Only the time and the
   /// wording version are stored, never the birthdate. Null = not confirmed.
   /// Nothing is gated on it yet (later: mature content, purchases/payouts).
@@ -81,6 +84,9 @@ model User {
   profileLibraryItems      ProfileLibraryItem[]
   profileAboutCards        ProfileAboutCard[]
   profileLinks             ProfileLink[]
+  authorFollowsGiven       AuthorFollow[] @relation("AuthorFollowsGiven")
+  authorFollowsReceived    AuthorFollow[] @relation("AuthorFollowsReceived")
+  rateLimitHits            RateLimitHit[]
 }
 
 model AuthorProfile {
@@ -252,6 +258,36 @@ model SeriesFollow {
   @@id([userId, seriesId])
   @@index([userId, createdAt])
   @@index([seriesId])
+}
+
+/// A member following a writer (Sweep B2). The follow belongs to the follower's
+/// reading profile (Library > People); a writer's public profile shows its
+/// followers, never who the writer follows. Self-follows are refused in code
+/// and by the hand-written CHECK "AuthorFollow_not_self" (migration
+/// 20261016090000_author_follows; Prisma doesn't model it).
+model AuthorFollow {
+  followerId String
+  authorId   String
+  createdAt  DateTime @default(now())
+  follower   User     @relation("AuthorFollowsGiven", fields: [followerId], references: [id], onDelete: Cascade)
+  author     User     @relation("AuthorFollowsReceived", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, authorId])
+  @@index([followerId, createdAt])
+  @@index([authorId, createdAt])
+}
+
+/// One rate-limited action by a member (lib/rate-limit.ts), counted in a
+/// sliding window. Rows older than a day are pruned as new ones arrive.
+model RateLimitHit {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, action, createdAt])
+  @@index([createdAt])
 }
 
 model Episode {

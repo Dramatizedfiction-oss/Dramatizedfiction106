@@ -9,7 +9,8 @@ import { PROFILE_LINK_FIELDS, normalizeProfileLink } from "@/lib/profile";
 /*
  * The signed-in user's own profile text: bio, public links, whether their
  * reading profile's Library is PRIVATE or PUBLIC, and the same for their
- * Activity (bookmarks, ratings, comments). The display name
+ * Activity (bookmarks, ratings, comments), and whether they appear by name in
+ * the follower lists of writers they follow. The display name
  * is changed on Settings > Account (/api/me/account/name), not here.
  * No user id is accepted (the account always comes from the session), and the
  * schema is strict: any other key (role, writerStatus, email, id, image, ...)
@@ -27,6 +28,7 @@ const schema = z
     discordUrl: optionalText,
     readingProfileVisibility: z.enum(["PRIVATE", "PUBLIC"]).optional(),
     activityVisibility: z.enum(["PRIVATE", "PUBLIC"]).optional(),
+    followerListVisibility: z.enum(["PRIVATE", "PUBLIC"]).optional(),
   })
   .strict();
 
@@ -47,6 +49,7 @@ export async function PATCH(request: Request) {
   const data: Record<string, string | null> = {};
   if (input.readingProfileVisibility) data.readingProfileVisibility = input.readingProfileVisibility;
   if (input.activityVisibility) data.activityVisibility = input.activityVisibility;
+  if (input.followerListVisibility) data.followerListVisibility = input.followerListVisibility;
 
   if (input.bio !== undefined) {
     const bio = checkBio(input.bio);
@@ -78,6 +81,7 @@ export async function PATCH(request: Request) {
         discordUrl: true,
         readingProfileVisibility: true,
         activityVisibility: true,
+        followerListVisibility: true,
       },
     });
 

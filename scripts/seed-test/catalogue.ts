@@ -406,6 +406,26 @@ export const FOLLOWS: { who: AccountKey; series: SeriesKey }[] = [
   { who: "B", series: "salt-crown" },
 ];
 
+/**
+ * Writers followed (Sweep B2), from the follower's reading profile. Readers
+ * with a public profile are also listed in follower lists; the rest (and the
+ * writers) only count. Writer A gets enough to show the Followers section.
+ */
+export const AUTHOR_FOLLOWS: { who: AccountKey; writer: WriterKey }[] = [
+  { who: "R1", writer: "A" },
+  { who: "R1", writer: "B" },
+  { who: "R2", writer: "B" },
+  { who: "R3", writer: "A" },
+  { who: "R3", writer: "C" },
+  { who: "R4", writer: "D" },
+  { who: "R5", writer: "B" },
+  { who: "R6", writer: "A" },
+  { who: "R6", writer: "E" },
+  { who: "R7", writer: "A" },
+  { who: "B", writer: "A" },
+  { who: "D", writer: "A" },
+];
+
 /** Plain-text comments; `hoursAfter` = hours after the episode was published. */
 export const COMMENTS: { who: AccountKey; series: SeriesKey; episode: number; hoursAfter: number; body: string }[] = [
   { who: "R1", series: "salt-crown", episode: 1, hoursAfter: 3, body: "The crown choosing Isla while she still smells of herring is the best opening I've read in ages." },

@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import type { AuthRestriction } from "@/auth";
 import AppSidebar, { type AppSidebarSeries } from "@/components/app-shell/AppSidebar";
 import ProfileMenu from "@/components/app-shell/ProfileMenu";
+import DeviceFollowImport from "@/components/follow/DeviceFollowImport";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { MenuIcon, SearchIcon } from "@/components/icons";
@@ -201,6 +202,7 @@ export default function AppShell({ user, studios, trending, renovationMode = fal
           </p>
         ) : null}
         <main className={isFlushRoute ? "flex-1" : "page-shell flex-1"}>{children}</main>
+        {sessionUser && !restriction ? <DeviceFollowImport /> : null}
         {!isReaderRoute ? (
           <footer className="border-t border-[var(--border-color)] px-6 py-6 sm:py-8">
             <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">

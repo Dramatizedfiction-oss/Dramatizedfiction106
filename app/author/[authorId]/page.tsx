@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import AuthorProfileEditor from "@/components/author-profile/AuthorProfileEditor";
+import FollowersSection from "@/components/author-profile/FollowersSection";
 import WritingSections from "@/components/author-profile/WritingSections";
 import FramedAvatar from "@/components/avatar/FramedAvatar";
 import FollowAuthorButton from "@/components/follow/FollowAuthorButton";
@@ -16,6 +17,9 @@ import {
   sectionSwitches,
   writingViewSelect,
 } from "@/lib/author-profile";
+import { followerCountText } from "@/lib/author-follow-rules";
+import { getFollowersPreview, isFollowingAuthor } from "@/lib/author-follows";
+import { parseLibraryShelf } from "@/lib/library-shelves";
 import { prisma } from "@/lib/prisma";
 import { isWriterRole, parseProfileView, profileHref } from "@/lib/profile-links";
 import { writerStatusLabel } from "@/lib/writer-studio/status";
@@ -41,7 +45,7 @@ export default async function AuthorProfilePage({
   searchParams,
 }: {
   params: { authorId: string };
-  searchParams?: { view?: string; as?: string; edit?: string };
+  searchParams?: { view?: string; as?: string; edit?: string; shelf?: string };
 }) {
   const session = await auth();
   const signedInOwner = session?.user?.id === params.authorId;
@@ -53,7 +57,8 @@ export default async function AuthorProfilePage({
   const requested = parseProfileView(searchParams?.view);
   const wantsWriting = requested !== "reading";
 
-  const [author, libraryLoaded, seriesOptions] = await Promise.all([
+  const viewerId = session?.user?.id ?? null;
+  const [author, libraryLoaded, seriesOptions, followers, viewerFollows] = await Promise.all([
     prisma.user.findUnique({
       where: { id: params.authorId },
       // Public profile fields only (never email, password hash, Stripe ids).
@@ -67,12 +72,16 @@ export default async function AuthorProfilePage({
         bannerImage: true,
         readingProfileVisibility: true,
         activityVisibility: true,
+        followerListVisibility: true,
         ...writingViewSelect,
       },
     }),
     // The owner's editor always needs the full Library (saving replaces it).
     wantsWriting || isOwner ? getLibraryCards(params.authorId, isOwner) : null,
     isOwner ? getSeriesOptions(params.authorId) : [],
+    // Followers (count + the listed few) for the header and the Writing view.
+    getFollowersPreview(params.authorId),
+    viewerId && !signedInOwner ? isFollowingAuthor(viewerId, params.authorId) : false,
   ]);
   if (!author) notFound();
   // Not a writer: their profile is the reading profile.
@@ -137,6 +146,7 @@ export default async function AuthorProfilePage({
                 bannerImage={author.bannerImage ?? ""}
                 readingProfileVisibility={author.readingProfileVisibility}
                 activityVisibility={author.activityVisibility}
+                followerListVisibility={author.followerListVisibility}
                 doc={{ bio: author.bio ?? "", sections, library: libraryLoaded ?? [], about, links }}
                 seriesOptions={seriesOptions}
                 // Only the Writing view sends its published work along (for the preview).
@@ -158,29 +168,45 @@ export default async function AuthorProfilePage({
             </div>
           </div>
 
-          {!isOwner || canSeeReading ? (
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              {isOwner ? null : <FollowAuthorButton authorId={author.id} authorName={displayName} />}
-              {canSeeReading ? <ProfileViewSwitch basePath={basePath} current={view} /> : null}
-            </div>
-          ) : null}
+          <div className="mt-5 flex flex-wrap items-center gap-3 empty:hidden">
+            {/* Following a writer is a reading-profile action of the visitor (Library > People); never shown to the owner. */}
+            {isOwner ? (
+              followers.count > 0 ? (
+                <span className="theme-meta text-sm">{followerCountText(followers.count)}</span>
+              ) : null
+            ) : (
+              <FollowAuthorButton
+                authorId={author.id}
+                authorName={displayName}
+                initialFollowing={viewerFollows}
+                initialCount={followers.count}
+                signedIn={Boolean(viewerId)}
+                returnPath={view === "reading" ? `${ownPath}?view=reading` : ownPath}
+                preview={previewing}
+              />
+            )}
+            {canSeeReading ? <ProfileViewSwitch basePath={basePath} current={view} /> : null}
+          </div>
         </div>
       </section>
 
       <div className="px-4 pb-10 pt-6 md:px-0 md:pt-8">
         {view === "reading" ? (
-          <ReadingView member={author} isOwner={isOwner} />
+          <ReadingView member={author} isOwner={isOwner} shelf={parseLibraryShelf(searchParams?.shelf)} />
         ) : (
-          <WritingSections
-            mode={isOwner ? "owner" : "visitor"}
-            authorId={author.id}
-            bio={author.bio}
-            sections={sections}
-            library={library}
-            about={about}
-            links={links}
-            onSite={onSite}
-          />
+          <>
+            <WritingSections
+              mode={isOwner ? "owner" : "visitor"}
+              authorId={author.id}
+              bio={author.bio}
+              sections={sections}
+              library={library}
+              about={about}
+              links={links}
+              onSite={onSite}
+            />
+            <FollowersSection authorId={author.id} {...followers} owner={isOwner} />
+          </>
         )}
       </div>
     </main>

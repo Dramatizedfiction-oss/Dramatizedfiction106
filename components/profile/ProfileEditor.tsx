@@ -29,6 +29,7 @@ export type ProfileEditorValues = {
   bannerImage: string;
   readingProfileVisibility: "PRIVATE" | "PUBLIC";
   activityVisibility: "PRIVATE" | "PUBLIC";
+  followerListVisibility: "PRIVATE" | "PUBLIC";
   links: Record<ProfileLinkKey, string>;
 };
 
@@ -75,6 +76,9 @@ export default function ProfileEditor({
     }
     if (values.activityVisibility !== saved.activityVisibility) {
       text.activityVisibility = values.activityVisibility;
+    }
+    if (values.followerListVisibility !== saved.followerListVisibility) {
+      text.followerListVisibility = values.followerListVisibility;
     }
     if (isWriter) {
       for (const field of PROFILE_LINK_FIELDS) {
@@ -233,7 +237,8 @@ export default function ProfileEditor({
                 publicText="Anyone with the link can see your bookmarks, ratings and comments. Comments always show under their episode."
                 privateText="Only you can see your Activity. Your comments still show under their episode."
               />
-              <p className="theme-meta text-xs leading-5">Your Bookmarks tab is always private.</p>
+              <FollowerListSwitch value={values.followerListVisibility} onChange={(value) => set("followerListVisibility", value)} />
+              <p className="theme-meta text-xs leading-5">Your Bookmarks and the writers you follow are always private.</p>
             </div>
             {isWriter ? (
               <p className="theme-meta mt-3 text-xs leading-5">Your author page is always public; this only affects your reading profile.</p>
@@ -289,6 +294,19 @@ export function VisibilitySwitch({
         />
       </button>
     </div>
+  );
+}
+
+/** Whether the member appears by name in the follower lists of writers they follow (Sweep B2). */
+export function FollowerListSwitch({ value, onChange }: { value: "PRIVATE" | "PUBLIC"; onChange: (value: "PRIVATE" | "PUBLIC") => void }) {
+  return (
+    <VisibilitySwitch
+      name="Follower lists"
+      value={value}
+      onChange={onChange}
+      publicText="Your picture and name appear in the follower lists of writers you follow."
+      privateText="You're left out of writers' follower lists. They still count you as a follower."
+    />
   );
 }
 

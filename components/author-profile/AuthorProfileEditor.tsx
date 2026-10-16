@@ -8,7 +8,7 @@ import ItemList from "@/components/author-profile/editor/ItemList";
 import LinkIcon from "@/components/author-profile/LinkIcon";
 import { OPEN_EDITOR_EVENT, type EditorTab } from "@/components/author-profile/OwnerPrompt";
 import WritingSections from "@/components/author-profile/WritingSections";
-import { PenIcon, VisibilitySwitch } from "@/components/profile/ProfileEditor";
+import { FollowerListSwitch, PenIcon, VisibilitySwitch } from "@/components/profile/ProfileEditor";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import ImageUploadField from "@/components/uploads/ImageUploadField";
 import UserAvatar from "@/components/UserAvatar";
@@ -62,6 +62,7 @@ type EditorValues = {
   bannerImage: string;
   readingProfileVisibility: Visibility;
   activityVisibility: Visibility;
+  followerListVisibility: Visibility;
 };
 
 export type AuthorProfileDoc = {
@@ -119,6 +120,7 @@ export default function AuthorProfileEditor({
   bannerImage,
   readingProfileVisibility,
   activityVisibility,
+  followerListVisibility,
   doc,
   seriesOptions,
   onSite,
@@ -133,6 +135,7 @@ export default function AuthorProfileEditor({
   bannerImage: string;
   readingProfileVisibility: Visibility;
   activityVisibility: Visibility;
+  followerListVisibility: Visibility;
   doc: AuthorProfileDoc;
   seriesOptions: SeriesCardInfo[];
   onSite: OnSiteData;
@@ -140,8 +143,8 @@ export default function AuthorProfileEditor({
   const router = useRouter();
   const { refreshSession } = useAuthSession();
   const initial = useMemo<EditorValues>(
-    () => ({ ...fromDoc(doc), bannerImage, readingProfileVisibility, activityVisibility }),
-    [doc, bannerImage, readingProfileVisibility, activityVisibility],
+    () => ({ ...fromDoc(doc), bannerImage, readingProfileVisibility, activityVisibility, followerListVisibility }),
+    [doc, bannerImage, readingProfileVisibility, activityVisibility, followerListVisibility],
   );
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<EditorTab>("basics");
@@ -233,6 +236,7 @@ export default function AuthorProfileEditor({
     const visibility: Record<string, Visibility> = {};
     if (values.readingProfileVisibility !== saved.readingProfileVisibility) visibility.readingProfileVisibility = values.readingProfileVisibility;
     if (values.activityVisibility !== saved.activityVisibility) visibility.activityVisibility = values.activityVisibility;
+    if (values.followerListVisibility !== saved.followerListVisibility) visibility.followerListVisibility = values.followerListVisibility;
     if (Object.keys(visibility).length) {
       const result = await send("/api/me/profile", "PATCH", visibility);
       if (!result.ok) return setStatus({ kind: "error", message: result.message });
@@ -476,7 +480,8 @@ function BasicsTab({ role, image, values, update, setSection, dirty }: TabProps 
             publicText="Anyone can see your bookmarks, ratings and comments. Comments always show under their episode."
             privateText="Only you can see your Activity. Your comments still show under their episode."
           />
-          <p className="theme-meta text-xs leading-5">Your Bookmarks are always private.</p>
+          <FollowerListSwitch value={values.followerListVisibility} onChange={(value) => update({ followerListVisibility: value })} />
+          <p className="theme-meta text-xs leading-5">Your Bookmarks and the writers you follow are always private.</p>
         </div>
       </Group>
     </>

@@ -46,7 +46,11 @@ export default async function DeleteAccountPage() {
               <p className="theme-body text-sm leading-6">Deleting your account removes, right away and for good:</p>
               <ul className="theme-body mt-3 list-disc space-y-1.5 pl-5 text-sm leading-6">
                 <li>Your sign-ins on every device. You&apos;ll be signed out everywhere.</li>
-                <li>Your follows: {summary.follows.toLocaleString()} series in your Library.</li>
+                <li>
+                  Your follows: {summary.follows.toLocaleString()} series and {plural(summary.writersFollowed, "writer")} in your Library. You&apos;ll
+                  also leave the follower lists of the writers you follow.
+                </li>
+                {summary.authorFollowers > 0 ? <li>Your {plural(summary.authorFollowers, "follower")}.</li> : null}
                 <li>
                   Your activity: {plural(summary.bookmarks, "bookmark")}, {plural(summary.ratings, "rating")} and{" "}
                   {plural(summary.comments, "comment")}. Your ratings stop counting toward series ratings.

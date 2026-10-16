@@ -43,6 +43,11 @@ export type BookmarkEntry = {
   bookmarkedAt: string;
 };
 
+/** How many bookmarks the member's list shows (published episodes only). */
+export function countBookmarks(userId: string) {
+  return prisma.bookmark.count({ where: { userId, episode: PUBLIC_EPISODE_WHERE } });
+}
+
 /** A member's bookmarks, newest first, published episodes only. `before` is the previous page's cursor. */
 export async function listBookmarks(userId: string, before?: string | null) {
   const cursor = before ? new Date(before) : null;
