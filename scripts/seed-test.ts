@@ -13,6 +13,7 @@
  */
 import { comparePassword, hashPassword } from "@/lib/auth-utils";
 import { analyzeEpisodeHtml } from "@/lib/episode-content";
+import { NEW_ACCOUNT_HOURS } from "@/lib/feed/config";
 import {
   AUTHOR_FOLLOWS,
   BOOKMARKS,
@@ -61,6 +62,10 @@ const CONTENT: Record<SeriesKey, { title: string; text: string }[]> = {
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
+// Every test account is this old (older than any series, the oldest starts 89
+// days ago), so its activity isn't "new account" activity to the feed
+// (NEW_ACCOUNT_HOURS in lib/feed/config.ts, judged at the time of the action).
+const ACCOUNT_AGE_DAYS = 120;
 
 const escapeHtml = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -81,6 +86,12 @@ async function main() {
   const { prisma } = await import("@/lib/prisma");
   const now = Date.now();
   const passwordHash = hashPassword(password);
+  const accountCreatedAt = new Date(now - ACCOUNT_AGE_DAYS * DAY);
+  /** Activity must come after the accounts stopped being new, or the feed ignores it. */
+  const established = (at: Date, what: string) => {
+    if (at.getTime() < accountCreatedAt.getTime() + NEW_ACCOUNT_HOURS * HOUR) throw new Error(`${what} is dated while its account was under ${NEW_ACCOUNT_HOURS} hours old.`);
+    return at;
+  };
 
   /* ---------------------------------------------------------- accounts */
   const ids = {} as Record<AccountKey, string>;
@@ -96,8 +107,17 @@ async function main() {
         writerPolicyAcknowledged: true,
         passwordHash,
         readingProfileVisibility: "PUBLIC",
+        createdAt: accountCreatedAt,
       },
-      update: { name: writer.name, bio: writer.bio, role: "WRITER", writerStatus: writer.writerStatus, writerPolicyAcknowledged: true, passwordHash },
+      update: {
+        name: writer.name,
+        bio: writer.bio,
+        role: "WRITER",
+        writerStatus: writer.writerStatus,
+        writerPolicyAcknowledged: true,
+        passwordHash,
+        createdAt: accountCreatedAt,
+      },
       select: { id: true },
     });
     ids[key as AccountKey] = user.id;
@@ -120,8 +140,10 @@ async function main() {
         readingProfileVisibility: visibility,
         activityVisibility: visibility,
         followerListVisibility: visibility,
+        createdAt: accountCreatedAt,
       },
       update: {
+        createdAt: accountCreatedAt,
         name: reader.name,
         bio: reader.bio,
         role: "READER",
@@ -221,7 +243,10 @@ async function main() {
     for (let n = 1; n <= plan.upTo; n += 1) {
       const episode = episodeOf(plan.series, n);
       if (!episode.publishedAt) throw new Error(`${plan.series} ${n} isn't published.`);
-      const at = new Date(Math.min(now - HOUR, episode.publishedAt.getTime() + (((planIndex * 7 + n * 5) % 40) + 2) * HOUR));
+      const at = established(
+        new Date(Math.min(now - HOUR, episode.publishedAt.getTime() + (((planIndex * 7 + n * 5) % 40) + 2) * HOUR)),
+        `${plan.who}'s read of ${plan.series} ${n}`,
+      );
       readEvents.push({ userId: ids[plan.who], episodeId: episode.id, createdAt: at });
       progress.push({ userId: ids[plan.who], episodeId: episode.id, percent: n === plan.upTo ? plan.lastPercent : 100, updatedAt: at });
       read.add(`${plan.who}:${plan.series}:${n}`);
@@ -235,20 +260,25 @@ async function main() {
     if (!read.has(`${rating.who}:${rating.series}:${rating.episode}`)) throw new Error(`${rating.who} rates ${rating.series} ${rating.episode} without reading it.`);
     if (rating.value < 1 || rating.value > 5) throw new Error("Ratings are 1-5.");
     const episode = episodeOf(rating.series, rating.episode);
-    const at = new Date(Math.min(now - HOUR, episode.publishedAt!.getTime() + 30 * HOUR));
+    const at = established(new Date(Math.min(now - HOUR, episode.publishedAt!.getTime() + 30 * HOUR)), `${rating.who}'s rating of ${rating.series} ${rating.episode}`);
     return { userId: ids[rating.who], episodeId: episode.id, value: rating.value, createdAt: at, updatedAt: at };
   });
   await prisma.rating.createMany({ data: ratings });
 
+  // Bookmarks and follows are dated at seeding time (as before), which is long
+  // after the accounts were created; stated explicitly so the check covers them.
+  const seededAt = established(new Date(now), "Bookmarks and follows");
   await prisma.bookmark.createMany({
-    data: BOOKMARKS.map((bookmark) => ({ userId: ids[bookmark.who], episodeId: episodeOf(bookmark.series, bookmark.episode).id })),
+    data: BOOKMARKS.map((bookmark) => ({ userId: ids[bookmark.who], episodeId: episodeOf(bookmark.series, bookmark.episode).id, createdAt: seededAt })),
   });
   // The SeriesFollow_count trigger keeps Series.followers equal to these rows.
-  await prisma.seriesFollow.createMany({ data: FOLLOWS.map((follow) => ({ userId: ids[follow.who], seriesId: seriesIds[follow.series] })) });
+  await prisma.seriesFollow.createMany({
+    data: FOLLOWS.map((follow) => ({ userId: ids[follow.who], seriesId: seriesIds[follow.series], createdAt: seededAt })),
+  });
   await prisma.authorFollow.createMany({
     data: AUTHOR_FOLLOWS.map((follow) => {
       if (follow.who === follow.writer) throw new Error(`${follow.who} can't follow themselves.`);
-      return { followerId: ids[follow.who], authorId: ids[follow.writer] };
+      return { followerId: ids[follow.who], authorId: ids[follow.writer], createdAt: seededAt };
     }),
   });
   await prisma.comment.createMany({
