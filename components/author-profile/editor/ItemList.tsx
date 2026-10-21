@@ -16,6 +16,7 @@ export default function ItemList<T extends { key: string }>({
   itemName,
   openKey,
   onOpenKeyChange,
+  wrapTitles = false,
 }: {
   items: T[];
   onChange: (items: T[]) => void;
@@ -26,6 +27,8 @@ export default function ItemList<T extends { key: string }>({
   itemName: string;
   openKey: string | null;
   onOpenKeyChange: (key: string | null) => void;
+  /** Let long titles wrap instead of cutting them off (narrow phones). */
+  wrapTitles?: boolean;
 }) {
   const rows = useRef(new Map<string, HTMLLIElement>());
   const [dragKey, setDragKey] = useState<string | null>(null);
@@ -107,7 +110,7 @@ export default function ItemList<T extends { key: string }>({
                   className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl px-2 text-left hover:bg-[var(--panel-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="theme-heading block truncate text-sm font-semibold">{title}</span>
+                    <span className={`theme-heading block text-sm font-semibold ${wrapTitles ? "break-words py-1 leading-snug" : "truncate"}`}>{title}</span>
                     {info.detail ? <span className="theme-meta block truncate text-xs">{info.detail}</span> : null}
                   </span>
                   {info.badge}

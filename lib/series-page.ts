@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { PUBLIC_EPISODE_WHERE, PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
 import { seriesRatingSummary } from "@/lib/engagement-rules";
+import { eligibleSeries } from "@/lib/feed/eligibility";
 import { prisma } from "@/lib/prisma";
 import { seriesRating } from "@/lib/ratings";
 import { continuePoint } from "@/lib/reading-progress-rules";
@@ -115,11 +115,12 @@ export type SeriesRows = {
 };
 
 /**
- * Which series may appear in any row. The one place to add the mature-content
- * cap and moderation filters (held/removed series) when they exist.
+ * Which series may appear in any row: the feed's eligibility rule (Sweep C,
+ * lib/feed/eligibility.ts: published with an episode, not held/blocked, writer
+ * not restricted; it also holds the content-rating hook).
  */
 function railVisibility() {
-  return Prisma.sql`s.status = 'PUBLISHED'`;
+  return eligibleSeries();
 }
 
 type RailRow = {

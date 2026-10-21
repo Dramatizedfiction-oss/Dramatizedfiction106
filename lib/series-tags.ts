@@ -46,6 +46,9 @@ export const SERIES_TAGS = [
   "Monsters",
   "Military",
   "Sports",
+  // Sweep C: for the feed's Young Adult and Dark Fantasy shelves.
+  "Young adult",
+  "Dark fantasy",
 ] as const;
 
 export type SeriesTag = (typeof SERIES_TAGS)[number];

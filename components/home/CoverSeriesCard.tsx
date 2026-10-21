@@ -1,4 +1,6 @@
 import Link from "next/link";
+import CoverImage from "@/components/series/CoverImage";
+import { coverThumbUrl } from "@/lib/cover-thumbs";
 import { safeHexColor } from "@/lib/writer-studio/format";
 
 export type CoverSeries = {
@@ -16,11 +18,14 @@ export default function CoverSeriesCard({
   rank,
   variant = "poster",
   className = "",
+  eager,
 }: {
   series: CoverSeries;
   rank?: number;
   variant?: "poster" | "wide";
   className?: string;
+  /** Load the cover immediately (default: posters yes, wide row cards lazily). */
+  eager?: boolean;
 }) {
   // Stored theme colors may be free text from older forms ("Black"); only a
   // hex value can take the alpha suffixes used below.
@@ -44,23 +49,23 @@ export default function CoverSeriesCard({
           background: `linear-gradient(160deg, #0a0a0a 0%, ${accent}55 100%)`,
         }}
       >
-        {series.coverImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={series.coverImage}
-            alt={series.title}
-            className={`h-full w-full object-cover transition-all duration-700 ${
-              variant === "poster"
-                ? "brightness-75 blur-[6px] group-hover:blur-0 group-hover:brightness-90"
-                : "group-hover:brightness-110"
-            }`}
-          />
-        ) : (
-          <div
-            className="h-full w-full"
-            style={{ background: `linear-gradient(160deg, #0a0a0a 0%, ${accent}55 100%)` }}
-          />
-        )}
+        {/* Wide cards (rows) use the 480px copy when there is one, and load lazily. */}
+        <CoverImage
+          sources={isWide ? [coverThumbUrl(series.coverImage), series.coverImage] : [series.coverImage]}
+          alt={series.title}
+          eager={eager ?? !isWide}
+          className={`h-full w-full object-cover transition-all duration-700 ${
+            variant === "poster"
+              ? "brightness-75 blur-[6px] group-hover:blur-0 group-hover:brightness-90"
+              : "group-hover:brightness-110"
+          }`}
+          fallback={
+            <div
+              className="h-full w-full"
+              style={{ background: `linear-gradient(160deg, #0a0a0a 0%, ${accent}55 100%)` }}
+            />
+          }
+        />
 
         {/* Cover art is its own dark world in both themes: a neutral scrim keeps the
             white title readable over any image or series color; the accent tints it. */}

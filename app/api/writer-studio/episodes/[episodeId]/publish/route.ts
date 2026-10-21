@@ -10,6 +10,7 @@ import {
   serverError,
 } from "@/lib/api/writer-studio-request";
 import { requireApiRole, requireOwnedEpisode, requireOwnedSeries } from "@/lib/auth/guards";
+import { refreshSeriesInFeed } from "@/lib/feed/invalidate";
 import { prisma } from "@/lib/prisma";
 import { decideImageField, deleteReplacedImage } from "@/lib/uploads/image-storage";
 
@@ -61,7 +62,9 @@ export async function POST(
         aiUsageTag: input.aiUsageTag ? serializeAiUsageTag(input.aiUsageTag) : episode.aiUsageTag,
         locked: await resolveLockedUpdate(input.locked),
         status: "PUBLISHED",
-        publishedAt: new Date(),
+        // Re-publishing an episode that is already out keeps its original
+        // date, so "Just Updated" can't be gamed by re-publishing (Sweep C).
+        publishedAt: episode.status === "PUBLISHED" && episode.publishedAt ? episode.publishedAt : new Date(),
         lastSavedAt: new Date(),
       },
     });
@@ -72,6 +75,8 @@ export async function POST(
     });
 
     await deleteReplacedImage(episode.coverImage, updated.coverImage);
+    // The writer is back in the feed (New Writers, Just Updated) right away.
+    await refreshSeriesInFeed(ownedSeries.series.id);
 
     return NextResponse.json({ success: true, episode: updated, seriesId: episode.seriesId });
   } catch (error) {

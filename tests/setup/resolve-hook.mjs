@@ -28,6 +28,9 @@ export async function resolve(specifier, context, nextResolve) {
       const file = findFile(resolvePath(dirname(parent), specifier));
       if (file) return nextResolve(pathToFileURL(file).href, context);
     }
+  } else if (/^next\/[a-z-]+$/.test(specifier)) {
+    // Next has no "exports" map: "next/cache" is the file next/cache.js.
+    return nextResolve(`${specifier}.js`, context);
   }
   return nextResolve(specifier, context);
 }

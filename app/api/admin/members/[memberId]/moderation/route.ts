@@ -3,6 +3,7 @@ import { z } from "zod";
 import { moderateMember } from "@/lib/admin/moderation-service";
 import { jsonError, parseStrictBody } from "@/lib/api/json";
 import { requireApiRole } from "@/lib/auth/guards";
+import { invalidateFeed } from "@/lib/feed/invalidate";
 
 /*
  * POST: ban, discipline (one month) or lift a restriction. BOARD and CEO.
@@ -33,6 +34,8 @@ export async function POST(request: Request, { params }: { params: { memberId: s
       reason: body.data.reason,
     });
     if (!result.ok) return jsonError(result.status, result.code, result.message);
+    // A restricted writer's series leave (or rejoin) the feed now, not in 15 minutes.
+    invalidateFeed();
     return NextResponse.json({ success: true, endsAt: result.endsAt?.toISOString() ?? null });
   } catch (error) {
     console.error("Moderation action failed.", error);

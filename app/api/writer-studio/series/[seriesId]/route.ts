@@ -9,6 +9,7 @@ import {
   serverError,
 } from "@/lib/api/writer-studio-request";
 import { requireApiRole, requireOwnedSeries } from "@/lib/auth/guards";
+import { refreshSeriesInFeed } from "@/lib/feed/invalidate";
 import { prisma } from "@/lib/prisma";
 import { parseSeriesTags } from "@/lib/series-tags";
 import { decideImageField, deleteReplacedImage } from "@/lib/uploads/image-storage";
@@ -65,11 +66,20 @@ export async function PATCH(
         themeColor: has("themeColor") ? cleanOptionalText(input.themeColor) : undefined,
         aiUsageTag: input.aiUsageTag ? serializeAiUsageTag(input.aiUsageTag) : undefined,
         isComplete: input.isComplete,
+        // When it was finished, for the feed's Fresh Finishes (Sweep C).
+        completedAt:
+          input.isComplete === undefined || input.isComplete === owned.series.isComplete
+            ? undefined
+            : input.isComplete
+              ? new Date()
+              : null,
         tags: tags?.ok ? tags.tags : undefined,
       },
     });
 
     await deleteReplacedImage(owned.series.coverImage, updated.coverImage);
+    // Genre, tags, completion and title show in the feed: refresh this series there.
+    if (updated.status === "PUBLISHED") await refreshSeriesInFeed(updated.id);
 
     return NextResponse.json({ success: true, series: updated });
   } catch (error) {

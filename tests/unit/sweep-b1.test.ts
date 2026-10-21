@@ -3,38 +3,39 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, test } from "node:test";
 import { ERROR_CODES, ERROR_COPY } from "@/lib/error-copy";
-import { RECENCY_FADE_DAYS, TRENDING_WEIGHTS, parseExploreSort, rankExplore, trendingScore, type ExploreSignals } from "@/lib/explore-ranking";
+import { parseExploreSort, rankExplore, type ExploreSignals } from "@/lib/explore-ranking";
+import { trendingScore } from "@/lib/feed/scoring";
 
 const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 const DAY = 24 * 60 * 60 * 1000;
 const now = Date.UTC(2026, 9, 16, 12);
 const series = (id: string, patch: Partial<ExploreSignals> = {}): ExploreSignals => ({
   id,
-  reads: 0,
-  recentReads: 0,
-  newFollows: 0,
-  ratingAvg: null,
+  readsTotal: 0,
+  reads7d: 0,
+  completions7d: 0,
+  newBookmarks7d: 0,
+  newFollows7d: 0,
+  newRatings7d: 0,
   ratingCount: 0,
-  firstPublishedAt: new Date(now - 30 * DAY),
-  lastPublishedAt: new Date(now - 30 * DAY),
-  createdAt: new Date(now - 40 * DAY),
+  ratingSum: 0,
+  firstPublishedAt: now - 30 * DAY,
+  lastPublishedAt: now - 30 * DAY,
+  createdAt: now - 40 * DAY,
   ...patch,
 });
 
 describe("Explore ranking", () => {
-  test("trending uses the named weights: recent reads, new follows, rating (3+ only), recency", () => {
-    assert.equal(trendingScore(series("a", { recentReads: 4 }), now), 4 * TRENDING_WEIGHTS.recentReads);
-    assert.equal(trendingScore(series("a", { newFollows: 2 }), now), 2 * TRENDING_WEIGHTS.newFollows);
-    assert.equal(trendingScore(series("a", { ratingAvg: 4, ratingCount: 2 }), now), 0, "under 3 ratings: ignored");
-    assert.equal(trendingScore(series("a", { ratingAvg: 4, ratingCount: 3 }), now), 4 * TRENDING_WEIGHTS.rating);
-    assert.equal(trendingScore(series("a", { lastPublishedAt: new Date(now) }), now), TRENDING_WEIGHTS.recency);
-    assert.equal(trendingScore(series("a", { lastPublishedAt: new Date(now - RECENCY_FADE_DAYS * DAY) }), now), 0);
+  test("Explore's Trending is the feed's Trending score (Sweep C; terms tested in feed.test.ts)", () => {
+    const item = series("a", { reads7d: 9, newFollows7d: 4 });
+    assert.equal(rankExplore([item], now).trending[0], "a");
+    assert.ok(trendingScore(item, now) > trendingScore(series("b"), now));
   });
 
   test("trending is about now, not all-time reads; newest is when a series first went public", () => {
-    const old = series("old", { reads: 5000, firstPublishedAt: new Date(now - 300 * DAY) });
-    const hot = series("hot", { reads: 10, recentReads: 9, firstPublishedAt: new Date(now - 60 * DAY) });
-    const fresh = series("fresh", { firstPublishedAt: new Date(now - 1 * DAY), createdAt: new Date(now - 200 * DAY) });
+    const old = series("old", { readsTotal: 5000, firstPublishedAt: now - 300 * DAY });
+    const hot = series("hot", { readsTotal: 10, reads7d: 9, firstPublishedAt: now - 60 * DAY });
+    const fresh = series("fresh", { firstPublishedAt: now - 1 * DAY, createdAt: now - 200 * DAY });
     const orders = rankExplore([old, hot, fresh], now);
     assert.equal(orders.trending[0], "hot");
     assert.deepEqual(orders.newest, ["fresh", "hot", "old"]);

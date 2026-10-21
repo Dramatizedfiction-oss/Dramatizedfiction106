@@ -27,6 +27,7 @@ export default async function AdministrationOverviewPage() {
     { href: "/administration/members", title: "Members", body: "Search members, moderate accounts and manage Board seats." },
     { href: "/administration/reports", title: "Reports", body: "Reported comments and AI tags: review, remove or dismiss." },
     { href: "/administration/analytics", title: "Analytics", body: "Accounts, published content and reading activity." },
+    { href: "/administration/feed", title: "Feed", body: "Explore's shelves: weights, on/off, tag shelves, Staff Picks, score breakdowns, holds and signals." },
     { href: "/administration/content", title: "Content", body: "Site text: onboarding, About, AI Usage, legal pages, home, footer and the announcement banner." },
     { href: "/administration/store", title: "Store", body: "Avatars members can choose, their order, and the Reader and Writer defaults." },
     { href: "/administration/renovation", title: "Renovation Mode", body: "Temporarily close the platform while major changes are made." },

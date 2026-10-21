@@ -3,12 +3,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import ExploreRow from "@/components/explore/ExploreRow";
+import FeedShelves from "@/components/feed/FeedShelves";
+import type { ComposedShelf } from "@/lib/feed/types";
 import StyledDropdown, { type StyledOption } from "@/components/explore/StyledDropdown";
 import { SearchIcon } from "@/components/icons";
 import type { CoverSeries } from "@/components/home/CoverSeriesCard";
 import { genreStyle, sortStyle } from "@/lib/filter-styles";
 import { EXPLORE_SORT_COOKIE, parseExploreSort, type ExploreSort } from "@/lib/explore-ranking";
 import { GENRES } from "@/lib/genres";
+
+/** Explore's top row length; lib/feed/server.ts's TOP_ROW_SIZE must match (shelves don't repeat it). */
+const TOP_ROW_SIZE = 12;
 
 // Same options and order as before: "All genres" then lib/genres.ts; Trending, Newest.
 const GENRE_OPTIONS: StyledOption[] = ["all", ...GENRES].map((value) => ({
@@ -33,6 +38,7 @@ export default function ExploreBrowse({
   initialGenre,
   initialSort = "trending",
   orders,
+  feed,
 }: {
   stories: ExploreStory[];
   initialQuery?: string;
@@ -44,6 +50,8 @@ export default function ExploreBrowse({
   initialSort?: ExploreSort;
   /** Both orders from rankExplore (lib/explore-ranking.ts), so switching is instant. */
   orders: Record<ExploreSort, string[]>;
+  /** The first shelves of the reader's feed (null if it couldn't be built). */
+  feed?: { shelves: ComposedShelf[]; next: number | null; sort: ExploreSort; reservedIds: string[] } | null;
 }) {
   const [search, setSearch] = useState(initialQuery);
   const [activeGenre, setActiveGenre] = useState(() => {
@@ -95,7 +103,10 @@ export default function ExploreBrowse({
 
   const isFiltering = Boolean(search.trim()) || activeGenre !== "all";
   // The top row follows the switch: Trending now, or Newest.
-  const topRow = [...stories].sort(byOrder).slice(0, 12);
+  // Series in the reader's Continue Reading shelf stay there, not in the top row (lib/feed/server.ts topRowIds).
+  const reserved = new Set(feed?.reservedIds ?? []);
+  const topRow = [...stories].filter((story) => !reserved.has(story.id)).sort(byOrder).slice(0, TOP_ROW_SIZE);
+  const topRowIds = new Set(topRow.map((story) => story.id));
   const byGenre = useMemo(() => {
     const map: Record<string, ExploreStory[]> = {};
     filtered.forEach((story) => {
@@ -170,8 +181,13 @@ export default function ExploreBrowse({
           )
         ) : (
           <>
-            <ExploreRow title={sortBy === "newest" ? "Newest" : "Trending now"} series={topRow} highlight />
-            {Object.entries(byGenre)
+            <ExploreRow title={sortBy === "newest" ? "Newest" : "Trending now"} series={topRow} highlight eagerCount={2} />
+            {feed ? (
+              // Sweep C: the reader's feed of shelves (lib/feed).
+              <FeedShelves initial={feed.shelves} next={feed.next} composedSort={feed.sort} hiddenIds={topRowIds} />
+            ) : (
+              // The feed couldn't be built: the plain genre rows.
+              Object.entries(byGenre)
               .filter(([, list]) => list.length >= 1)
               .sort((a, b) => b[1].length - a[1].length)
               .map(([genre, list]) => (
@@ -180,7 +196,8 @@ export default function ExploreBrowse({
                   title={genre.charAt(0).toUpperCase() + genre.slice(1)}
                   series={list}
                 />
-              ))}
+              ))
+            )}
           </>
         )}
       </div>

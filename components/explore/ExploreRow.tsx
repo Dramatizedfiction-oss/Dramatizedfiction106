@@ -8,10 +8,13 @@ export default function ExploreRow({
   title,
   series,
   highlight = false,
+  eagerCount = 0,
 }: {
   title: string;
   series: CoverSeries[];
   highlight?: boolean;
+  /** How many of the first covers load immediately (the rest load as they scroll near). */
+  eagerCount?: number;
 }) {
   const rowRef = useRef<HTMLDivElement | null>(null);
 
@@ -51,8 +54,8 @@ export default function ExploreRow({
         ref={rowRef}
         className="scrollbar-hide -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto scroll-smooth px-4 pb-2 md:mx-0 md:scroll-px-0 md:px-0"
       >
-        {series.map((item) => (
-          <CoverSeriesCard key={item.id} series={item} variant="wide" className="snap-start" />
+        {series.map((item, index) => (
+          <CoverSeriesCard key={item.id} series={item} variant="wide" className="snap-start" eager={index < eagerCount} />
         ))}
       </div>
     </section>

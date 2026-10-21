@@ -8,6 +8,7 @@ const ITEMS = [
   { href: "/administration/members", label: "Members" },
   { href: "/administration/reports", label: "Reports" },
   { href: "/administration/analytics", label: "Analytics" },
+  { href: "/administration/feed", label: "Feed" },
   { href: "/administration/content", label: "Content" },
   { href: "/administration/store", label: "Store" },
   { href: "/administration/renovation", label: "Renovation" },

@@ -90,6 +90,9 @@ model User {
   contentEdits             ContentItem[]
   contentRevisions         ContentRevision[]
   storeItemsAdded          StoreItem[]
+  feedShelvesUpdated       FeedShelf[]
+  feedShelfItemsAdded      FeedShelfItem[]
+  writerExposure           WriterExposure[]
 }
 
 model AuthorProfile {
@@ -234,6 +237,13 @@ model Series {
   /// Set by the writer in Writer Studio ("Series complete"): shown to readers
   /// as Complete instead of Ongoing. Separate from status (published or not).
   isComplete  Boolean    @default(false)
+  /// When "Series complete" was last switched on (null while ongoing). Drives
+  /// the feed's Fresh Finishes shelf (Sweep C).
+  completedAt DateTime?
+  /// Feed eligibility (Sweep C, set by Board/CEO in Administration > Feed):
+  /// only VISIBLE series appear in the feed, Explore and series-page rows.
+  /// The series page itself is not affected yet.
+  moderationStatus SeriesModeration @default(VISIBLE)
   reads       Int        @default(0)
   followers   Int        @default(0)
   createdAt   DateTime   @default(now())
@@ -245,6 +255,105 @@ model Series {
   follows     SeriesFollow[]
   aiTagReports AiTagReport[]
   profileLibraryItems ProfileLibraryItem[]
+  stats       SeriesStats?
+  feedShelfItems FeedShelfItem[]
+}
+
+/// Per-series numbers for the feed (Sweep C, lib/feed/stats.ts), computed ahead
+/// of time: refreshed for one series when it publishes or its details change,
+/// for all series when the feed finds them over an hour old, and by the daily
+/// cron. Activity from the series' author is never counted; activity made
+/// while the account was younger than NEW_ACCOUNT_HOURS is weighted by
+/// NEW_ACCOUNT_WEIGHT (lib/feed/config.ts), and such ratings are left out of the average.
+model SeriesStats {
+  seriesId         String    @id
+  authorId         String
+  genre            String
+  /// Sub tags on the fixed list only (lib/series-tags.ts).
+  tags             String[]
+  isComplete       Boolean
+  completedAt      DateTime?
+  episodeCount     Int
+  totalReadMinutes Int
+  firstPublishedAt DateTime?
+  lastPublishedAt  DateTime?
+  ratingCount      Int
+  ratingSum        Int
+  bookmarkCount    Int
+  followCount      Int
+  /// Series.reads (distinct reader+episode pairs, all time).
+  readsTotal       Int
+  /// Last TRENDING_WINDOW_DAYS, weighted (see above).
+  reads7d          Float
+  completions7d    Float
+  newBookmarks7d   Float
+  newFollows7d     Float
+  newRatings7d     Float
+  computedAt       DateTime
+  series           Series    @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+
+  @@index([lastPublishedAt])
+  @@index([authorId])
+}
+
+/// A feed shelf (Sweep C): a named list of series with a rule. Built-in shelves
+/// are seeded by the migration and can be edited or switched off, not deleted.
+/// `rule` and `tier` are code lists (lib/feed/config.ts).
+model FeedShelf {
+  id          String          @id @default(cuid())
+  key         String          @unique
+  name        String
+  /// BIG | GENRE | NICHE (for the admin list; selection uses `weight`).
+  tier        String
+  rule        String
+  /// Optional filters for GENRE / TAGS rules (genres from lib/genres.ts, tags from lib/series-tags.ts).
+  genres      String[]        @default([])
+  tags        String[]        @default([])
+  /// How often the composer picks this shelf, relative to the others.
+  weight      Float
+  /// Hidden when it has fewer series than this.
+  minItems    Int             @default(4)
+  maxItems    Int             @default(12)
+  enabled     Boolean         @default(true)
+  sortOrder   Int             @default(0)
+  builtIn     Boolean         @default(false)
+  /// Seasonal shelves: shown only in these months (1-12); empty = all year.
+  months      Int[]           @default([])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  updatedById String?
+  updatedBy   User?           @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  items       FeedShelfItem[]
+
+  @@index([enabled, sortOrder])
+}
+
+/// A series placed on a hand-picked shelf (Staff Picks) by Board/CEO.
+model FeedShelfItem {
+  shelfId   String
+  seriesId  String
+  position  Int
+  addedById String?
+  createdAt DateTime  @default(now())
+  shelf     FeedShelf @relation(fields: [shelfId], references: [id], onDelete: Cascade)
+  series    Series    @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  addedBy   User?     @relation(fields: [addedById], references: [id], onDelete: SetNull)
+
+  @@id([shelfId, seriesId])
+  @@index([seriesId])
+}
+
+/// How often a writer was shown on the New Writers shelf, per day (Sweep C):
+/// the shelf puts the least-shown writers first. At most one count per
+/// visitor per day; rows older than EXPOSURE_KEEP_DAYS are pruned by the cron.
+model WriterExposure {
+  authorId    String
+  day         DateTime @db.Date
+  impressions Int      @default(0)
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@id([authorId, day])
+  @@index([day])
 }
 
 /// A member following a series (separate from following an author). Their
@@ -261,6 +370,7 @@ model SeriesFollow {
   @@id([userId, seriesId])
   @@index([userId, createdAt])
   @@index([seriesId])
+  @@index([seriesId, createdAt])
 }
 
 /// A member following a writer (Sweep B2). The follow belongs to the follower's
@@ -324,6 +434,8 @@ model Episode {
   aiTagReports  AiTagReport[]
 
   @@unique([seriesId, episodeNumber])
+  @@index([seriesId, status, publishedAt])
+  @@index([authorId, status, publishedAt])
 }
 
 /// How far a signed-in member has read an episode: the furthest point reached,
@@ -335,11 +447,14 @@ model ReadingProgress {
   episodeId String
   percent   Int
   updatedAt DateTime @updatedAt
+  /// When percent first reached FINISHED_PERCENT (Sweep C: completions for the feed).
+  finishedAt DateTime?
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   episode   Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
 
   @@id([userId, episodeId])
   @@index([userId, updatedAt])
+  @@index([episodeId, finishedAt])
 }
 
 /// A member saving an episode to their Bookmarks list (not a reading position).
@@ -352,6 +467,7 @@ model Bookmark {
 
   @@id([userId, episodeId])
   @@index([userId, createdAt])
+  @@index([episodeId, createdAt])
 }
 
 /// One 1-5 star rating per member per episode, changeable. The database also
@@ -700,6 +816,15 @@ enum PayoutStatus {
   PENDING
   PAID
   FAILED
+}
+
+/// Feed eligibility of a series (Sweep C). Only VISIBLE is shown in the feed,
+/// Explore and series-page rows; BLOCKED also stands for hidden/removed.
+enum SeriesModeration {
+  VISIBLE
+  IN_REVIEW
+  HELD
+  BLOCKED
 }
 
 enum SeriesStatus {

@@ -3,6 +3,7 @@ import ExploreBrowse from "@/components/explore/ExploreBrowse";
 import { auth } from "@/auth";
 import { getExploreCatalogue } from "@/lib/explore-catalogue";
 import { EXPLORE_SORT_COOKIE, parseExploreSort, type ExploreSort } from "@/lib/explore-ranking";
+import { getFeed, getFeedPool } from "@/lib/feed/server";
 import { isWriter } from "@/lib/roles";
 
 export default async function ExplorePage({
@@ -17,8 +18,18 @@ export default async function ExplorePage({
   const initialSort = parseExploreSort(searchParams?.sort ?? cookies().get(EXPLORE_SORT_COOKIE)?.value);
 
   let catalogue: Awaited<ReturnType<typeof getExploreCatalogue>> = { series: [], orders: { trending: [], newest: [] } as Record<ExploreSort, string[]> };
+  let feed: { shelves: Awaited<ReturnType<typeof getFeed>>["shelves"]; next: number | null; sort: ExploreSort; reservedIds: string[] } | null = null;
   try {
-    catalogue = await getExploreCatalogue();
+    // One cached pool feeds both the catalogue and the shelves (lib/feed/server.ts).
+    const pool = await getFeedPool();
+    catalogue = await getExploreCatalogue(pool);
+    try {
+      const readerId = session?.user && !session.user.restriction ? session.user.id : null;
+      const page = await getFeed({ readerId, sort: initialSort, pool });
+      feed = { shelves: page.shelves, next: page.next, sort: initialSort, reservedIds: page.reservedIds };
+    } catch (error) {
+      console.error("Explore feed failed; showing genre rows.", error);
+    }
   } catch (error) {
     console.error("Explore stories failed.", error);
   }
@@ -33,6 +44,7 @@ export default async function ExplorePage({
       showBecomeAuthorCta={showBecomeAuthorCta}
       initialSort={initialSort}
       orders={catalogue.orders}
+      feed={feed}
       stories={catalogue.series.map((series) => ({
         id: series.id,
         title: series.title,
