@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useId, useState } from "react";
 import FramedAvatar from "@/components/avatar/FramedAvatar";
-import { EmptyShelf, ShelfError, ShelfRow } from "@/components/reader/ShelfParts";
+import { EmptyShelf, previewHiddenClass, SeeAllButton, ShelfError, ShelfRow } from "@/components/reader/ShelfParts";
 import { send, useUndoableRemove } from "@/components/reader/useUndoableRemove";
 import type { PersonEntry } from "@/lib/author-follows";
 import { timeAgo } from "@/lib/engagement-rules";
@@ -10,8 +10,9 @@ import { profileHref } from "@/lib/profile-links";
 import { writerStatusLabel } from "@/lib/writer-studio/status";
 
 /**
- * Library › People: the writers the member follows (Sweep B2), with Unfollow +
- * Undo. Only ever rendered on the member's own reading profile.
+ * Library › Follows: the writers the member follows (Sweep B2), with Unfollow +
+ * Undo, the first few with "See all". Only ever rendered on the member's own
+ * reading profile; the heading is the caller's.
  */
 export default function ReaderPeople({
   initial,
@@ -20,6 +21,8 @@ export default function ReaderPeople({
   initial: PersonEntry[];
   onCountChange?: (count: number) => void;
 }) {
+  const listId = useId();
+  const [expanded, setExpanded] = useState(false);
   const list = useUndoableRemove({
     initial,
     keyOf: (person) => person.id,
@@ -35,7 +38,6 @@ export default function ReaderPeople({
   if (list.items.length === 0) {
     return (
       <EmptyShelf
-        eyebrow="People"
         title="No writers followed yet"
         body={
           <>
@@ -48,17 +50,14 @@ export default function ReaderPeople({
 
   return (
     <div>
-      <h2 className="sr-only">Writers you follow</h2>
-      <p className="theme-meta text-sm">
-        {list.liveCount} {list.liveCount === 1 ? "writer" : "writers"} you follow
-      </p>
-      <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {list.items.map((person) => {
+      <ul id={listId} className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {list.items.map((person, index) => {
           const name = person.name?.trim() || "Writer";
           return (
             <ShelfRow
               key={person.id}
               href={profileHref(person)}
+              hiddenClass={previewHiddenClass(index, expanded)}
               removeLabel={`Unfollow ${name}`}
               onRemove={() => list.removeItem(person)}
               removed={list.removed.has(person.id)}
@@ -77,6 +76,7 @@ export default function ReaderPeople({
           );
         })}
       </ul>
+      <SeeAllButton total={list.items.length} expanded={expanded} onToggle={() => setExpanded((value) => !value)} controls={listId} />
       <ShelfError message={list.error} />
     </div>
   );

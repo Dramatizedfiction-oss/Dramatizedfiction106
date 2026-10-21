@@ -8,7 +8,7 @@ import { buildTasteProfile, pickAnchor } from "@/lib/feed/taste";
 import type { ComposedShelf, FeedPool, PoolSeries, ReaderSignals } from "@/lib/feed/types";
 import { prisma } from "@/lib/prisma";
 import { knownSeriesTags } from "@/lib/series-tags";
-import { rankExplore, type ExploreSort } from "@/lib/explore-ranking";
+import type { ExploreSort } from "@/lib/explore-ranking";
 
 /*
  * The feed's one server module (Sweep C). Server-only.
@@ -21,9 +21,6 @@ import { rankExplore, type ExploreSort } from "@/lib/explore-ranking";
  *                  signed-in reader's history, none for signed-out visitors.
  * Explore's catalogue and top row come from the same pool (lib/explore-catalogue.ts).
  */
-
-/** Explore's top row length (it is shown above the feed, so shelves don't repeat it). */
-export const TOP_ROW_SIZE = 12;
 
 type PoolRow = {
   id: string;
@@ -266,16 +263,11 @@ export type FeedPage = {
   reservedIds: string[];
 };
 
-/** Explore's top row: the order's first TOP_ROW_SIZE series, without the reserved ones. */
-export function topRowIds(order: string[], reserved: Iterable<string>) {
-  const skip = new Set(reserved);
-  return order.filter((id) => !skip.has(id)).slice(0, TOP_ROW_SIZE);
-}
-
 /**
  * One page of a reader's feed on Explore. The whole feed is composed (cheap,
  * in memory) and sliced, so pages never repeat each other. `sort` is the
- * Explore top row's order; its series aren't repeated in the shelves.
+ * Explore top row's order; since Sweep D shelves may repeat the top row's
+ * series, so the shelves are the same for both orders.
  */
 export async function getFeed(input: {
   readerId: string | null;
@@ -291,10 +283,11 @@ export async function getFeed(input: {
   const ctx = shelfContext(pool, signals, now);
   const base = { shelves: pool.shelves, ctx, seed: feedSeed(input.readerId, now), skipRules: ["TRENDING"] as const, now };
   // Today's priority shelves (Continue Reading, Because you liked, New Writers when drawn) keep
-  // their series: Explore's top row skips them, so they're never emptied by it and nothing repeats.
+  // their series: Explore's top row skips them.
   const reservedIds = composeFeed({ ...base, priorityOnly: true }).flatMap((shelf) => shelf.cards.map((card) => card.id));
-  const topRow = topRowIds(rankExplore(pool.series, now)[input.sort], reservedIds);
-  const all = composeFeed({ ...base, alreadyShown: topRow });
+  // Sweep D: shelves may repeat the top row's series (the top row holds up to TOP_ROW_SIZE,
+  // which left a small catalogue almost no shelves); shelves still never repeat each other.
+  const all = composeFeed(base);
   const from = Math.max(0, input.from ?? 0);
   const count = input.count ?? (from === 0 ? FEED_FIRST_LOAD : FEED_LOAD_MORE);
   const shelves = all.slice(from, from + count);

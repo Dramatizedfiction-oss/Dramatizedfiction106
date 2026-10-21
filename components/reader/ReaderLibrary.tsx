@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
-import { EmptyShelf, ShelfError, ShelfRow } from "@/components/reader/ShelfParts";
+import { useEffect, useId, useState } from "react";
+import { EmptyShelf, previewHiddenClass, SeeAllButton, ShelfError, ShelfRow } from "@/components/reader/ShelfParts";
 import { send, useUndoableRemove } from "@/components/reader/useUndoableRemove";
 import type { LibraryEntry } from "@/lib/series-follows";
 import { safeHexColor, safeImageUrl } from "@/lib/writer-studio/format";
 
 /**
- * Library › Following: series the member follows, as tappable rows (cover,
- * title, author, episodes). The owner can unfollow each with a short Undo;
- * `visitor` is someone else's public profile (read-only, its own wording).
+ * Library › Followed Series: series the member follows, as tappable rows
+ * (cover, title, author, episodes), the first few with "See all". The owner
+ * can unfollow each with a short Undo; `visitor` is someone else's public
+ * profile (read-only, its own wording). The heading is the caller's.
  */
 export default function ReaderLibrary({
   entries,
@@ -20,12 +21,14 @@ export default function ReaderLibrary({
   visitor?: boolean;
   onCountChange?: (count: number) => void;
 }) {
+  const listId = useId();
+  const [expanded, setExpanded] = useState(false);
   const list = useUndoableRemove({
     initial: entries,
     keyOf: (entry) => entry.id,
     remove: (entry) => send(`/api/me/follows/${encodeURIComponent(entry.id)}`, "DELETE"),
     restore: (entry) => send(`/api/me/follows/${encodeURIComponent(entry.id)}`, "PUT"),
-    failMessage: "Couldn't update your Library. Please try again.",
+    failMessage: "Couldn't update your Followed Series. Please try again.",
   });
 
   useEffect(() => {
@@ -35,8 +38,8 @@ export default function ReaderLibrary({
   if (list.items.length === 0) {
     return (
       <EmptyShelf
-        eyebrow="Following"
-        title="Nothing here yet"
+        title={visitor ? "No followed series yet" : "No series followed yet"}
+        action={!visitor}
         body={
           visitor ? (
             "This reader hasn't followed any series yet."
@@ -52,18 +55,20 @@ export default function ReaderLibrary({
 
   return (
     <div>
-      <h2 className="sr-only">Series {visitor ? "followed" : "you follow"}</h2>
-      <p className="theme-meta text-sm">
-        {list.liveCount} series {visitor ? "followed" : "you follow"}
-      </p>
-      <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {list.items.map((entry) => {
+      {visitor ? (
+        <p className="theme-meta mb-3 text-sm">
+          {list.liveCount} series followed
+        </p>
+      ) : null}
+      <ul id={listId} className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {list.items.map((entry, index) => {
           const cover = safeImageUrl(entry.coverImage);
           const accent = safeHexColor(entry.themeColor);
           return (
             <ShelfRow
               key={entry.id}
               href={`/series/${entry.id}`}
+              hiddenClass={previewHiddenClass(index, expanded)}
               removeLabel={`Unfollow ${entry.title}`}
               onRemove={visitor ? undefined : () => list.removeItem(entry)}
               removed={list.removed.has(entry.id)}
@@ -92,6 +97,7 @@ export default function ReaderLibrary({
           );
         })}
       </ul>
+      <SeeAllButton total={list.items.length} expanded={expanded} onToggle={() => setExpanded((value) => !value)} controls={listId} />
       <ShelfError message={list.error} />
     </div>
   );

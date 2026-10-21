@@ -10,7 +10,7 @@ const ITEMS = [
   { href: "/administration/analytics", label: "Analytics" },
   { href: "/administration/feed", label: "Feed" },
   { href: "/administration/content", label: "Content" },
-  { href: "/administration/store", label: "Store" },
+  { href: "/administration/back-of-store", label: "Back of the store" },
   { href: "/administration/renovation", label: "Renovation" },
 ];
 

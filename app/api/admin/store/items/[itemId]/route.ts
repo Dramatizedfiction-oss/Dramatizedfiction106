@@ -5,7 +5,7 @@ import { requireApiRole } from "@/lib/auth/guards";
 import { removeStoreItem, updateStoreItem } from "@/lib/store/service";
 
 /*
- * One Store item (Administration › Store, Sweep B3). Board and CEO only;
+ * One Store item (Administration › Back of the store, Sweep B3/D). Board and CEO only;
  * JSON 401/403 for everyone else.
  *   PATCH { name?, active? }: rename, hide or show (audited).
  *   DELETE: remove it; for an avatar, members using it fall back to the default (audited).

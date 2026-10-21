@@ -8,22 +8,20 @@ import type { ComposedShelf } from "@/lib/feed/types";
 /*
  * Explore's feed (Sweep C): the shelves under the top row. The first ones
  * come with the page; "More shelves" (also triggered when the button scrolls
- * into view) fetches the next ones from /api/feed. Cards already in the
- * current top row are left out (the top row can switch between Trending and
- * Newest without a reload). Only the first shelf's first cards load eagerly.
+ * into view) fetches the next ones from /api/feed. Since Sweep D shelves may
+ * repeat the top row's series, so they're shown as composed (no shelf drops
+ * under its minimum on screen). Only the first shelf's first cards load
+ * eagerly; the rest are lazy.
  */
 export default function FeedShelves({
   initial,
   next: initialNext,
   composedSort,
-  hiddenIds,
 }: {
   initial: ComposedShelf[];
   next: number | null;
   /** The top row order the server composed the feed against (kept for every page). */
   composedSort: ExploreSort;
-  /** Series in the top row on screen now. */
-  hiddenIds: Set<string>;
 }) {
   const [shelves, setShelves] = useState(initial);
   const [next, setNext] = useState(initialNext);
@@ -80,7 +78,7 @@ export default function FeedShelves({
         <ExploreRow
           key={shelf.key}
           title={shelf.title}
-          series={shelf.cards.filter((card) => !hiddenIds.has(card.id))}
+          series={shelf.cards}
           eagerCount={index === 0 ? 2 : 0}
         />
       ))}

@@ -38,8 +38,12 @@ export const LEADING_RULES: readonly FeedRule[] = ["CONTINUE_READING", "BECAUSE_
 /** A reader with no taste profile gets these (cold start), plus Continue Reading if they have progress. */
 export const COLD_START_RULES: readonly FeedRule[] = ["NEW_WRITERS", "TRENDING", "JUST_UPDATED"];
 
-/** Default shelf size: hidden below the minimum, cut at the maximum. */
-export const DEFAULT_MIN_ITEMS = 4;
+/**
+ * Default shelf size: hidden below the minimum, cut at the maximum. Sweep D
+ * lowered the minimum from 4 so more rows fill while the catalogue is small
+ * (scripts/feed-min-items.ts moved the built-in shelves still at 4).
+ */
+export const DEFAULT_MIN_ITEMS = 3;
 export const DEFAULT_MAX_ITEMS = 12;
 /** Upper bounds an admin can set. */
 export const MAX_SHELF_ITEMS = 24;

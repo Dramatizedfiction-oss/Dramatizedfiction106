@@ -5,7 +5,7 @@ import { screenStoreImage } from "@/lib/store/screening";
 import { deleteReplacedImage, isOwnedImageUrl } from "@/lib/uploads/image-storage";
 
 /*
- * The avatar library behind Administration › Store (Sweep B3) and the
+ * The avatar library behind Administration › Back of the store (Sweep B3/D) and the
  * Reader/Writer default choices. Each library avatar has one StoreItem (its
  * name, visibility and order in the Store). Defaults are display-time
  * fallbacks only: changing them never touches a member's own picture

@@ -13,10 +13,10 @@ import { getLibrary } from "@/lib/series-follows";
  * A member's Reading view (reading profile and the author profile's Reading
  * view). This is where a member's platform interaction lives (Sweep B2): who
  * and what they follow. Only ever loads data for `member`, the profile shown:
- *   - the owner: Library (shelves Following, Bookmarks, People, each item
- *     removable with Undo) and Activity tabs;
- *   - anyone else: the followed series if readingProfileVisibility is PUBLIC,
- *     Activity if activityVisibility is PUBLIC, never Bookmarks or People (a
+ *   - the owner: Library (sections Followed Series, Bookmarks, Follows, each
+ *     item removable with Undo) and Activity tabs;
+ *   - anyone else: Followed Series if readingProfileVisibility is PUBLIC,
+ *     Activity if activityVisibility is PUBLIC, never Bookmarks or Follows (a
  *     follower who hid from writers' follower lists stays hidden); otherwise a
  *     private notice.
  */
@@ -31,7 +31,7 @@ export default async function ReadingView({
 }: {
   member: { id: string; readingProfileVisibility: string; activityVisibility: string };
   isOwner: boolean;
-  /** The owner's Library shelf to open (?shelf=). */
+  /** The owner's Library section to scroll to (?shelf=). */
   shelf?: LibraryShelf;
 }) {
   if (isOwner) {
@@ -78,7 +78,7 @@ export default async function ReadingView({
       {library ? (
         <section aria-labelledby="library-heading">
           <h2 id="library-heading" className="eyebrow mb-3">
-            Library
+            Followed Series
           </h2>
           <ReaderLibrary entries={library} visitor />
         </section>

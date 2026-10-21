@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 
 /*
  * The avatar library as members see it: the active avatars in the Store
- * (Administration › Store, Sweep B3), in the Store's order. Members choose
+ * (Administration › Back of the store, Sweep B3/D), in the Store's order. Members choose
  * their profile picture from here (the Store page or /reader/avatar), or use
  * the role default or their own photo.
  *

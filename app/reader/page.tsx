@@ -83,7 +83,7 @@ export default async function ReaderProfilePage({ searchParams }: { searchParams
               <LockIcon />
             </span>
             <p className="min-w-0">
-              {`Library: ${isPublic ? "public" : "private"} · Activity: ${activityPublic ? "public" : "private"}. `}
+              {`Followed Series: ${isPublic ? "public" : "private"} · Activity: ${activityPublic ? "public" : "private"}. `}
               {isPublic || activityPublic
                 ? "Anyone with your profile link sees what's public."
                 : "Others with your link see only your picture, name and bio."}{" "}

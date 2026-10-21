@@ -4,8 +4,8 @@ import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "rea
 
 /*
  * Library / Activity on the member's own reading profile. WAI-ARIA tabs with
- * automatic activation. The Library tab holds its own shelves (Following,
- * Bookmarks, People: components/reader/LibraryShelves); both panels are
+ * automatic activation. The Library tab holds three stacked sections
+ * (Followed Series, Bookmarks, Follows: components/reader/LibraryShelves); both panels are
  * rendered on the server and passed in, and stay mounted while hidden.
  */
 

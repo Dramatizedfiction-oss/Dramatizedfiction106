@@ -8,7 +8,8 @@ import ImageUploadField from "@/components/uploads/ImageUploadField";
 import { STORE_ITEM_NAME_MAX } from "@/lib/store/rules";
 
 /*
- * Administration › Store (Sweep B3; was Avatars). Board and CEO.
+ * Administration › Back of the store › Avatars (Sweep D; was Administration ›
+ * Store, before that Avatars). Board and CEO.
  *   - Default avatars for Readers and for Writers/Board/CEO (shown to members
  *     without their own picture; never replaces one).
  *   - Add an avatar: upload (resized to 512px WebP on the server), name it.

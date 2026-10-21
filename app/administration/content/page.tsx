@@ -61,8 +61,8 @@ export default async function ContentPage() {
           Store
         </h2>
         <p className="theme-meta mt-1 text-sm">Items members can choose, such as avatars, and the Reader and Writer defaults.</p>
-        <Link href="/administration/store" className="story-button-secondary mt-4 min-h-11">
-          Manage the Store
+        <Link href="/administration/back-of-store" className="story-button-secondary mt-4 min-h-11">
+          Open the Back of the store
         </Link>
       </section>
     </div>

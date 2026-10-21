@@ -5,7 +5,7 @@ import { checkReorder, cleanItemName, isStoreCategory, type StoreCategory } from
 
 /*
  * The Store (Sweep B3). Members browse active items; Board and CEO manage
- * them in Administration › Store (the routes check the role). Adding an
+ * them in Administration › Back of the store (the routes check the role). Adding an
  * avatar goes through lib/admin/avatars-service.addPlatformAvatar (it creates
  * the library avatar and its Store item together). Every change is audited.
  * Nothing here has a price, checkout or ownership: see lib/store/rules.ts.

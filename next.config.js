@@ -33,8 +33,10 @@ const nextConfig = {
       { source: "/ceo/users", destination: "/administration/members", permanent: false },
       { source: "/ceo/analytics", destination: "/administration/analytics", permanent: false },
       { source: "/ceo/settings", destination: "/administration/content", permanent: false },
-      // Sweep B3: the avatar library is now Administration › Store.
-      { source: "/administration/avatars", destination: "/administration/store", permanent: false }
+      // The avatar tools: Administration › Avatars, then › Store (Sweep B3), now
+      // Back of the store › Avatars (Sweep D).
+      { source: "/administration/avatars", destination: "/administration/back-of-store/avatars", permanent: false },
+      { source: "/administration/store", destination: "/administration/back-of-store/avatars", permanent: false }
     ];
   }
 };

@@ -479,7 +479,7 @@ function BasicsTab({ role, image, values, update, setSection, dirty }: TabProps 
       <Group title="Reading profile" description="Your Reading view: the series you follow and your activity.">
         <div className="space-y-3">
           <VisibilitySwitch
-            name="Library"
+            name="Followed Series"
             value={values.readingProfileVisibility}
             onChange={(value) => update({ readingProfileVisibility: value })}
             publicText="Anyone can see the series you follow."

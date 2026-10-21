@@ -44,6 +44,17 @@ describe("following writers (Sweep B2)", () => {
     assert.equal(parseLibraryShelf("bookmarks"), "bookmarks");
     assert.equal(parseLibraryShelf("nope"), "following");
     assert.equal(parseLibraryShelf(undefined), "following");
+    // Sweep D names work too.
+    assert.equal(parseLibraryShelf("followed-series"), "following");
+    assert.equal(parseLibraryShelf("follows"), "people");
+  });
+
+  test("the Library is one page of three named sections, no tabs (Sweep D)", () => {
+    const shelves = read("components/reader/LibraryShelves.tsx");
+    assert.doesNotMatch(shelves, /role="tablist"|role="tab"/);
+    const titles = read("lib/library-shelves.ts");
+    assert.match(titles, /following: "Followed Series"/);
+    assert.match(titles, /people: "Follows"/);
   });
 });
 

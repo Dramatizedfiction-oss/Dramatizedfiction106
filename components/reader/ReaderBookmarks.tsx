@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { EmptyShelf, ShelfError, ShelfRow } from "@/components/reader/ShelfParts";
+import { useEffect, useId, useState } from "react";
+import { EmptyShelf, previewHiddenClass, SeeAllButton, ShelfError, ShelfRow } from "@/components/reader/ShelfParts";
 import { send, useUndoableRemove } from "@/components/reader/useUndoableRemove";
 import type { BookmarkEntry } from "@/lib/bookmarks";
 import { timeAgo } from "@/lib/engagement-rules";
@@ -9,8 +9,10 @@ import { safeHexColor, safeImageUrl } from "@/lib/writer-studio/format";
 
 /**
  * Library › Bookmarks: the member's own saved episodes (from the reader's
- * bookmark button), newest first, with Remove + Undo and "Show more". Not
- * reading progress. Only ever rendered on the member's own reading profile.
+ * bookmark button), newest first, with Remove + Undo. The first few show;
+ * "See all" opens the rest, then "Show more" loads further pages. Not reading
+ * progress. Only ever rendered on the member's own reading profile; the
+ * heading is the caller's.
  */
 export default function ReaderBookmarks({
   initial,
@@ -21,6 +23,8 @@ export default function ReaderBookmarks({
   total: number;
   onCountChange?: (count: number) => void;
 }) {
+  const listId = useId();
+  const [expanded, setExpanded] = useState(false);
   const list = useUndoableRemove({
     initial: initial.bookmarks,
     keyOf: (entry) => entry.episodeId,
@@ -63,22 +67,22 @@ export default function ReaderBookmarks({
 
   if (list.items.length === 0 && !cursor) {
     return (
-      <EmptyShelf eyebrow="Bookmarks" title="No bookmarks yet" body="Tap the bookmark icon while reading an episode and it will be saved here." />
+      <EmptyShelf title="No bookmarks yet" body="Tap the bookmark icon while reading an episode and it will be saved here." />
     );
   }
 
   return (
     <div>
-      <h2 className="sr-only">Bookmarks</h2>
       <p className="theme-meta text-sm">Only you can see your bookmarks.</p>
-      <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {list.items.map((entry) => {
+      <ul id={listId} className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {list.items.map((entry, index) => {
           const cover = safeImageUrl(entry.coverImage);
           const accent = safeHexColor(entry.themeColor);
           return (
             <ShelfRow
               key={entry.episodeId}
               href={`/episode/${entry.episodeId}`}
+              hiddenClass={previewHiddenClass(index, expanded)}
               removeLabel={`Remove ${entry.episodeTitle} from your bookmarks`}
               onRemove={() => list.removeItem(entry)}
               removed={list.removed.has(entry.episodeId)}
@@ -105,7 +109,9 @@ export default function ReaderBookmarks({
           );
         })}
       </ul>
-      {cursor ? (
+      {/* Counts bookmarks not loaded yet, so "See all" says the real number. */}
+      <SeeAllButton total={Math.max(count, list.items.length)} expanded={expanded} onToggle={() => setExpanded((value) => !value)} controls={listId} />
+      {expanded && cursor ? (
         <div className="mt-4 text-center">
           <button type="button" onClick={() => void loadMore()} disabled={loading} className="story-button-secondary min-h-11 disabled:opacity-60">
             {loading ? "Loading…" : "Show more"}

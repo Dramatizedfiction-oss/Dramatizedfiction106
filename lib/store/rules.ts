@@ -5,14 +5,21 @@
 // there are no ownership rows. Writer frames are earned by level and are not
 // Store items.
 
+// Each category is managed in Administration › Back of the store at
+// BACK_OF_STORE_PATH/<adminSlug> (Sweep D); a new item type adds an entry here
+// and its own page there.
 export const STORE_CATEGORIES = [
   {
     id: "AVATAR",
     label: "Avatars",
     description: "Pictures for your profile. Choose one and it's yours right away.",
     empty: "No avatars yet. Check back soon.",
+    adminSlug: "avatars",
+    adminDescription: "Add, rename, hide, reorder and remove avatars, and set the Reader and Writer defaults.",
   },
 ] as const;
+
+export const BACK_OF_STORE_PATH = "/administration/back-of-store";
 
 export type StoreCategory = (typeof STORE_CATEGORIES)[number]["id"];
 

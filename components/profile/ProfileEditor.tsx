@@ -236,7 +236,7 @@ export default function ProfileEditor({
           >
             <div className="space-y-3">
               <VisibilitySwitch
-                name="Library"
+                name="Followed Series"
                 value={values.readingProfileVisibility}
                 onChange={(value) => set("readingProfileVisibility", value)}
                 publicText="Anyone with the link can see the series you follow."

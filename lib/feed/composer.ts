@@ -20,8 +20,9 @@ import type { ComposedShelf, PoolSeries, ShelfConfig } from "@/lib/feed/types";
  *   3. New Writers on NEW_WRITERS_SHOW_RATE of days (always in a cold feed),
  *      placed within the first NEW_WRITERS_MAX_POSITION shelves.
  *   4. The rest by weighted random order (each shelf's `weight`).
- *   5. Filling: no series twice on a screen (counting `alreadyShown`, e.g.
- *      Explore's top row), at most MAX_PER_AUTHOR_PER_SHELF cards per writer
+ *   5. Filling: no series on two shelves (nor in `alreadyShown`, when given;
+ *      since Sweep D Explore doesn't pass its top row, so shelves may repeat
+ *      it), at most MAX_PER_AUTHOR_PER_SHELF cards per writer
  *      per shelf, cut at maxItems; a shelf left under minItems is skipped.
  *      Leading personal shelves and New Writers are filled first (they keep
  *      their series), the rest in display order.

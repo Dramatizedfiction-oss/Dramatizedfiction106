@@ -29,7 +29,11 @@ export default async function AdministrationOverviewPage() {
     { href: "/administration/analytics", title: "Analytics", body: "Accounts, published content and reading activity." },
     { href: "/administration/feed", title: "Feed", body: "Explore's shelves: weights, on/off, tag shelves, Staff Picks, score breakdowns, holds and signals." },
     { href: "/administration/content", title: "Content", body: "Site text: onboarding, About, AI Usage, legal pages, home, footer and the announcement banner." },
-    { href: "/administration/store", title: "Store", body: "Avatars members can choose, their order, and the Reader and Writer defaults." },
+    {
+      href: "/administration/back-of-store",
+      title: "Back of the store",
+      body: "Make and manage what members choose in the Store: avatars, their order, and the Reader and Writer defaults.",
+    },
     { href: "/administration/renovation", title: "Renovation Mode", body: "Temporarily close the platform while major changes are made." },
   ];
 
