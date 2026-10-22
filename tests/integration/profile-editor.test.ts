@@ -43,6 +43,10 @@ before(async () => {
     data: { url: `https://test-store.public.blob.vercel-storage.com/images/platform-avatar/${TAG}.webp`, label: `${TAG} Fox` },
     select: { id: true, url: true },
   });
+  // Listed by the library only as an active Store item (Sweep B3); removed with the avatar by cascade.
+  await prisma.storeItem.create({
+    data: { category: "AVATAR", name: `${TAG} Fox`, imageUrl: avatar.url, sortOrder: 9000, platformAvatarId: avatar.id },
+  });
   const series = await prisma.series.create({
     data: { title: `${TAG} shelf series`, description: "Test.", genre: "drama", authorId: writer.id, aiUsageTag: "AI_FREE", status: "PUBLISHED" },
     select: { id: true },

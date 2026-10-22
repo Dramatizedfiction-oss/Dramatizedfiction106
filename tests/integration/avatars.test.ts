@@ -55,7 +55,12 @@ before(async () => {
   banned = await actor("READER", "av-banned");
   await prisma.memberRestriction.create({ data: { userId: banned.id, kind: "BAN", reason: `${TAG} test ban` } });
   libraryUrl = `https://example.invalid/images/platform-avatar/${TAG}.webp`;
-  await prisma.platformAvatar.create({ data: { url: libraryUrl, label: `${TAG} avatar` } });
+  // A library avatar is one the Store lists (Sweep B3): a PlatformAvatar plus its active StoreItem
+  // (removed with the avatar by cascade).
+  const avatar = await prisma.platformAvatar.create({ data: { url: libraryUrl, label: `${TAG} avatar` } });
+  await prisma.storeItem.create({
+    data: { category: "AVATAR", name: `${TAG} avatar`, imageUrl: libraryUrl, sortOrder: 9000, platformAvatarId: avatar.id },
+  });
 });
 
 after(async () => {
