@@ -16,7 +16,6 @@ import {
   PenIcon,
   SettingsIcon,
   ShieldIcon,
-  StoreIcon,
   SunIcon,
   TrendingUpIcon,
   UserIcon,
@@ -189,13 +188,8 @@ export default function AppSidebar({
           icon={<CompassIcon size={16} className="flex-shrink-0" />}
           active={pathname.startsWith("/explore")}
         />
-        <NavItem
-          {...item}
-          href="/store"
-          label="Store"
-          icon={<StoreIcon size={16} className="flex-shrink-0" />}
-          active={pathname.startsWith("/store")}
-        />
+        {/* Sweep D2: no Store entry while it only holds avatars; it's reached from the
+            profile editor's Picture area (StoreIcon in components/icons is kept for its return). */}
         {canWrite ? (
           <NavItem
             {...item}

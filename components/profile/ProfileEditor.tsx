@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState, type ReactNode } from "react";
+import { StoreIcon } from "@/components/icons";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import ImageUploadField from "@/components/uploads/ImageUploadField";
 import UserAvatar from "@/components/UserAvatar";
@@ -177,9 +178,13 @@ export default function ProfileEditor({
               onClick={(event) => {
                 if (dirty && !window.confirm("Leave the editor? Your unsaved changes here will be lost.")) event.preventDefault();
               }}
-              className="mt-2 flex min-h-11 items-center justify-between gap-3 rounded-2xl px-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[var(--panel-hover)]"
+              className="mt-2 flex min-h-[72px] items-center gap-4 rounded-2xl border border-[var(--border-color)] p-3 transition hover:border-[var(--border-strong)] hover:bg-[var(--panel-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--series-accent))]"
             >
-              Browse the Store
+              <StoreRowIcon />
+              <span className="min-w-0 flex-1">
+                <span className="theme-heading block text-sm font-semibold">Store</span>
+                <span className="theme-meta mt-0.5 block text-xs leading-5">Browse avatars and choose one for your profile.</span>
+              </span>
               <span aria-hidden className="text-lg text-[var(--text-muted)]">
                 ›
               </span>
@@ -339,6 +344,15 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
       {children}
       {hint ? <span className="theme-meta mt-1.5 block text-xs">{hint}</span> : null}
     </label>
+  );
+}
+
+/** The Store row's picture in the editors' Picture area, sized like the avatar beside "Choose avatar". */
+export function StoreRowIcon() {
+  return (
+    <span aria-hidden className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--surface-raised)] text-[var(--text-secondary)]">
+      <StoreIcon size={26} />
+    </span>
   );
 }
 

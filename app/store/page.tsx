@@ -3,6 +3,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import StoreGrid from "@/components/store/StoreGrid";
 import { prisma } from "@/lib/prisma";
+import { ownProfileHref } from "@/lib/profile-links";
 import { STORE_CATEGORIES, parseStoreCategory } from "@/lib/store/rules";
 import { listStoreItems } from "@/lib/store/service";
 
@@ -12,6 +13,9 @@ export const metadata: Metadata = { title: "Store" };
  * The Store (Sweep B3): items members can choose, by category (only Avatars
  * today). Open to everyone; choosing needs an account. Everything is free and
  * no prices are shown. Writer frames are earned by level, not sold here.
+ * Sweep D2: browse and choose only (a member's own photo is made on the avatar
+ * page, library avatars in Administration › Back of the store); not in the
+ * sidebar, reached from the profile editors' Picture area.
  */
 export default async function StorePage({ searchParams }: { searchParams?: { category?: string } }) {
   const category = parseStoreCategory(searchParams?.category);
@@ -27,6 +31,14 @@ export default async function StorePage({ searchParams }: { searchParams?: { cat
   return (
     <main className="px-4 py-6 md:px-6 md:py-10 lg:px-8">
       <div className="mx-auto max-w-5xl">
+        {userId ? (
+          <Link
+            href={ownProfileHref({ id: userId, role: session?.user?.role })}
+            className="-ml-1 mb-3 inline-flex min-h-11 items-center gap-1 px-1 text-sm font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          >
+            <span aria-hidden>‹</span> Back to your profile
+          </Link>
+        ) : null}
         <p className="eyebrow">Store</p>
         <h1 className="font-heading theme-heading mt-2 text-3xl font-semibold md:text-4xl">Make your profile yours</h1>
         <p className="theme-meta mt-2 max-w-2xl text-sm leading-6">Everything here is free to use. Pick something and it shows on your profile straight away.</p>
@@ -62,24 +74,6 @@ export default async function StorePage({ searchParams }: { searchParams?: { cat
               emptyText={info.empty}
             />
           </div>
-
-          {category === "AVATAR" ? (
-            <Link
-              href={userId ? "/reader/avatar?tab=photo" : `/sign-in?callbackUrl=${encodeURIComponent("/reader/avatar?tab=photo")}`}
-              className="theme-panel-hover mt-6 flex min-h-[72px] items-center gap-4 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-4 transition"
-            >
-              <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--border-strong)] text-xl text-[var(--text-secondary)]">
-                +
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="theme-heading block text-sm font-semibold">Use your own photo</span>
-                <span className="theme-meta mt-0.5 block text-xs leading-5">Upload a picture, then move and zoom it inside the circle.</span>
-              </span>
-              <span aria-hidden className="text-lg text-[var(--text-muted)]">
-                ›
-              </span>
-            </Link>
-          ) : null}
         </section>
       </div>
     </main>

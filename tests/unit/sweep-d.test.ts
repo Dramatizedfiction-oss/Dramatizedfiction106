@@ -26,6 +26,16 @@ describe("Sweep D: Back of the store", () => {
       assert.doesNotMatch(read(path), /StoreManager|\/api\/admin\//, path);
     }
   });
+
+  test("Sweep D2: the Store is reached from the profile editors, not the sidebar, and has no photo upload", () => {
+    assert.doesNotMatch(read("components/app-shell/AppSidebar.tsx"), /href="\/store"/);
+    assert.doesNotMatch(read("app/store/page.tsx"), /tab=photo|avatar\/photo/);
+    for (const path of ["components/profile/ProfileEditor.tsx", "components/author-profile/AuthorProfileEditor.tsx"]) {
+      assert.match(read(path), /href="\/store"/, path);
+    }
+    // Library avatar uploads stay Board and CEO only on the server.
+    assert.match(read("lib/uploads/authorize.ts"), /case "platform-avatar":\s*return requireApiRole\("BOARD"\);/);
+  });
 });
 
 describe("Sweep D: Explore rows", () => {

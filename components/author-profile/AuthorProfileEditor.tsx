@@ -8,7 +8,7 @@ import ItemList from "@/components/author-profile/editor/ItemList";
 import LinkIcon from "@/components/author-profile/LinkIcon";
 import { OPEN_EDITOR_EVENT, type EditorTab } from "@/components/author-profile/OwnerPrompt";
 import WritingSections from "@/components/author-profile/WritingSections";
-import { FollowerListSwitch, PenIcon, VisibilitySwitch } from "@/components/profile/ProfileEditor";
+import { FollowerListSwitch, PenIcon, StoreRowIcon, VisibilitySwitch } from "@/components/profile/ProfileEditor";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import ImageUploadField from "@/components/uploads/ImageUploadField";
 import UserAvatar from "@/components/UserAvatar";
@@ -434,9 +434,13 @@ function BasicsTab({ role, image, values, update, setSection, dirty }: TabProps 
           onClick={(event) => {
             if (dirty && !window.confirm("Leave the editor? Your unsaved changes here will be lost.")) event.preventDefault();
           }}
-          className="mt-2 flex min-h-11 items-center justify-between gap-3 rounded-2xl px-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[var(--panel-hover)]"
+          className="mt-2 flex min-h-[72px] items-center gap-4 rounded-2xl border border-[var(--border-color)] p-3 transition hover:border-[var(--border-strong)] hover:bg-[var(--panel-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--series-accent))]"
         >
-          Browse the Store
+          <StoreRowIcon />
+          <span className="min-w-0 flex-1">
+            <span className="theme-heading block text-sm font-semibold">Store</span>
+            <span className="theme-meta mt-0.5 block text-xs leading-5">Browse avatars and choose one for your profile.</span>
+          </span>
           <span aria-hidden className="text-lg text-[var(--text-muted)]">
             ›
           </span>
