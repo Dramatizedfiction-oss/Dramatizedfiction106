@@ -98,7 +98,7 @@ export default function EditorTopBar({
                 type="button"
                 onClick={onUpdateLive}
                 disabled={!hasUnsavedChanges || busy}
-                className="story-button-primary ml-1 px-4 py-2 disabled:opacity-50"
+                className="story-button-primary ml-1 min-h-11 px-4 py-2 disabled:opacity-50"
               >
                 {busy ? "Updating…" : "Update live"}
               </button>
@@ -108,7 +108,7 @@ export default function EditorTopBar({
               type="button"
               onClick={onPublish}
               disabled={busy}
-              className="story-button-primary ml-1 px-4 py-2 disabled:opacity-60"
+              className="story-button-primary ml-1 min-h-11 px-4 py-2 disabled:opacity-60"
             >
               Publish
             </button>

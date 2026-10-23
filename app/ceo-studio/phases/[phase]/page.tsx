@@ -19,6 +19,8 @@ export default async function PhasePage({ params }: { params: { phase: string } 
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pb-20 pt-6 md:px-8 md:pt-8">
+      {/* The page heading for assistive tech; the panels below carry the visible titles. */}
+      <h1 className="sr-only">{PHASE_EXPLANATIONS[phase].name}</h1>
       <PhaseActivationFlow
         phase={phase}
         explanation={PHASE_EXPLANATIONS[phase]}

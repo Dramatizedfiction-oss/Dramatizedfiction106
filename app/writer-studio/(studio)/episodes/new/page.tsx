@@ -40,7 +40,7 @@ export default async function NewEpisodePage() {
           }))}
         />
       </div>
-      <Link href="/writer-studio/series/new" className="theme-meta mt-6 inline-block text-sm transition hover:text-[var(--text-primary)]">
+      <Link href="/writer-studio/series/new" className="theme-meta mt-4 inline-flex min-h-11 items-center text-sm transition hover:text-[var(--text-primary)]">
         Or start a new series →
       </Link>
     </div>

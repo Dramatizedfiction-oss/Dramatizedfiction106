@@ -175,13 +175,14 @@ export default function PhaseActivationFlow({
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                autoComplete="current-password"
+                // The CEO password is not the member's sign-in password; don't offer the saved login.
+                autoComplete="off"
                 className="ui-input w-full max-w-sm px-3 py-2 text-sm"
               />
             </label>
             <label className="mt-3 flex items-start gap-2 text-sm">
               <input type="checkbox" checked={understood} onChange={(event) => setUnderstood(event.target.checked)} className="mt-1" />
-              <span className="theme-body">I've read what this phase changes and want to activate it for the whole platform.</span>
+              <span className="theme-body">I&apos;ve read what this phase changes and want to activate it for the whole platform.</span>
             </label>
             <div className="mt-4 flex flex-wrap gap-3">
               <button type="submit" disabled={!password || !understood} className="story-button-primary disabled:opacity-50">

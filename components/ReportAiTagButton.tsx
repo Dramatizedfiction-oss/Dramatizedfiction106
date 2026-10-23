@@ -109,8 +109,9 @@ export default function ReportAiTagButton({
           setOpen((value) => !value);
         }}
         aria-expanded={open}
-        className={`inline-flex min-h-9 items-center text-left text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] ${
-          compact ? "text-[11px] uppercase tracking-[0.22em]" : "text-xs"
+        className={`inline-flex items-center text-left text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] ${
+          // 44px tap target, except inside compact series cards where space is tight.
+          compact ? "min-h-9 text-[11px] uppercase tracking-[0.22em]" : "min-h-11 text-xs"
         } ${underline ? "min-h-11 underline decoration-1 underline-offset-4 hover:decoration-2 focus-visible:decoration-2" : ""}`}
       >
         Report incorrect AI tag

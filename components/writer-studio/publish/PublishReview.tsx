@@ -114,7 +114,7 @@ export default function PublishReview({
           </div>
           <Link
             href={`/writer-studio/series/${series.id}`}
-            className="theme-meta mt-6 inline-block text-sm transition hover:text-[var(--text-primary)]"
+            className="theme-meta mt-4 inline-flex min-h-11 items-center text-sm transition hover:text-[var(--text-primary)]"
           >
             Back to series
           </Link>

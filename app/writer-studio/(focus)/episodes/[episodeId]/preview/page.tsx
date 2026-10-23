@@ -32,7 +32,7 @@ export default async function EpisodePreviewPage({ params }: { params: { episode
             </span>
             {live ? "This is the saved version readers see." : "Only you can see this. It shows the last saved version."}
           </p>
-          <Link href={`/writer-studio/episodes/${episode.id}`} className="story-button-secondary px-4 py-2">
+          <Link href={`/writer-studio/episodes/${episode.id}`} className="story-button-secondary min-h-11 px-4 py-2">
             Back to editor
           </Link>
         </div>

@@ -118,6 +118,8 @@ export default function ExploreBrowse({
 
   return (
     <div className="min-h-screen">
+      {/* The page heading for assistive tech (the visible page leads with search and rows). */}
+      <h1 className="sr-only">Explore</h1>
       {/* Search takes the free width; the single-choice genre filter and the
           sort are compact dropdowns. Phones: search on its own row. The bar
           sits under the mobile header (h-14), and at the top on desktop. */}

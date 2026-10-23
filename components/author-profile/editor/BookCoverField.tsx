@@ -90,7 +90,7 @@ export default function BookCoverField({ value, title, onChange }: { value: stri
             {error ? (
               <span className="text-[var(--status-danger)]">{error}</span>
             ) : (
-              <span className="theme-meta">JPEG, PNG or WebP. You can position it before it's saved.</span>
+              <span className="theme-meta">JPEG, PNG or WebP. You can position it before it&apos;s saved.</span>
             )}
           </p>
         </div>

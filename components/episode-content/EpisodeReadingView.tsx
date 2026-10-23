@@ -38,7 +38,7 @@ export default function EpisodeReadingView({
     <article className="reader-column">
       <header className="pt-10 text-center md:pt-16">
         {seriesHref ? (
-          <Link href={seriesHref} className="reader-kicker inline-block py-2 transition hover:opacity-80">
+          <Link href={seriesHref} className="reader-kicker inline-flex min-h-11 items-center transition hover:opacity-80">
             {seriesTitle}
           </Link>
         ) : (

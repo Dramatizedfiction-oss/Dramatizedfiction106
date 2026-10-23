@@ -67,7 +67,7 @@ export default function AvatarCropper({
     return () => {
       alive = false;
     };
-  }, [src]);
+  }, [src, aspect]);
 
   const ready = Boolean(natural);
   const width = natural?.width ?? 1;
@@ -118,7 +118,7 @@ export default function AvatarCropper({
     }
     element.addEventListener("wheel", onWheel, { passive: false });
     return () => element.removeEventListener("wheel", onWheel);
-  }, [natural]);
+  }, [natural, aspect]);
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     const step = event.shiftKey ? 24 : 8;

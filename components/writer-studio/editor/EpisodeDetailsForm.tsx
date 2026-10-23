@@ -102,7 +102,7 @@ export default function EpisodeDetailsForm({
 
       <Link
         href={`/writer-studio/series/${meta.seriesId}?edit=details`}
-        className="theme-meta inline-block text-sm transition hover:text-[var(--text-primary)]"
+        className="theme-meta inline-flex min-h-11 items-center text-sm transition hover:text-[var(--text-primary)]"
       >
         Edit series details →
       </Link>

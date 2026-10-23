@@ -36,7 +36,7 @@ export default function AuthPageShell({
               <Link
                 key={link.href}
                 href={link.href}
-                className="theme-body block text-sm font-medium transition hover:opacity-80"
+                className="theme-body flex min-h-11 items-center text-sm font-medium transition hover:opacity-80"
               >
                 {link.label}
               </Link>

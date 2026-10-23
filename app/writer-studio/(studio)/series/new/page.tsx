@@ -7,7 +7,7 @@ export default async function NewSeriesPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <Link href="/writer-studio/series" className="theme-meta text-sm transition hover:text-[var(--text-primary)]">
+      <Link href="/writer-studio/series" className="theme-meta inline-flex min-h-11 items-center text-sm transition hover:text-[var(--text-primary)]">
         ← Series
       </Link>
       <h2 className="font-heading theme-heading mt-4 text-3xl font-semibold">New series</h2>

@@ -62,7 +62,7 @@ export default async function StudioStatsPage() {
               {episodes.map((episode) => (
                 <tr key={episode.id}>
                   <td className="px-4 py-3">
-                    <Link href={`/writer-studio/episodes/${episode.id}`} className="theme-heading font-semibold hover:underline">
+                    <Link href={`/writer-studio/episodes/${episode.id}`} className="theme-heading inline-flex min-h-11 items-center font-semibold hover:underline">
                       {episode.title}
                     </Link>
                     <span className="theme-meta block text-xs">
@@ -86,7 +86,7 @@ export default async function StudioStatsPage() {
         <ul className="divide-y divide-[var(--studio-border)] rounded-2xl border border-[var(--studio-border)]">
           {series.map((item) => (
             <li key={item.id} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
-              <Link href={`/writer-studio/series/${item.id}`} className="theme-heading truncate font-semibold hover:underline">
+              <Link href={`/writer-studio/series/${item.id}`} className="theme-heading block truncate py-3 font-semibold leading-5 hover:underline">
                 {item.title}
               </Link>
               <span className="shrink-0 tabular-nums text-[var(--studio-muted)]">

@@ -672,8 +672,14 @@
   }
 
   .studio-tool {
-    height: 2.5rem;
-    min-width: 2.5rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+  }
+
+  /* Text fields and selects are at least a 44px tap target too. */
+  .ui-input,
+  .studio-field {
+    min-height: 44px;
   }
 }
 

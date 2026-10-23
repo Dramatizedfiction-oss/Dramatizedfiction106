@@ -25,13 +25,13 @@ export default function StudioHeader({
           <FramedAvatar user={{ image, role: "WRITER", writerStatus }} size="md" eager className="sm:!hidden" />
           <h1 className="font-heading theme-heading min-w-0 truncate text-3xl font-semibold md:text-4xl">{name}</h1>
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 text-sm">
           <WriterStatusBadge status={writerStatus} />
           {/* Opens the profile exactly as visitors see it (no pen, no owner prompts). */}
-          <Link href={`/author/${userId}?as=visitor`} className="theme-meta transition hover:text-[var(--text-primary)]">
+          <Link href={`/author/${userId}?as=visitor`} className="theme-meta inline-flex min-h-11 items-center transition hover:text-[var(--text-primary)]">
             Public profile
           </Link>
-          <Link href="/" className="theme-meta transition hover:text-[var(--text-primary)]">
+          <Link href="/" className="theme-meta inline-flex min-h-11 items-center transition hover:text-[var(--text-primary)]">
             Exit to library
           </Link>
         </div>

@@ -190,7 +190,7 @@ export default function AppShell({
                   variant="header"
                 />
               ) : (
-                <Link href="/sign-in" className="story-button-secondary shrink-0 px-3 py-2">
+                <Link href="/sign-in" className="story-button-secondary min-h-11 shrink-0 px-3 py-2">
                   Sign in
                 </Link>
               )}

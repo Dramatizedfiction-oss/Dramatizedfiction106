@@ -30,7 +30,7 @@ export default async function SeriesHubPage({
 
   return (
     <div className="space-y-8">
-      <Link href="/writer-studio/series" className="theme-meta text-sm transition hover:text-[var(--text-primary)]">
+      <Link href="/writer-studio/series" className="theme-meta inline-flex min-h-11 items-center text-sm transition hover:text-[var(--text-primary)]">
         ← All series
       </Link>
 

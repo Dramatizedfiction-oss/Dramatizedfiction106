@@ -24,7 +24,7 @@ export default async function MemberDetailPage({ params }: { params: { memberId:
 
   return (
     <div className="space-y-6">
-      <Link href="/administration/members" className="theme-meta text-sm transition hover:text-[var(--text-primary)]">
+      <Link href="/administration/members" className="theme-meta inline-flex min-h-11 items-center text-sm transition hover:text-[var(--text-primary)]">
         ← All members
       </Link>
 

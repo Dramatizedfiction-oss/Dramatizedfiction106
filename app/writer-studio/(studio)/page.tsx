@@ -142,7 +142,7 @@ function SectionHeading({ title, href, linkLabel }: { title: string; href: strin
   return (
     <div className="mb-4 flex items-end justify-between gap-4">
       <h2 className="font-heading theme-heading text-2xl font-semibold">{title}</h2>
-      <Link href={href} className="theme-meta text-sm transition hover:text-[var(--text-primary)]">
+      <Link href={href} className="theme-meta inline-flex min-h-11 items-center text-sm transition hover:text-[var(--text-primary)]">
         {linkLabel} →
       </Link>
     </div>

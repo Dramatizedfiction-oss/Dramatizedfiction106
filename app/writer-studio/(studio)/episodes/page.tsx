@@ -56,7 +56,7 @@ export default async function StudioEpisodesPage({
               key={option.value}
               href={buildHref({ status: option.value, series: seriesId })}
               aria-current={filter === option.value ? "page" : undefined}
-              className={`rounded-full px-4 py-1.5 text-sm transition ${
+              className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm transition ${
                 filter === option.value
                   ? "bg-[var(--studio-surface)] text-[var(--studio-text)]"
                   : "text-[var(--studio-muted)] hover:text-[var(--studio-text)]"

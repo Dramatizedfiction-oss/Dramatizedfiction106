@@ -352,7 +352,8 @@ function RolePanel({
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
+              // The CEO password is not the member's sign-in password; don't offer the saved login.
+              autoComplete="off"
               className="ui-input w-full max-w-sm px-3 py-2 text-sm"
             />
           </label>

@@ -48,7 +48,7 @@ export default async function AnalyticsPage() {
           <ul className="mt-4 divide-y divide-[var(--border-color)] rounded-2xl border border-[var(--border-color)]">
             {data.topSeries.map((series) => (
               <li key={series.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
-                <Link href={`/series/${series.id}`} className="theme-heading truncate font-medium hover:underline">
+                <Link href={`/series/${series.id}`} className="theme-heading block truncate py-3 font-medium leading-5 hover:underline">
                   {series.title}
                 </Link>
                 <span className="theme-meta shrink-0 tabular-nums">{n(series.reads)} reader-episode pairs</span>
