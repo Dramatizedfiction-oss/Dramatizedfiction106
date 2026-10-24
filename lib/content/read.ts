@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { getContentDef, validateContent, type ContentValues } from "@/lib/content/registry";
+import { isNextSignal } from "@/lib/next-signals";
 import { prisma } from "@/lib/prisma";
 
 /*
@@ -43,6 +44,7 @@ export async function getContent<T extends ContentValues = ContentValues>(key: s
       console.warn(`Content "${key}" is invalid (${check.message}); showing the built-in text.`);
     }
   } catch (error) {
+    if (isNextSignal(error)) throw error;
     console.error(`Content "${key}" couldn't be read; showing the built-in text.`, error);
   }
   return { values: def.defaults as T, source: "built-in", updatedAt: null };

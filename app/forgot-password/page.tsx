@@ -1,6 +1,8 @@
 import Link from "next/link";
 import AuthPageShell from "@/components/auth/AuthPageShell";
 
+export const metadata = { title: "Forgot password" };
+
 export default function ForgotPasswordPage() {
   return (
     <AuthPageShell

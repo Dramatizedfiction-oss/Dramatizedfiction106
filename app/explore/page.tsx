@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import ExploreBrowse from "@/components/explore/ExploreBrowse";
 import { auth } from "@/auth";
+
+export const metadata = { title: "Explore" };
 import { getExploreCatalogue } from "@/lib/explore-catalogue";
 import { EXPLORE_SORT_COOKIE, parseExploreSort, type ExploreSort } from "@/lib/explore-ranking";
 import { getFeed, getFeedPool } from "@/lib/feed/server";

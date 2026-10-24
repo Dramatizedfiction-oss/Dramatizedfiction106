@@ -1,6 +1,8 @@
 import { auth } from "@/auth";
 import AdminNav from "@/components/admin/AdminNav";
 import { requireAdministrationPage } from "@/lib/utils";
+
+export const metadata = { title: "Administration" };
 import { isCEO } from "@/lib/roles";
 
 // Administration: CEO and Board. Every page and API repeats the server-side

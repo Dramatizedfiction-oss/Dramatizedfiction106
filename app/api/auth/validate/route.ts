@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { isNextSignal } from "@/lib/next-signals";
 
 export async function GET() {
   try {
@@ -11,6 +12,7 @@ export async function GET() {
       role: session?.user?.role ?? null,
     });
   } catch (error) {
+    if (isNextSignal(error)) throw error;
     // Lookup failure is not proof the session is invalid; report a generic error.
     console.error("Session validation failed.", error);
     return NextResponse.json(

@@ -11,9 +11,8 @@ import { PATHNAME_HEADER } from "@/lib/auth-route-guards";
 import { READING_INIT_SCRIPT } from "@/lib/reading-prefs";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { getContent } from "@/lib/content/read";
-import { PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
-import { getPlatformSettings } from "@/lib/phases";
-import { prisma } from "@/lib/prisma";
+import { getLayoutRenovationMode, getLayoutTrending } from "@/lib/layout-data";
+import { isNextSignal } from "@/lib/next-signals";
 import { getAccessibleStudiosForUser } from "@/lib/studios";
 import type { Metadata, Viewport } from "next";
 
@@ -50,15 +49,16 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const session = await auth().catch((error) => {
+    if (isNextSignal(error)) throw error;
     console.error("Root layout auth lookup failed. Rendering as guest.", error);
     return null;
   });
   const user = session?.user || null;
   const pathname = headers().get(PATHNAME_HEADER) ?? "";
 
-  const renovationMode = await getPlatformSettings()
-    .then((settings) => settings.renovationMode)
+  const renovationMode = await getLayoutRenovationMode()
     .catch((error) => {
+      if (isNextSignal(error)) throw error;
       console.error("Platform settings lookup failed in layout.", error);
       return false;
     });
@@ -90,20 +90,11 @@ export default async function RootLayout({
         // Read-only: studios are provisioned on writer onboarding and on
         // Writer Studio entry, not on every page render.
         user?.id ? getAccessibleStudiosForUser(user.id) : Promise.resolve([]),
-        prisma.series.findMany({
-          where: PUBLIC_SERIES_WHERE,
-          orderBy: [{ reads: "desc" }, { followers: "desc" }],
-          take: 3,
-          select: {
-            id: true,
-            title: true,
-            genre: true,
-            reads: true,
-            themeColor: true,
-          },
-        }),
+        // Cached (lib/layout-data.ts): the same 3 series for everyone.
+        getLayoutTrending(),
       ]);
     } catch (error) {
+      if (isNextSignal(error)) throw error;
       console.error("Database connection error in layout:", error);
     }
 
@@ -132,7 +123,7 @@ export default async function RootLayout({
   return (
     // "light" is the server default; THEME_INIT_SCRIPT swaps it for the stored
     // preference before first paint (hence suppressHydrationWarning).
-    <html lang="en" className="light" suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: READING_INIT_SCRIPT }} />

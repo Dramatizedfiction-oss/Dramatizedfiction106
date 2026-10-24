@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth, clearSessionCookie, hasSessionCookie } from "@/auth";
+import { isNextSignal } from "@/lib/next-signals";
 
 export async function GET() {
   let session: Awaited<ReturnType<typeof auth>>;
@@ -7,6 +8,7 @@ export async function GET() {
   try {
     session = await auth();
   } catch (error) {
+    if (isNextSignal(error)) throw error;
     // Lookup failed (e.g. database unavailable): the cookie may still be
     // valid, so leave it in place.
     console.error("Auth session lookup failed in /api/auth/me.", error);

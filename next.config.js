@@ -6,7 +6,8 @@ const nextConfig = {
   // that endpoint (fixed only in 15.5+), so it shouldn't be reachable.
   images: { unoptimized: true },
   experimental: {
-    workerThreads: true,
+    // workerThreads was removed (Sweep E): with it, the build's page workers
+    // couldn't reach the shared data cache ("localhost:undefined").
     webpackBuildWorker: false,
     // Loaded by Node at runtime instead of bundled: @vercel/blob's HTTP client
     // (undici) uses syntax Next 14.1's bundler can't parse; sharp is native.

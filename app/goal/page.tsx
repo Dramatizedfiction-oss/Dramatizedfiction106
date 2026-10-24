@@ -1,10 +1,14 @@
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import BookshelfMeter from "@/components/BookshelfMeter";
+import { requireCEOPage } from "@/lib/utils";
 
 const TARGET_READS = 5000;
 export const dynamic = "force-dynamic";
 
+// CEO only (Sweep E) until it's ready to be public: it counts every read this month.
 export default async function GoalPage() {
+  requireCEOPage(await auth(), "/goal");
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 

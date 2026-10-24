@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
+import { PROFILE_LIMITS } from "@/lib/profile";
 
 export default function BecomeAuthorForm({ defaultDisplayName }: { defaultDisplayName: string }) {
   const router = useRouter();
@@ -97,7 +98,7 @@ export default function BecomeAuthorForm({ defaultDisplayName }: { defaultDispla
             value={bio}
             onChange={(event) => setBio(event.target.value)}
             rows={4}
-            maxLength={280}
+            maxLength={PROFILE_LIMITS.bio}
             placeholder="Optional"
             className="ui-input w-full rounded-[18px] px-4 py-3 text-sm"
           />

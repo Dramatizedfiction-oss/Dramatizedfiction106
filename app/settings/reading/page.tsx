@@ -2,6 +2,8 @@ import ReadingPreferences from "@/components/settings/ReadingPreferences";
 import { SettingsPageHeader, SettingsSection } from "@/components/settings/SettingsUi";
 import ThemePreferenceControl from "@/components/settings/ThemePreferenceControl";
 
+export const metadata = { title: "Reading & Appearance" };
+
 /* Settings > Reading & Appearance: device-only preferences (no account needed). */
 export default function ReadingSettingsPage() {
   return (

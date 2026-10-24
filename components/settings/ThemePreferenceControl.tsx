@@ -5,8 +5,8 @@ import { useTheme } from "@/components/providers/ThemeProvider";
 import type { ThemePreference } from "@/lib/theme";
 
 const OPTIONS: { value: ThemePreference; label: string; description: string; Icon: typeof SunIcon }[] = [
-  { value: "light", label: "Light", description: "Bright and clean. The default.", Icon: SunIcon },
-  { value: "dark", label: "Dark", description: "Cinematic, for night reading.", Icon: MoonIcon },
+  { value: "light", label: "Light", description: "Bright and clean.", Icon: SunIcon },
+  { value: "dark", label: "Dark", description: "Cinematic, for night reading. The default.", Icon: MoonIcon },
   { value: "system", label: "System", description: "Follow your device's setting.", Icon: SettingsIcon },
 ];
 

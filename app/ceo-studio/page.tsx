@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { Badge, Panel } from "@/components/admin/ui";
+
+export const metadata = { title: "CEO Studio" };
 import { formatDate } from "@/lib/admin/format";
 import { PHASE_EXPLANATIONS, evaluatePhaseReadiness, type PhaseNumber } from "@/lib/ceo/phase-readiness";
 import { getPlatformSettings } from "@/lib/phases";

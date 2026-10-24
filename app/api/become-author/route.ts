@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/auth/guards";
 import { promoteUserToWriter } from "@/lib/author-onboarding";
+import { PROFILE_LIMITS } from "@/lib/profile";
 
 function cleanOptionalText(value: unknown) {
   if (typeof value !== "string") {
@@ -46,9 +47,10 @@ export async function POST(request: Request) {
       );
     }
 
-    if (bio && bio.length > 280) {
+    // Same bio limit as the profile editors (one bio, Sweep 14).
+    if (bio && bio.length > PROFILE_LIMITS.bio) {
       return NextResponse.json(
-        { error: "Bio must be 280 characters or fewer." },
+        { error: `Bio must be ${PROFILE_LIMITS.bio} characters or fewer.` },
         { status: 400 },
       );
     }

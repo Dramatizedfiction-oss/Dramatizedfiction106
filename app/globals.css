@@ -6,8 +6,9 @@
 
 @layer base {
   /*
-   * Theme tokens. Light is the default; .dark (set on <html> by the
-   * pre-paint script in app/layout.tsx) switches every token at once.
+   * Theme tokens. :root holds the light values; .dark (the default theme,
+   * set on <html> by the pre-paint script in app/layout.tsx) switches every
+   * token at once.
    *
    * Layers, back to front:
    *   --page-bg       the page

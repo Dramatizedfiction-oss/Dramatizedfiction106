@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+
+export const metadata = { title: "Account" };
 import { AgeConfirmation, ChangePasswordForm, DisplayNameForm } from "@/components/settings/AccountForms";
 import { SettingsPageHeader, SettingsSection } from "@/components/settings/SettingsUi";
 import { prisma } from "@/lib/prisma";

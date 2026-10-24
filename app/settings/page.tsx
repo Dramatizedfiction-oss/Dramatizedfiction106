@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { BookOpenIcon, UserIcon } from "@/components/icons";
+
+export const metadata = { title: "Settings" };
 import { SettingsCard } from "@/components/settings/SettingsUi";
 
 /*

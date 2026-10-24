@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ChevronIcon, SettingsPageHeader } from "@/components/settings/SettingsUi";
 
+export const metadata = { title: "About & Help" };
+
 /* Settings > About & Help: links to the About and AI-label pages and the six legal pages. */
 const LINKS = [
   { href: "/about", title: "About Dramatized Fiction", description: "What the platform is and who it's for." },

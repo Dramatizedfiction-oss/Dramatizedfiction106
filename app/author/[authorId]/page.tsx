@@ -40,6 +40,12 @@ const EMPTY_ON_SITE = { series: [], seriesTotal: 0, episodes: [], episodesTotal:
  * and sections need, the Library query in parallel, and for the owner the
  * series they can add. Drafts are never shown.
  */
+/** The tab title is the writer's name (writers only; others are redirected to their reading profile). */
+export async function generateMetadata({ params }: { params: { authorId: string } }) {
+  const user = await prisma.user.findUnique({ where: { id: params.authorId }, select: { name: true, role: true } }).catch(() => null);
+  return user?.name && isWriterRole(user.role) ? { title: user.name } : {};
+}
+
 export default async function AuthorProfilePage({
   params,
   searchParams,

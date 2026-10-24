@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+
+export const metadata = { title: "Delete your account" };
 import DeleteAccountForm from "@/components/settings/DeleteAccountForm";
 import { SettingsSection } from "@/components/settings/SettingsUi";
 import { deletionSummary } from "@/lib/account-service";

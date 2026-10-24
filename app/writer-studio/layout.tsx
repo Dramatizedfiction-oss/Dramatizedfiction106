@@ -2,6 +2,8 @@ import { auth } from "@/auth";
 import { getWriterStudioContext } from "@/lib/studios";
 import { requireWriterStudioAccess } from "@/lib/utils";
 
+export const metadata = { title: "Writer Studio" };
+
 // Access gate for everything under /writer-studio. Pages repeat the check via
 // requireStudioUser() because layouts don't re-run on client navigation.
 // Chrome lives in the (studio) and (focus) route-group layouts.

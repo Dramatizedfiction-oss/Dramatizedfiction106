@@ -19,6 +19,12 @@ export function seasonOf(_episode: { episodeNumber: number }) {
   return 1;
 }
 
+/** The title of a published series (for the browser tab), or null. One small query. */
+export async function getPublicSeriesTitle(seriesId: string) {
+  const series = await prisma.series.findFirst({ where: { id: seriesId, ...PUBLIC_SERIES_WHERE }, select: { title: true } });
+  return series?.title ?? null;
+}
+
 export async function getSeriesPage(seriesId: string, viewerId: string | null) {
   const series = await prisma.series.findFirst({
     where: { id: seriesId, ...PUBLIC_SERIES_WHERE },

@@ -2,6 +2,8 @@ import AuthPageShell from "@/components/auth/AuthPageShell";
 import SignInForm from "@/components/auth/SignInForm";
 import { ERROR_COPY } from "@/lib/error-copy";
 
+export const metadata = { title: "Sign in" };
+
 export default function SignInPage({ searchParams }: { searchParams?: { callbackUrl?: string } }) {
   // Sent here from a page that needs an account (the site's "401"): say so in the site's voice.
   const fromProtectedPage = Boolean(searchParams?.callbackUrl);

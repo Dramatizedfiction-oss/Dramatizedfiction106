@@ -11,7 +11,7 @@ import ExpandableText from "@/components/series/ExpandableText";
 import PlaceholderArt from "@/components/series/PlaceholderArt";
 import SeriesRail from "@/components/series/SeriesRail";
 import { seriesAccentStyle } from "@/lib/series-accent";
-import { getSeriesPage } from "@/lib/series-page";
+import { getPublicSeriesTitle, getSeriesPage } from "@/lib/series-page";
 import { knownSeriesTags } from "@/lib/series-tags";
 
 /*
@@ -29,6 +29,12 @@ function formatMinutes(total: number) {
   const hours = Math.floor(total / 60);
   const minutes = total % 60;
   return minutes ? `${hours} h ${minutes} min` : `${hours} h`;
+}
+
+/** The tab title is the series title (published series only, so a draft's title never leaks). */
+export async function generateMetadata({ params }: { params: { seriesId: string } }) {
+  const title = await getPublicSeriesTitle(params.seriesId).catch(() => null);
+  return title ? { title } : {};
 }
 
 export default async function SeriesPage({ params }: { params: { seriesId: string } }) {
