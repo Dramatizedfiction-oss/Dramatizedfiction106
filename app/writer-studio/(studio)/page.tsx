@@ -54,7 +54,7 @@ export default async function StudioHomePage({
             <StudioSeriesCard key={item.id} series={item} />
           ))}
         </div>
-        <Link href="/writer-studio/series/new" className="story-button-secondary mt-4">
+        <Link href="/writer-studio/series/new" className="story-button-secondary mt-4 min-h-11">
           New series
         </Link>
       </section>
@@ -69,10 +69,8 @@ function ContinueWriting({ block }: { block: NonNullable<ContinueBlock> }) {
   const unpublished = series.status !== "PUBLISHED";
 
   return (
-    <section
-      aria-labelledby="continue-writing"
-      className="rounded-3xl border border-[var(--studio-border)] bg-[var(--studio-surface)] p-5 sm:p-6 md:p-8"
-    >
+    // The Studio's main entry point: a feature card (brand edge), not one more panel.
+    <section aria-labelledby="continue-writing" className="surface-feature p-5 sm:p-6 md:p-8">
       <p id="continue-writing" className="eyebrow">
         {draft ? "Continue writing" : "Pick up where you left off"}
       </p>
@@ -120,17 +118,17 @@ function ContinueWriting({ block }: { block: NonNullable<ContinueBlock> }) {
 }
 
 function Snapshot({ label, value, href }: { label: string; value: number; href?: string }) {
+  // A number in an inset well (same look as Administration's Stat), label above.
   const body = (
     <>
-      <p className="font-heading theme-heading text-3xl font-semibold">{value.toLocaleString()}</p>
-      <p className="theme-meta mt-1 text-xs uppercase tracking-[0.18em]">{label}</p>
+      <p className="theme-meta font-mono-df text-[10px] font-bold uppercase tracking-[0.16em]">{label}</p>
+      <p className="font-heading theme-heading mt-1 text-3xl font-semibold tabular-nums">{value.toLocaleString()}</p>
     </>
   );
-  const className =
-    "block rounded-2xl border border-[var(--studio-border)] bg-[var(--studio-surface)] p-4 transition";
+  const className = "block rounded-[var(--radius-group)] bg-[var(--surface-inset)] p-4 ring-1 ring-inset ring-[var(--studio-border)] transition";
 
   return href ? (
-    <Link href={href} className={`${className} hover:border-[var(--studio-muted)]`}>
+    <Link href={href} className={`${className} hover:ring-[var(--studio-muted)]`}>
       {body}
     </Link>
   ) : (
