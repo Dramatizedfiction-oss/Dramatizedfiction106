@@ -66,10 +66,11 @@ export default function ReadingPreferences() {
 
   const isDefault = JSON.stringify(prefs) === JSON.stringify(DEFAULT_READING_PREFS);
 
+  // Rows of a Settings group (Sweep E): the group draws the hairlines between them.
   return (
-    <div className="space-y-6">
+    <>
       {CONTROLS.map((control) => (
-        <div key={control.key}>
+        <div key={control.key} className="p-4 sm:p-5">
           <p className="theme-heading text-sm font-semibold">{control.label}</p>
           <p className="theme-meta mb-2 mt-0.5 text-xs">{control.hint}</p>
           <SegmentedControl
@@ -81,9 +82,9 @@ export default function ReadingPreferences() {
         </div>
       ))}
 
-      <div>
+      <div className="p-4 sm:p-5">
         <p className="theme-heading text-sm font-semibold">Preview</p>
-        <div className="reader-page mt-2 overflow-hidden rounded-[20px] border border-[var(--border-color)] py-6" aria-live="polite">
+        <div className="reader-page mt-2 overflow-hidden rounded-xl border border-[var(--border-color)] py-6" aria-live="polite">
           <div className="reader-column">
             <div className="reading-body">
               <p>
@@ -99,7 +100,7 @@ export default function ReadingPreferences() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3 p-4 sm:p-5">
         <button
           type="button"
           disabled={isDefault}
@@ -113,6 +114,6 @@ export default function ReadingPreferences() {
         </button>
         <p className="theme-meta text-xs">Saved on this device automatically.</p>
       </div>
-    </div>
+    </>
   );
 }

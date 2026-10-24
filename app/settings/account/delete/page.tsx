@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-
-export const metadata = { title: "Delete your account" };
 import DeleteAccountForm from "@/components/settings/DeleteAccountForm";
-import { SettingsSection } from "@/components/settings/SettingsUi";
+import { SettingsGroup, SettingsSection } from "@/components/settings/SettingsUi";
 import { deletionSummary } from "@/lib/account-service";
 import { requireRole } from "@/lib/utils";
+
+export const metadata = { title: "Delete your account" };
 
 /*
  * Delete account: a full page (so it's a full screen on phones) that spells
@@ -66,7 +66,7 @@ export default async function DeleteAccountPage() {
                 ) : null}
               </ul>
               {summary.series > 0 ? (
-                <p className="mt-4 rounded-2xl border border-[color-mix(in_srgb,var(--status-danger)_45%,transparent)] p-4 text-sm leading-6 text-[var(--text-primary)]">
+                <p className="mt-4 border-t border-[color-mix(in_srgb,var(--status-danger)_35%,transparent)] pt-3 text-sm font-medium leading-6 text-[var(--text-primary)]">
                   Readers will lose these stories immediately
                   {summary.followersLosing > 0 ? `, and ${plural(summary.followersLosing, "follow")} of your series by other readers will be removed` : ""}.
                   This can&apos;t be undone.
@@ -74,9 +74,11 @@ export default async function DeleteAccountPage() {
               ) : null}
             </SettingsSection>
 
-            <SettingsSection title="Confirm">
-              <DeleteAccountForm />
-            </SettingsSection>
+            <SettingsGroup>
+              <SettingsSection title="Confirm">
+                <DeleteAccountForm />
+              </SettingsSection>
+            </SettingsGroup>
           </>
         )}
       </div>

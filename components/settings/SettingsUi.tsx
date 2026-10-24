@@ -1,40 +1,16 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Note } from "@/components/ui/Surface";
 
 /*
- * Shared Settings building blocks (server-safe): the landing page's arrow
- * cards, a sub-page header with a back link, and a titled row group.
+ * Shared Settings building blocks (server-safe), on the Sweep E surface types:
+ *   SettingsPageHeader  a sub-page header with the back link
+ *   SettingsGroup       one grouped container (optional title above it) whose
+ *                       rows are SettingsSections, separated by hairlines
+ *   SettingsSection     one setting inside a group; tone="danger" stands on
+ *                       its own as a danger note (the account's last block)
+ * The landing page and About & Help use Group/Row from components/ui/Surface.
  */
-
-export function SettingsCard({
-  href,
-  title,
-  description,
-  icon,
-}: {
-  href: string;
-  title: string;
-  description: string;
-  icon: ReactNode;
-}) {
-  return (
-    <li>
-      <Link
-        href={href}
-        className="theme-panel group flex min-h-[72px] items-center gap-4 rounded-[22px] border px-4 py-3 transition hover:border-[var(--border-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--series-accent))] sm:px-5"
-      >
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[hsl(var(--series-accent))]">
-          {icon}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="theme-heading block text-base font-semibold">{title}</span>
-          <span className="theme-meta mt-0.5 block text-sm leading-5">{description}</span>
-        </span>
-        <ChevronIcon />
-      </Link>
-    </li>
-  );
-}
 
 export function SettingsPageHeader({ title, description }: { title: string; description?: string }) {
   return (
@@ -54,6 +30,16 @@ export function SettingsPageHeader({ title, description }: { title: string; desc
   );
 }
 
+export function SettingsGroup({ title, description, children, className = "mt-6" }: { title?: string; description?: ReactNode; children: ReactNode; className?: string }) {
+  return (
+    <div className={className}>
+      {title ? <h2 className="surface-group-title">{title}</h2> : null}
+      {description ? <p className="theme-meta -mt-1 mb-2 ml-1 text-xs leading-5">{description}</p> : null}
+      <div className="surface-group">{children}</div>
+    </div>
+  );
+}
+
 export function SettingsSection({
   title,
   description,
@@ -65,25 +51,20 @@ export function SettingsSection({
   children: ReactNode;
   tone?: "default" | "danger";
 }) {
+  if (tone === "danger") {
+    return (
+      <Note tone="danger" className="mt-8">
+        <h2 className="text-base font-semibold text-[var(--status-danger)]">{title}</h2>
+        {description ? <div className="theme-meta mt-1 text-sm leading-6">{description}</div> : null}
+        <div className="mt-3">{children}</div>
+      </Note>
+    );
+  }
   return (
-    <section
-      className={`mt-6 rounded-[24px] border p-5 sm:p-6 ${
-        tone === "danger"
-          ? "border-[color-mix(in_srgb,var(--status-danger)_45%,transparent)] bg-[color-mix(in_srgb,var(--status-danger)_6%,var(--bg-secondary))]"
-          : "theme-panel"
-      }`}
-    >
-      <h2 className={`text-lg font-semibold ${tone === "danger" ? "text-[var(--status-danger)]" : "theme-heading"}`}>{title}</h2>
+    <section className="p-4 sm:p-5">
+      <h2 className="theme-heading text-base font-semibold">{title}</h2>
       {description ? <div className="theme-meta mt-1 text-sm leading-6">{description}</div> : null}
-      <div className="mt-4">{children}</div>
+      <div className="mt-3">{children}</div>
     </section>
-  );
-}
-
-export function ChevronIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5 shrink-0 text-[var(--text-muted)] transition group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M7.5 4.5L13 10l-5.5 5.5" />
-    </svg>
   );
 }

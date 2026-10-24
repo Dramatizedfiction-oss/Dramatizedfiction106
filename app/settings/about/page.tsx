@@ -1,9 +1,9 @@
-import Link from "next/link";
-import { ChevronIcon, SettingsPageHeader } from "@/components/settings/SettingsUi";
+import { SettingsPageHeader } from "@/components/settings/SettingsUi";
+import { Group, Row } from "@/components/ui/Surface";
 
 export const metadata = { title: "About & Help" };
 
-/* Settings > About & Help: links to the About and AI-label pages and the six legal pages. */
+/* Settings > About & Help: links to the About and AI-label pages and the six legal pages, as one grouped list. */
 const LINKS = [
   { href: "/about", title: "About Dramatized Fiction", description: "What the platform is and who it's for." },
   { href: "/ai-usage", title: "AI labels", description: "What AI Free, AI Corrected, AI Heavy and AI Written mean." },
@@ -20,22 +20,17 @@ export default function AboutSettingsPage() {
     <main className="px-4 py-6 md:p-10">
       <div className="mx-auto max-w-2xl">
         <SettingsPageHeader title="About & Help" />
-        <ul className="mt-6 space-y-3">
-          {LINKS.map((link) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                className="theme-panel group flex min-h-[64px] items-center gap-4 rounded-[22px] border px-4 py-3 transition hover:border-[var(--border-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--series-accent))] sm:px-5"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="theme-heading block text-base font-semibold">{link.title}</span>
-                  <span className="theme-meta mt-0.5 block text-sm leading-5">{link.description}</span>
-                </span>
-                <ChevronIcon />
-              </Link>
-            </li>
+        {/* The platform pages first, then the legal pages, as two groups. */}
+        <Group className="mt-6">
+          {LINKS.slice(0, 2).map((link) => (
+            <Row key={link.href} href={link.href} title={link.title} description={link.description} />
           ))}
-        </ul>
+        </Group>
+        <Group className="mt-4">
+          {LINKS.slice(2).map((link) => (
+            <Row key={link.href} href={link.href} title={link.title} description={link.description} />
+          ))}
+        </Group>
       </div>
     </main>
   );

@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { BookOpenIcon, UserIcon } from "@/components/icons";
+import { FeatureCard, Group, Row } from "@/components/ui/Surface";
 
 export const metadata = { title: "Settings" };
-import { SettingsCard } from "@/components/settings/SettingsUi";
 
 /*
- * Settings: how the app behaves for this member. A short list of arrow cards,
- * each leading to its own page, and only for sections that really work. How
- * others see you (picture, visibility, bio) lives in the profile editor;
+ * Settings: how the app behaves for this member. One grouped list (Sweep E),
+ * each row leading to its own page, and only for sections that really work.
+ * How others see you (picture, visibility, bio) lives in the profile editor;
  * anything about money will live in Writer Studio > Grow.
  */
 export default async function SettingsPage() {
@@ -21,28 +21,28 @@ export default async function SettingsPage() {
         <p className="eyebrow">Settings</p>
         <h1 className="font-heading theme-heading mt-3 text-4xl font-semibold md:text-5xl">Settings</h1>
 
-        <ul className="mt-8 space-y-3">
+        <Group className="mt-8">
           {signedIn ? (
-            <SettingsCard
+            <Row
               href="/settings/account"
               title="Account"
               description="Email, display name, 18+ confirmation, password and account deletion."
               icon={<UserIcon size={18} />}
             />
           ) : null}
-          <SettingsCard
+          <Row
             href="/settings/reading"
             title="Reading & Appearance"
             description="Theme, text size, line spacing, reading width and motion on this device."
             icon={<BookOpenIcon size={18} />}
           />
           {signedIn ? (
-            <SettingsCard href="/settings/about" title="About & Help" description="About, AI labels, terms, privacy, guidelines and contact." icon={<InfoIcon />} />
+            <Row href="/settings/about" title="About & Help" description="About, AI labels, terms, privacy, guidelines and contact." icon={<InfoIcon />} />
           ) : null}
-        </ul>
+        </Group>
 
         {!signedIn ? (
-          <section className="theme-panel mt-6 rounded-[24px] border p-5 sm:p-6">
+          <FeatureCard className="mt-6">
             <h2 className="theme-heading text-lg font-semibold">Your account</h2>
             <p className="theme-meta mt-1 text-sm">Sign in to manage your account.</p>
             <div className="mt-4 flex flex-wrap gap-3">
@@ -53,7 +53,7 @@ export default async function SettingsPage() {
                 Create account
               </Link>
             </div>
-          </section>
+          </FeatureCard>
         ) : null}
       </div>
     </main>
