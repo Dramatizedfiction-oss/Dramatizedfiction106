@@ -1,6 +1,6 @@
 import { isLibraryImagePath } from "@/lib/avatar-library";
 import { comparePassword, hashPassword } from "@/lib/auth-utils";
-import { AGE_CONFIRMATION_VERSION, PASSWORD_MIN } from "@/lib/account-rules";
+import { AGE_CONFIRMATION_VERSION, PASSWORD_MAX, PASSWORD_MIN } from "@/lib/account-rules";
 import { prisma } from "@/lib/prisma";
 import { deleteReplacedImage } from "@/lib/uploads/image-storage";
 
@@ -45,6 +45,9 @@ export async function changePassword(
 ): Promise<Result> {
   if (input.newPassword.length < PASSWORD_MIN) {
     return fail(400, "WEAK_PASSWORD", `Your new password needs at least ${PASSWORD_MIN} characters.`);
+  }
+  if (input.newPassword.length > PASSWORD_MAX) {
+    return fail(400, "LONG_PASSWORD", `Your new password can have at most ${PASSWORD_MAX} characters.`);
   }
   if (!(await checkPassword(userId, input.currentPassword))) {
     return fail(403, "WRONG_PASSWORD", "Your current password isn't right.");

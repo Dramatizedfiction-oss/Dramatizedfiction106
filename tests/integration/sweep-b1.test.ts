@@ -39,7 +39,10 @@ describe("sign-out", () => {
     assert.match(setCookie, /df\.session-token=;/);
     assert.match(setCookie, /Expires=Thu, 01 Jan 1970/i);
     assert.equal(await prisma.session.count({ where: { sessionToken: token } }), 0);
-    assert.equal((await get("/api/auth/me", cookie)).status, 401);
+    // Signed out is a normal 200 answer (Sweep E), never a session.
+    const me = await get("/api/auth/me", cookie);
+    assert.equal(me.status, 200);
+    assert.deepEqual(await me.json(), { authenticated: false, user: null });
   });
 
   test("signing out without a session still answers 200 and clears the cookie", async (t) => {

@@ -15,6 +15,13 @@ const DAY_MS = 24 * 60 * 60_000;
 
 /** Records the action and returns true, or returns false when the member is over a limit. */
 export async function takeRateLimit(userId: string, action: string, limits: readonly RateLimitWindow[], now = new Date()) {
+  if (await isRateLimited(userId, action, limits, now)) return false;
+  await recordRateLimitHit(userId, action, now);
+  return true;
+}
+
+/** True when the member is already over a limit for this action (records nothing). */
+export async function isRateLimited(userId: string, action: string, limits: readonly RateLimitWindow[], now = new Date()) {
   const counts = await Promise.all(
     limits.map((limit) =>
       prisma.rateLimitHit.count({
@@ -22,13 +29,15 @@ export async function takeRateLimit(userId: string, action: string, limits: read
       }),
     ),
   );
-  if (overRateLimit(counts, limits)) return false;
+  return overRateLimit(counts, limits);
+}
 
+/** Records one hit (and prunes this member's hits older than a day). */
+export async function recordRateLimitHit(userId: string, action: string, now = new Date()) {
   await prisma.$transaction([
     prisma.rateLimitHit.create({ data: { userId, action, createdAt: now } }),
     prisma.rateLimitHit.deleteMany({ where: { userId, action, createdAt: { lt: new Date(now.getTime() - DAY_MS) } } }),
   ]);
-  return true;
 }
 
 export function rateLimitedResponse() {

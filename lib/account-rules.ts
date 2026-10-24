@@ -4,6 +4,9 @@
 export const DISPLAY_NAME_MIN = 2;
 export const DISPLAY_NAME_MAX = 40;
 export const PASSWORD_MIN = 8;
+/** Upper bound for any password the server hashes (scrypt cost grows with input). */
+export const PASSWORD_MAX = 200;
+export const EMAIL_MAX = 254;
 /** The wording version recorded with an 18+ confirmation. Bump when the wording changes. */
 export const AGE_CONFIRMATION_VERSION = "2026-10";
 export const ADULT_AGE = 18;
@@ -13,6 +16,13 @@ export function normalizeDisplayName(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const name = value.trim().replace(/\s+/g, " ");
   return name.length >= DISPLAY_NAME_MIN && name.length <= DISPLAY_NAME_MAX ? name : null;
+}
+
+/** Trimmed, lower-cased email with one "@" and a dotted domain, at most EMAIL_MAX characters; otherwise null. */
+export function normalizeEmail(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const email = value.trim().toLowerCase();
+  return email.length <= EMAIL_MAX && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
 }
 
 /**

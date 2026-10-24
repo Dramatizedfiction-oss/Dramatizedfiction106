@@ -24,10 +24,9 @@ export async function GET() {
       clearSessionCookie();
     }
 
-    return NextResponse.json(
-      { authenticated: false, user: null },
-      { status: 401 },
-    );
+    // Signed out is a normal answer here, not an error: 200 keeps every
+    // visitor's browser console free of a red 401 on each page.
+    return NextResponse.json({ authenticated: false, user: null });
   }
 
   return NextResponse.json({

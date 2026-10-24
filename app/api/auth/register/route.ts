@@ -3,6 +3,7 @@ import { createSession, persistSession } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth-utils";
 import { requirePlatformOpen } from "@/lib/auth/guards";
+import { DISPLAY_NAME_MAX, DISPLAY_NAME_MIN, PASSWORD_MAX, PASSWORD_MIN, normalizeDisplayName, normalizeEmail } from "@/lib/account-rules";
 
 export async function POST(request: Request) {
   // No new accounts while the platform is closed for renovation.
@@ -18,22 +19,35 @@ export async function POST(request: Request) {
     | null;
 
   // Non-string values are treated as missing (400), never passed on.
-  const name = typeof body?.name === "string" ? body.name.trim() : "";
-  const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+  const rawName = typeof body?.name === "string" ? body.name.trim() : "";
+  const rawEmail = typeof body?.email === "string" ? body.email.trim() : "";
   const password = typeof body?.password === "string" ? body.password : "";
 
-  if (!name || !email || !password) {
+  if (!rawName || !rawEmail || !password) {
     return NextResponse.json(
       { error: "Name, email, and password are required." },
       { status: 400 },
     );
   }
 
-  if (password.length < 8) {
+  // Same name rule as Settings > Account (2–40 characters, spaces collapsed).
+  const name = normalizeDisplayName(rawName);
+  if (!name) {
+    return NextResponse.json({ error: `Your name needs ${DISPLAY_NAME_MIN} to ${DISPLAY_NAME_MAX} characters.` }, { status: 400 });
+  }
+  const email = normalizeEmail(rawEmail);
+  if (!email) {
+    return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
+  }
+
+  if (password.length < PASSWORD_MIN) {
     return NextResponse.json(
       { error: "Password must be at least 8 characters long." },
       { status: 400 },
     );
+  }
+  if (password.length > PASSWORD_MAX) {
+    return NextResponse.json({ error: `Password must be at most ${PASSWORD_MAX} characters long.` }, { status: 400 });
   }
 
   const existingUser = await prisma.user.findUnique({

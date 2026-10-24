@@ -1,8 +1,23 @@
 import { NextResponse } from "next/server";
+import { EMAIL_MAX, PASSWORD_MAX } from "@/lib/account-rules";
 import { comparePassword } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
+import { isRateLimited, rateLimitedResponse, recordRateLimitHit } from "@/lib/rate-limit";
+import { LOGIN_FAILURE_LIMITS } from "@/lib/rate-limit-rules";
 import { createSession, persistSession } from "@/auth";
 
+const LOGIN_FAILURE = "login-failed";
+
+function invalidCredentials() {
+  return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
+}
+
+/*
+ * Sign-in. Failed passwords are counted per account (LOGIN_FAILURE_LIMITS);
+ * an account over the limit gets 429 before its password is checked. Unknown
+ * emails get the same 401 as a wrong password, and over-long input is refused
+ * without hashing it.
+ */
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as
     | {
@@ -21,6 +36,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+  if (email.length > EMAIL_MAX || password.length > PASSWORD_MAX) return invalidCredentials();
 
   const user = await prisma.user.findUnique({
     where: { email },
@@ -34,11 +50,11 @@ export async function POST(request: Request) {
     },
   });
 
-  if (!user?.passwordHash || !comparePassword(password, user.passwordHash)) {
-    return NextResponse.json(
-      { error: "Invalid email or password." },
-      { status: 401 },
-    );
+  if (!user?.passwordHash) return invalidCredentials();
+  if (await isRateLimited(user.id, LOGIN_FAILURE, LOGIN_FAILURE_LIMITS)) return rateLimitedResponse();
+  if (!comparePassword(password, user.passwordHash)) {
+    await recordRateLimitHit(user.id, LOGIN_FAILURE);
+    return invalidCredentials();
   }
 
   const { sessionToken, expires } = await createSession(user.id);
