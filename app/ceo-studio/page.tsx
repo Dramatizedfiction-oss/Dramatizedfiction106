@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import { Badge, Panel } from "@/components/admin/ui";
-
-export const metadata = { title: "CEO Studio" };
+import { Badge } from "@/components/admin/ui";
+import { FeatureCard } from "@/components/ui/Surface";
 import { formatDate } from "@/lib/admin/format";
 import { PHASE_EXPLANATIONS, evaluatePhaseReadiness, type PhaseNumber } from "@/lib/ceo/phase-readiness";
 import { getPlatformSettings } from "@/lib/phases";
 import { requireCEOPage } from "@/lib/utils";
+
+export const metadata = { title: "CEO Studio" };
 
 // CEO Studio: CEO only (Board is redirected to Administration on the server).
 export default async function CeoStudioPage() {
@@ -38,31 +39,30 @@ export default async function CeoStudioPage() {
           const missing = readiness.requirements.filter((requirement) => !requirement.met).length;
           const info = PHASE_EXPLANATIONS[phase];
           return (
-            <Panel
-              key={phase}
-              title={info.name}
-              action={
-                active ? (
+            // Each phase is a high-impact entry point: a feature card.
+            <FeatureCard key={phase} className="flex flex-col">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <h2 className="theme-heading text-lg font-semibold">{info.name}</h2>
+                {active ? (
                   <Badge tone="good">Active</Badge>
                 ) : readiness.ready ? (
                   <Badge tone="accent">Ready to activate</Badge>
                 ) : (
                   <Badge tone="warn">Not ready</Badge>
-                )
-              }
-              description={
-                active
+                )}
+              </div>
+              <p className="theme-meta mt-1 text-sm leading-6">
+                {active
                   ? `Activated ${formatDate(activatedAt)}.`
                   : readiness.ready
                     ? "Every requirement is met. Activation needs the CEO password."
-                    : `Inactive. ${missing} requirement${missing === 1 ? "" : "s"} still missing, so it can't be activated yet.`
-              }
-            >
-              <p className="theme-body text-sm leading-6">{info.summary}</p>
-              <Link href={`/ceo-studio/phases/${phase}`} className="story-button-secondary mt-4">
+                    : `Inactive. ${missing} requirement${missing === 1 ? "" : "s"} still missing, so it can't be activated yet.`}
+              </p>
+              <p className="theme-body mt-4 border-t border-[var(--border-color)] pt-4 text-sm leading-6">{info.summary}</p>
+              <Link href={`/ceo-studio/phases/${phase}`} className="story-button-secondary mt-4 min-h-11 self-start">
                 {active ? "View details" : "Open activation"}
               </Link>
-            </Panel>
+            </FeatureCard>
           );
         })}
       </div>

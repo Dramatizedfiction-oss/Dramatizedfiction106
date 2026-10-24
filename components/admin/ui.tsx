@@ -1,6 +1,12 @@
 import type { ReactNode } from "react";
 
-/* Small shared pieces for the Administration and CEO Studio screens. */
+/*
+ * Small shared pieces for the Administration and CEO Studio screens (Sweep E
+ * surface types): a Panel is a titled work area (title bar, hairline, body);
+ * a Stat is a number in an inset well, so figures don't look like panels.
+ * Lists of destinations use Group/Row and entry points FeatureCard
+ * (components/ui/Surface).
+ */
 
 export function Panel({
   title,
@@ -15,10 +21,11 @@ export function Panel({
   children?: ReactNode;
   className?: string;
 }) {
+  const hasHeader = Boolean(title || action);
   return (
-    <section className={`theme-panel rounded-3xl border p-5 sm:p-6 ${className}`.trim()}>
-      {title || action ? (
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+    <section className={`overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-color)] bg-[var(--bg-secondary)] ${className}`.trim()}>
+      {hasHeader ? (
+        <div className={`flex flex-wrap items-start justify-between gap-3 px-5 py-4 sm:px-6 ${children ? "border-b border-[var(--border-color)]" : ""}`}>
           <div className="min-w-0">
             {title ? <h2 className="theme-heading text-lg font-semibold">{title}</h2> : null}
             {description ? <p className="theme-meta mt-1 text-sm leading-6">{description}</p> : null}
@@ -26,16 +33,16 @@ export function Panel({
           {action}
         </div>
       ) : null}
-      {children}
+      {children ? <div className="p-5 sm:p-6">{children}</div> : null}
     </section>
   );
 }
 
 export function Stat({ label, value, note }: { label: string; value: ReactNode; note?: string }) {
   return (
-    <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-4">
-      <p className="font-heading theme-heading text-2xl font-semibold sm:text-3xl">{value}</p>
-      <p className="theme-meta mt-1 text-xs uppercase tracking-[0.16em]">{label}</p>
+    <div className="rounded-[var(--radius-group)] bg-[var(--surface-inset)] p-4 ring-1 ring-inset ring-[var(--border-color)]">
+      <p className="theme-meta font-mono-df text-[10px] font-bold uppercase tracking-[0.16em]">{label}</p>
+      <p className="font-heading theme-heading mt-1 text-2xl font-semibold tabular-nums sm:text-3xl">{value}</p>
       {note ? <p className="theme-meta mt-2 text-xs leading-5">{note}</p> : null}
     </div>
   );

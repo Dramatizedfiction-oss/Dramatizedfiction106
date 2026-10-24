@@ -65,7 +65,7 @@ export default async function MembersPage({
             <option value="banned">Banned</option>
           </select>
         </label>
-        <button type="submit" className="story-button-primary px-5 py-2.5">
+        <button type="submit" className="story-button-primary min-h-11 px-5 py-2.5">
           Filter
         </button>
       </form>

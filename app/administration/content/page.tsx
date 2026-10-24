@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { Badge } from "@/components/admin/ui";
+import { Group, Row, RowChevron } from "@/components/ui/Surface";
 import { CONTENT_DEFS, CONTENT_SECTIONS } from "@/lib/content/registry";
 import { listContentMeta } from "@/lib/content/service";
 import { requireAdministrationPage } from "@/lib/utils";
@@ -27,32 +28,28 @@ export default async function ContentPage() {
             {section.label}
           </h2>
           <p className="theme-meta mt-1 text-sm">{section.description}</p>
-          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+          {/* One grouped list per section (Sweep E): rows with the last edit and a status badge. */}
+          <Group className="mt-4">
             {CONTENT_DEFS.filter((def) => def.section === section.id).map((def) => {
               const item = meta.get(def.key);
               return (
-                <li key={def.key} className="min-w-0">
-                  <Link
-                    href={`/administration/content/${def.key}`}
-                    className="theme-panel-hover flex min-h-[88px] items-center gap-3 rounded-[20px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-4 transition"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="theme-heading block font-semibold">{def.label}</span>
-                      <span className="theme-meta mt-1 block text-xs leading-5">
-                        {item?.updatedAt
-                          ? `Edited by ${item.updatedBy ?? "a former member"} · ${item.updatedAt.slice(0, 10)}`
-                          : "Built-in text"}
-                      </span>
+                <Row
+                  key={def.key}
+                  href={`/administration/content/${def.key}`}
+                  title={def.label}
+                  description={
+                    item?.updatedAt ? `Edited by ${item.updatedBy ?? "a former member"} · ${item.updatedAt.slice(0, 10)}` : "Built-in text"
+                  }
+                  trailing={
+                    <span className="flex shrink-0 items-center gap-2">
+                      {item?.updatedAt ? <Badge tone="good">Edited</Badge> : <Badge>Built-in</Badge>}
+                      <RowChevron />
                     </span>
-                    {item?.updatedAt ? <Badge tone="good">Edited</Badge> : <Badge>Built-in</Badge>}
-                    <span aria-hidden="true" className="text-[var(--text-muted)]">
-                      ›
-                    </span>
-                  </Link>
-                </li>
+                  }
+                />
               );
             })}
-          </ul>
+          </Group>
         </section>
       ))}
 

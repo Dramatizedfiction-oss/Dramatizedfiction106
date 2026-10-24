@@ -95,7 +95,7 @@ export default function ImageUploadField({
               onClick={() => inputRef.current?.click()}
               disabled={disabled || uploading}
               aria-describedby={statusId}
-              className="story-button-secondary px-4 py-2 disabled:opacity-50"
+              className="story-button-secondary min-h-11 px-4 py-2 disabled:opacity-50"
             >
               {uploading ? "Uploading…" : value ? "Replace" : "Upload image"}
             </button>

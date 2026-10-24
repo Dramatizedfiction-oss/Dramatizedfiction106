@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/auth";
+import { FeatureCard } from "@/components/ui/Surface";
 import { prisma } from "@/lib/prisma";
 import { BACK_OF_STORE_PATH, STORE_CATEGORIES } from "@/lib/store/rules";
 import { requireAdministrationPage } from "@/lib/utils";
@@ -34,10 +35,8 @@ export default async function BackOfStorePage() {
           const hidden = count(category.id, false);
           return (
             <li key={category.id}>
-              <Link
-                href={`${BACK_OF_STORE_PATH}/${category.adminSlug}`}
-                className="theme-panel flex min-h-[96px] flex-col rounded-2xl border p-5 transition hover:border-[var(--border-strong)]"
-              >
+              {/* Each item type is an entry point: a feature card. */}
+              <FeatureCard href={`${BACK_OF_STORE_PATH}/${category.adminSlug}`} className="flex min-h-[96px] flex-col">
                 <span className="flex items-baseline justify-between gap-3">
                   <span className="theme-heading font-semibold">{category.label}</span>
                   <span className="font-mono-df text-xs tabular-nums text-[var(--text-muted)]">
@@ -45,7 +44,7 @@ export default async function BackOfStorePage() {
                   </span>
                 </span>
                 <span className="theme-meta mt-1 text-sm leading-6">{category.adminDescription}</span>
-              </Link>
+              </FeatureCard>
             </li>
           );
         })}

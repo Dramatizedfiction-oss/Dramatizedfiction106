@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { auth } from "@/auth";
-import { Badge, Panel, Stat } from "@/components/admin/ui";
+import { Badge, Stat } from "@/components/admin/ui";
+import { Group, Note, Row } from "@/components/ui/Surface";
 import { MAX_BOARD_MEMBERS } from "@/lib/admin/policy";
 import { getPlatformSettings } from "@/lib/phases";
 import { prisma } from "@/lib/prisma";
@@ -46,28 +46,24 @@ export default async function AdministrationOverviewPage() {
         <Stat label="Banned" value={banned.toLocaleString()} />
       </section>
 
-      <Panel
-        title="Renovation Mode"
-        action={settings.renovationMode ? <Badge tone="warn">On</Badge> : <Badge tone="good">Off: site open</Badge>}
-        description={
-          settings.renovationMode
+      {/* Renovation Mode's state as a status note: warning while the site is closed. */}
+      <Note tone={settings.renovationMode ? "warning" : "success"}>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="theme-heading text-base font-semibold">Renovation Mode</h2>
+          {settings.renovationMode ? <Badge tone="warn">On</Badge> : <Badge tone="good">Off: site open</Badge>}
+        </div>
+        <p className="theme-meta mt-1">
+          {settings.renovationMode
             ? "The public sees the renovation page. Only the CEO and Board can use the site."
-            : "The platform is open to everyone."
-        }
-      />
+            : "The platform is open to everyone."}
+        </p>
+      </Note>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <Group>
         {links.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className="theme-panel rounded-2xl border p-5 transition hover:border-[var(--border-strong)]"
-          >
-            <p className="theme-heading font-semibold">{link.title}</p>
-            <p className="theme-meta mt-1 text-sm leading-6">{link.body}</p>
-          </Link>
+          <Row key={link.href} href={link.href} title={link.title} description={link.body} />
         ))}
-      </div>
+      </Group>
     </div>
   );
 }
