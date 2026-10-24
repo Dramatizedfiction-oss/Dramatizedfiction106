@@ -85,6 +85,19 @@
     --status-live: #15803d;
     --status-warning: #b45309;
     --status-danger: #b91c1c;
+
+    /*
+     * Surface types (Sweep E; classes .surface-* below, React parts in
+     * components/ui/Surface.tsx). One corner size per role, a tinted callout,
+     * an inset well for facts, and the brand gradient for feature cards.
+     */
+    --radius-card: 20px;
+    --radius-group: 16px;
+    --surface-inset: var(--bg-primary);
+    --callout-bg: color-mix(in srgb, var(--accent-solid) 7%, var(--bg-secondary));
+    --callout-rule: var(--accent-solid);
+    --brand-gradient: linear-gradient(90deg, #7c3aed, #4f46e5, #a855f7);
+    --prose-measure: 40rem;
   }
 
   /* Dark: layered ink surfaces with a faint violet atmosphere, never flat black. */
@@ -140,6 +153,9 @@
     --status-live: #4ade80;
     --status-warning: #fbbf24;
     --status-danger: #f87171;
+
+    --callout-bg: color-mix(in srgb, var(--accent-solid) 14%, var(--bg-secondary));
+    --callout-rule: #a78bfa;
   }
 
   * {
@@ -598,6 +614,151 @@
     border-color: var(--accent);
     background: var(--accent-soft);
     box-shadow: inset 0 0 0 1px var(--accent);
+  }
+
+  /* ---------------------------------------------------------------------
+   * Surface types (Sweep E). Each has one job; never put a card in a card.
+   *   .surface-prose    long reading text, no box
+   *   .surface-callout  the "in short" summary: tint + violet rule
+   *   .surface-note     a note/warning, data-tone="note|success|warning|danger"
+   *   .surface-group    a grouped list; rows are .surface-row
+   *   .surface-facts    a strip of small facts in an inset well
+   *   .surface-section  a divider-led section of a long page
+   *   .surface-feature  an entry-point card with the brand gradient edge
+   * ------------------------------------------------------------------- */
+  .surface-prose {
+    max-width: var(--prose-measure);
+    color: var(--text-primary);
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+
+  .surface-callout {
+    border-radius: var(--radius-group);
+    background: var(--callout-bg);
+    box-shadow: inset 3px 0 0 var(--callout-rule);
+    padding: 1rem 1.125rem 1rem 1.375rem;
+    color: var(--text-primary);
+    line-height: 1.7;
+  }
+
+  .surface-note {
+    --tone: var(--text-secondary);
+    display: flex;
+    gap: 0.75rem;
+    border-radius: var(--radius-group);
+    border: 1px solid color-mix(in srgb, var(--tone) 32%, transparent);
+    background: color-mix(in srgb, var(--tone) 7%, var(--bg-secondary));
+    padding: 0.875rem 1rem;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+  .surface-note[data-tone="success"] { --tone: var(--status-live); }
+  .surface-note[data-tone="warning"] { --tone: var(--status-warning); }
+  .surface-note[data-tone="danger"] { --tone: var(--status-danger); }
+  .surface-note > .surface-note-icon {
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+    color: var(--tone);
+  }
+
+  .surface-group-title {
+    margin: 0 0 0.5rem 0.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .surface-group {
+    overflow: hidden;
+    border-radius: var(--radius-group);
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+  }
+
+  .surface-row {
+    display: flex;
+    min-height: 52px;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    transition: background-color 160ms ease;
+  }
+  /* Hairlines between a group's rows (rows may be direct children or wrapped in <li>). */
+  .surface-group > * + * {
+    border-top: 1px solid var(--border-color);
+  }
+  a.surface-row:hover,
+  button.surface-row:hover {
+    background: var(--panel-hover);
+  }
+  a.surface-row:focus-visible,
+  button.surface-row:focus-visible {
+    outline-offset: -2px;
+  }
+  .surface-row-icon {
+    display: flex;
+    height: 2.25rem;
+    width: 2.25rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .surface-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    border-radius: var(--radius-group);
+    background: var(--surface-inset);
+    border: 1px solid var(--border-color);
+    padding: 0.75rem 1rem;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+  }
+  .surface-facts > * {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+  .surface-facts strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .surface-section {
+    border-top: 1px solid var(--border-color);
+  }
+  .surface-section-number {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+  }
+
+  .surface-feature {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow-card);
+  }
+  .surface-feature::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    background: var(--brand-gradient);
   }
 }
 

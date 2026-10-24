@@ -34,6 +34,20 @@ describe("Sweep E: sign-in and sign-up limits", () => {
     assert.match(read("app/api/auth/register/route.ts"), /normalizeEmail\(rawEmail\)/);
   });
 
+  test("surface types live in one place, and the legal page uses them", () => {
+    const css = read("app/globals.css");
+    for (const name of ["surface-prose", "surface-callout", "surface-note", "surface-group", "surface-row", "surface-facts", "surface-section", "surface-feature"]) {
+      assert.match(css, new RegExp(`\\.${name}\\s*\\{`), name);
+    }
+    assert.match(css, /--radius-card:/);
+    assert.match(css, /\.dark \{[\s\S]*--callout-bg:/);
+    const legal = read("components/legal/LegalPage.tsx");
+    assert.match(legal, /Jump to section/);
+    assert.doesNotMatch(legal, /On this page/);
+    assert.match(legal, /<Callout/);
+    assert.match(read("components/content/RenderedMarkdown.tsx"), /case "quote":[\s\S]*surface-callout/);
+  });
+
   test("/api/auth/me treats signed out as a normal answer", () => {
     const me = read("app/api/auth/me/route.ts");
     assert.match(me, /return NextResponse\.json\(\{ authenticated: false, user: null \}\);/);

@@ -20,6 +20,7 @@ export default async function LegalContentPage({ slug }: { slug: LegalSlug }) {
       showEffectiveDate={document.showEffectiveDate}
       tableOfContents={document.tableOfContents}
       fill={placeholderFiller(values)}
+      updatedAt={page.updatedAt}
     />
   );
 }

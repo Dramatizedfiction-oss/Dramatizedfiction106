@@ -71,9 +71,10 @@ export function ContentBlock({ block, fill }: { block: Block; fill?: Fill }) {
       );
     }
     case "quote":
+      // A "> " quote is a summary callout (Sweep E): write one in Administration › Content for an "In short".
       return (
-        <div className="theme-panel rounded-[22px] border p-5 text-base leading-7 sm:p-6">
-          <p className="theme-body">{text(block.c)}</p>
+        <div className="surface-callout text-base">
+          <p>{text(block.c)}</p>
         </div>
       );
     case "table":
