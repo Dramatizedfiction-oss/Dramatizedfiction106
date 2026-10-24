@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // The app shows plain <img> tags (no next/image), so the image optimizer is
+  // switched off: /_next/image answers 404. Next 14 has unpatched advisories in
+  // that endpoint (fixed only in 15.5+), so it shouldn't be reachable.
+  images: { unoptimized: true },
   experimental: {
     workerThreads: true,
     webpackBuildWorker: false,
