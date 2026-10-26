@@ -168,7 +168,8 @@ describe("Store", () => {
     const page = await (await call("/store", undefined)).text();
     assert.match(page, new RegExp(`${TAG} avatar 0`));
     assert.doesNotMatch(page, new RegExp(`${TAG} avatar 1`));
-    assert.doesNotMatch(page, /\$\d|price/i);
+    // No prices in what visitors see. Script contents are left out: Next's page data has references like "$7".
+    assert.doesNotMatch(page.replace(/<script[\s\S]*?<\/script>/g, ""), /\$\d|price/i);
 
     const hidden = await call("/api/me/profile-images", reader, "PATCH", { image: `https://example.invalid/images/platform-avatar/${TAG}-1.webp` });
     assert.equal(hidden.status, 400);
