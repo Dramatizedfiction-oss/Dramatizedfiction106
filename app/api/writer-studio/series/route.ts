@@ -64,6 +64,8 @@ export async function POST(request: Request) {
         status: "DRAFT",
         aiUsageTag: serializeAiUsageTag(input.aiUsageTag),
         authorId: guard.user.id,
+        // Every series starts with Season 1 (Sweep G); nested, so it's one transaction.
+        seasons: { create: { number: 1 } },
       },
     });
 

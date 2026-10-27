@@ -257,6 +257,29 @@ model Series {
   profileLibraryItems ProfileLibraryItem[]
   stats       SeriesStats?
   feedShelfItems FeedShelfItem[]
+  seasons     Season[]
+}
+
+/// A season of a series (Sweep G). `number` is its place in the series
+/// (1, 2, …; reordering renumbers). Readers see a season once it has a
+/// published episode. Title/description lengths and number >= 1 are
+/// hand-written CHECKs in the migration.
+model Season {
+  id          String       @id @default(cuid())
+  seriesId    String
+  number      Int
+  title       String?
+  description String?
+  status      SeasonStatus @default(ONGOING)
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  series      Series       @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  episodes    Episode[]
+
+  @@unique([seriesId, number])
+  /// Lets Episode reference (seasonId, seriesId), so an episode's season is always in its own series.
+  @@unique([id, seriesId])
 }
 
 /// Per-series numbers for the feed (Sweep C, lib/feed/stats.ts), computed ahead
@@ -432,8 +455,14 @@ model Episode {
   comments      Comment[]
   progress      ReadingProgress[]
   aiTagReports  AiTagReport[]
+  /// Sweep G. Nullable only until every writer of episodes sets it (stage 4 makes it required).
+  seasonId      String?
+  /// Number within its season (1, 2, …). episodeNumber stays the series-wide reading order.
+  seasonEpisodeNumber Int?
+  season        Season?        @relation(fields: [seasonId, seriesId], references: [id, seriesId], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([seriesId, episodeNumber])
+  @@unique([seasonId, seasonEpisodeNumber])
   @@index([seriesId, status, publishedAt])
   @@index([authorId, status, publishedAt])
 }
@@ -825,6 +854,11 @@ enum SeriesModeration {
   IN_REVIEW
   HELD
   BLOCKED
+}
+
+enum SeasonStatus {
+  ONGOING
+  COMPLETE
 }
 
 enum SeriesStatus {

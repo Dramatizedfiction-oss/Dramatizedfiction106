@@ -187,6 +187,38 @@ async function main() {
       : await prisma.series.create({ data: { ...data, authorId, createdAt }, select: { id: true } });
     seriesIds[def.key] = series.id;
 
+    // Seasons (Sweep G): upsert by number; each takes the next `episodes` episodes.
+    const seasonDefs = def.seasons ?? [{ episodes: episodes.length }];
+    if (seasonDefs.reduce((sum, season) => sum + season.episodes, 0) !== episodes.length) {
+      throw new Error(`${def.title}: its seasons don't add up to its ${episodes.length} episodes.`);
+    }
+    const seasonIds: string[] = [];
+    for (const [index, season] of seasonDefs.entries()) {
+      const fields = {
+        title: season.title ?? null,
+        description: season.description ?? null,
+        status: season.complete || def.isComplete ? ("COMPLETE" as const) : ("ONGOING" as const),
+        completedAt: season.complete || def.isComplete ? new Date(now - DAY) : null,
+      };
+      const row = await prisma.season.upsert({
+        where: { seriesId_number: { seriesId: series.id, number: index + 1 } },
+        create: { ...fields, seriesId: series.id, number: index + 1 },
+        update: fields,
+        select: { id: true },
+      });
+      seasonIds.push(row.id);
+    }
+    const placeOf = (n: number) => {
+      let before = 0;
+      for (const [index, season] of seasonDefs.entries()) {
+        if (n <= before + season.episodes) return { seasonId: seasonIds[index], seasonEpisodeNumber: n - before };
+        before += season.episodes;
+      }
+      throw new Error(`${def.title}: no season for episode ${n}.`);
+    };
+    // Park the numbers within seasons so re-assigning them can't collide on a re-run.
+    await prisma.$executeRaw`UPDATE "Episode" SET "seasonEpisodeNumber" = COALESCE("seasonEpisodeNumber", 0) + 1000000 WHERE "seriesId" = ${series.id}`;
+
     for (const [index, episode] of episodes.entries()) {
       const n = index + 1;
       const body = toHtml(episode.text);
@@ -201,6 +233,7 @@ async function main() {
         lastSavedAt: savedAt,
         aiUsageTag: def.aiUsageTag,
         locked: false,
+        ...placeOf(n),
       };
       const row = await prisma.episode.upsert({
         where: { seriesId_episodeNumber: { seriesId: series.id, episodeNumber: n } },
@@ -212,6 +245,7 @@ async function main() {
       episodeCount += 1;
     }
     await prisma.episode.deleteMany({ where: { seriesId: series.id, episodeNumber: { gt: episodes.length } } });
+    await prisma.season.deleteMany({ where: { seriesId: series.id, number: { gt: seasonDefs.length } } });
     // Keep the timeline believable (the read counts below would otherwise stamp "now").
     await prisma.series.update({ where: { id: series.id }, data: { updatedAt: lastActivity } });
   }

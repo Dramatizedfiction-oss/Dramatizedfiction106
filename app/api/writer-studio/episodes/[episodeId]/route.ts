@@ -19,10 +19,11 @@ import { decideImageField, deleteReplacedImage } from "@/lib/uploads/image-stora
 // Edit/autosave. Publication state is not accepted here: the autosave's
 // `status: "DRAFT"` is ignored, so saving never unpublishes, and publishing
 // happens only through ./publish. seriesId, authorId, readerCount and
-// timestamps are server-controlled and stripped by the schema.
+// timestamps are server-controlled and stripped by the schema, and so are the
+// episode's number and season (Sweep G: only the season routes change them,
+// through lib/seasons.ts, which keeps the numbering whole).
 const updateEpisodeSchema = z.object({
   title: optionalText,
-  episodeNumber: optionalCount,
   description: optionalText,
   contentWarning: optionalText,
   body: optionalText,
@@ -59,7 +60,6 @@ export async function PATCH(
         // Omitted fields are left unchanged; a blank title keeps the current
         // one, blank optional text clears it.
         title: cleanOptionalText(input.title) || undefined,
-        episodeNumber: input.episodeNumber ?? undefined,
         description: has("description") ? cleanOptionalText(input.description) : undefined,
         contentWarning: has("contentWarning") ? cleanOptionalText(input.contentWarning) : undefined,
         body: typeof input.body === "string" ? input.body : undefined,

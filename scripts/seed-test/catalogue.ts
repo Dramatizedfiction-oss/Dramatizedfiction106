@@ -92,6 +92,12 @@ export type SeriesDef = {
   /** Episode 1's publish date, in days before the seed run; then one every `everyDays`. */
   startDaysAgo: number;
   everyDays: number;
+  /**
+   * Seasons in order, each taking the next `episodes` episodes (Sweep G).
+   * Omitted: one untitled Season 1 with everything. Episodes elsewhere in the
+   * catalogue are still referred to by their series-wide number.
+   */
+  seasons?: { episodes: number; title?: string; description?: string; complete?: boolean }[];
 };
 
 export const SERIES: SeriesDef[] = [
@@ -142,6 +148,11 @@ export const SERIES: SeriesDef[] = [
     published: true,
     startDaysAgo: 89,
     everyDays: 7,
+    // The multi-season example (Sweep G): Season 2 starts at "Nine Days".
+    seasons: [
+      { episodes: 6, title: "The Signal", complete: true },
+      { episodes: 6, title: "Closest Approach", description: "The thing in the long orbit comes back, and Station Nine has nine days to decide what to say." },
+    ],
   },
   {
     key: "lighthouse-letters",
