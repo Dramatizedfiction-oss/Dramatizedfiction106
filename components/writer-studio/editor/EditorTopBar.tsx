@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowLeftIcon, EyeIcon, PanelRightIcon } from "@/components/icons";
+import { ArrowLeftIcon, EyeIcon } from "@/components/icons";
 import EpisodeStatusBadge from "@/components/writer-studio/episodes/EpisodeStatusBadge";
 import type { SaveStatus } from "./autosave-state";
 import SaveStatusIndicator from "./SaveStatusIndicator";
+import StepIndicator, { type EditorStep } from "./StepIndicator";
 import type { AutosaveMode } from "./use-episode-autosave";
 
 export default function EditorTopBar({
@@ -12,16 +13,15 @@ export default function EditorTopBar({
   status,
   saveStatus,
   mode,
+  step,
   hasUnsavedChanges,
   readerView,
-  detailsOpen,
   busy,
   onBack,
   onRetry,
+  onStepChange,
   onToggleReaderView,
-  onToggleDetails,
   onPreview,
-  onPublish,
   onUpdateLive,
   onViewLive,
 }: {
@@ -30,16 +30,15 @@ export default function EditorTopBar({
   status: string;
   saveStatus: SaveStatus;
   mode: AutosaveMode;
+  step: EditorStep;
   hasUnsavedChanges: boolean;
   readerView: boolean;
-  detailsOpen: boolean;
   busy: boolean;
   onBack: () => void;
   onRetry: () => void;
+  onStepChange: (step: EditorStep) => void;
   onToggleReaderView: () => void;
-  onToggleDetails: () => void;
   onPreview: () => void;
-  onPublish: () => void;
   onUpdateLive: () => void;
   onViewLive: () => void;
 }) {
@@ -66,27 +65,19 @@ export default function EditorTopBar({
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
-          <button
-            type="button"
-            onClick={onToggleReaderView}
-            aria-pressed={readerView}
-            className="studio-tool hidden sm:inline-flex"
-            title="Read without the editing tools"
-          >
-            Reader view
-          </button>
+          {step === "write" ? (
+            <button
+              type="button"
+              onClick={onToggleReaderView}
+              aria-pressed={readerView}
+              className="studio-tool hidden sm:inline-flex"
+              title="Read without the editing tools"
+            >
+              Reader view
+            </button>
+          ) : null}
           <button type="button" onClick={onPreview} className="studio-tool" aria-label="Preview as a reader" title="Preview as a reader">
             <EyeIcon size={18} />
-          </button>
-          <button
-            type="button"
-            onClick={onToggleDetails}
-            aria-pressed={detailsOpen}
-            className="studio-tool"
-            aria-label="Episode details"
-            title="Episode details"
-          >
-            <PanelRightIcon size={18} />
           </button>
 
           {live ? (
@@ -103,18 +94,20 @@ export default function EditorTopBar({
                 {busy ? "Updating…" : "Update live"}
               </button>
             </>
-          ) : (
+          ) : step === "write" ? (
             <button
               type="button"
-              onClick={onPublish}
-              disabled={busy}
-              className="story-button-primary ml-1 min-h-11 px-4 py-2 disabled:opacity-60"
+              onClick={() => onStepChange("publish")}
+              className="story-button-primary ml-1 min-h-11 px-4 py-2"
             >
-              Publish
+              <span className="sm:hidden">Next</span>
+              <span className="hidden sm:inline">Next: Publish details</span>
             </button>
-          )}
+          ) : null}
         </div>
       </div>
+
+      <StepIndicator step={step} live={live} onStepChange={onStepChange} />
     </header>
   );
 }

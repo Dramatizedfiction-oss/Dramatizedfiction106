@@ -3,18 +3,21 @@
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Placeholder } from "@tiptap/extensions";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import EpisodeContent from "@/components/episode-content/EpisodeContent";
-import Sheet from "@/components/writer-studio/ui/Sheet";
+import PublishStep, { type PublishResult } from "@/components/writer-studio/publish/PublishStep";
 import type { EpisodeDocument } from "@/lib/episode-content/types";
-import { countWords, documentToPlainText, estimateReadTime } from "@/lib/episode-content/text";
-import type { EpisodeSaveInput } from "@/lib/writer-studio/api";
+import { countWords, documentToPlainText, estimateReadTime, excerptText } from "@/lib/episode-content/text";
+import { sceneBreakFor, sceneBreakNote } from "@/lib/scene-breaks";
+import { seriesAccentStyle } from "@/lib/series-accent";
+import { publishEpisode, type EpisodeSaveInput } from "@/lib/writer-studio/api";
 import { UNTITLED_EPISODE, formatRelative } from "@/lib/writer-studio/format";
 import type { EditableEpisode } from "@/lib/writer-studio/queries";
 import EditorToolbar from "./EditorToolbar";
 import EditorTopBar from "./EditorTopBar";
-import EpisodeDetailsForm, { type EpisodeDetailsValues } from "./EpisodeDetailsForm";
+import { SceneBreakView } from "./scene-break-view";
+import type { EditorStep } from "./StepIndicator";
 import {
   clearBackup,
   readBackup,
@@ -31,6 +34,12 @@ import { useIsMobile } from "./use-viewport";
  * episode) and composes: Tiptap (configured to the content contract),
  * autosave, the per-device backup, and the guarded ways out of the page.
  * Everything authoritative (status, number, ownership) stays on the server.
+ *
+ * Two steps on one page (Sweep F), in the URL as ?step=publish so the phone's
+ * Back button moves between them: Write (title + text only) and Publish
+ * (details, AI label, publish; "Details" for a live episode). Both steps
+ * share the working copy and autosave, and the editor stays mounted, so
+ * nothing (not even undo history) is lost moving back and forth.
  */
 
 type Fields = Omit<EpisodeDraftFields, "bodyHtml">;
@@ -41,8 +50,9 @@ type Notice =
 
 // Exactly the content contract (lib/episode-content/types): paragraphs, H2,
 // blockquote, scene break (<hr>), bold, italic, line breaks, undo/redo.
-// Anything else pasted in is reduced to text.
-const EDITOR_EXTENSIONS = [
+// Anything else pasted in is reduced to text. Scene breaks are shown in the
+// series' design (display only; still saved as <hr>).
+const BASE_EXTENSIONS = [
   StarterKit.configure({
     heading: { levels: [2] },
     bulletList: false,
@@ -58,7 +68,6 @@ const EDITOR_EXTENSIONS = [
   Placeholder.configure({ placeholder: "Begin your episode…" }),
 ];
 
-const PANEL_PREF_KEY = "df:studio:details-panel";
 const LIVE_CONFIRM_KEY = "df:studio:live-update-confirmed";
 const BACKUP_DELAY_MS = 300;
 
@@ -79,9 +88,19 @@ export default function EpisodeEditor({
   initialContent: EpisodeDocument;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const step: EditorStep = searchParams.get("step") === "publish" ? "publish" : "write";
   const isMobile = useIsMobile();
   const live = episode.status === "PUBLISHED";
   const mode = live ? "live" : "draft";
+
+  // The genre doesn't change while editing (it's set in series details).
+  const [sceneBreak] = useState(() => {
+    const choice = sceneBreakFor(episode.series.genre, episode.series.tags);
+    return { design: choice.design, note: sceneBreakNote(choice, episode.series.genre) };
+  });
+  const [extensions] = useState(() => [...BASE_EXTENSIONS, SceneBreakView.configure(sceneBreak)]);
 
   const initialFields: Fields = {
     title: episode.title === UNTITLED_EPISODE ? "" : episode.title,
@@ -101,8 +120,6 @@ export default function EpisodeEditor({
 
   const [wordCount, setWordCount] = useState(() => countWords(documentToPlainText(initialContent)));
   const [notice, setNotice] = useState<Notice | null>(null);
-  const [panelOpen, setPanelOpen] = useState(true);
-  const [mobileDetailsOpen, setMobileDetailsOpen] = useState(false);
   const [readerView, setReaderView] = useState(false);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -230,7 +247,7 @@ export default function EpisodeEditor({
   const editor = useEditor({
     immediatelyRender: false,
     shouldRerenderOnTransaction: false,
-    extensions: EDITOR_EXTENSIONS,
+    extensions,
     content: episode.bodyHtml,
     editorProps: {
       attributes: {
@@ -239,8 +256,9 @@ export default function EpisodeEditor({
         "aria-multiline": "true",
         "aria-label": "Episode text",
       },
-      scrollMargin: { top: 96, bottom: 140, left: 0, right: 0 },
-      scrollThreshold: { top: 96, bottom: 140, left: 0, right: 0 },
+      // Clear of the top bar + step row (100px) and the phone toolbar + Next row.
+      scrollMargin: { top: 140, bottom: 190, left: 0, right: 0 },
+      scrollThreshold: { top: 140, bottom: 190, left: 0, right: 0 },
     },
     onCreate: ({ editor: created }) => handlersRef.current.handleCreate(created),
     onUpdate: ({ editor: updated }) => {
@@ -257,15 +275,6 @@ export default function EpisodeEditor({
       editor.setEditable(!readerView && !blocked, false);
     }
   }, [blocked, editor, readerView]);
-
-  // Details panel preference (desktop).
-  useEffect(() => {
-    try {
-      if (window.localStorage.getItem(PANEL_PREF_KEY) === "closed") setPanelOpen(false);
-    } catch {
-      // ignore
-    }
-  }, []);
 
   // Keep the backup current when leaving; clear timers.
   useEffect(
@@ -356,35 +365,45 @@ export default function EpisodeEditor({
     [live, router, writeBackupNow],
   );
 
-  const goPublish = useCallback(async () => {
+  /** Moves between Write and Publish in place (the URL keeps the step for Back/forward). */
+  const goToStep = useCallback(
+    (next: EditorStep) => {
+      setActionError(null);
+      if (next === step) return;
+      setReaderView(false);
+      window.history.pushState(null, "", next === "publish" ? `${pathname}?step=publish` : pathname);
+      window.scrollTo({ top: 0 });
+      // Drafts save on the way to Publish (live edits wait for Update live).
+      if (next === "publish" && !live) void autosaveRef.current.flush();
+    },
+    [live, pathname, step],
+  );
+
+  // Same publish action as before: save everything, then the publish route
+  // with the same fields (title, description, content warning, AI label).
+  const publish = useCallback(async (): Promise<PublishResult> => {
     setActionError(null);
-    setBusy(true);
     const ok = await autosaveRef.current.flush({ force: true });
-    setBusy(false);
     if (!ok) {
-      setActionError("Your changes need to be saved before you can publish. Check the save status above and try again.");
-      return;
+      return {
+        ok: false,
+        message: "Your changes need to be saved before you can publish. Check the save status above and try again.",
+      };
     }
-    router.push(`/writer-studio/episodes/${episode.id}/publish`);
+    const current = fieldsRef.current;
+    const result = await publishEpisode(episode.id, {
+      title: current.title.trim(),
+      description: current.description,
+      contentWarning: current.contentWarning,
+      aiUsageTag: current.aiUsageTag,
+    });
+    if (!result.ok) return { ok: false, message: result.message };
+    router.refresh();
+    return { ok: true };
   }, [episode.id, router]);
 
-  const toggleDetails = useCallback(() => {
-    if (isMobile) {
-      setMobileDetailsOpen(true);
-      return;
-    }
-    setPanelOpen((open) => {
-      try {
-        window.localStorage.setItem(PANEL_PREF_KEY, open ? "closed" : "open");
-      } catch {
-        // ignore
-      }
-      return !open;
-    });
-  }, [isMobile]);
-
   const onDetailsChange = useCallback(
-    (next: EpisodeDetailsValues) => {
+    (next: Partial<Fields>) => {
       applyFields({ ...fieldsRef.current, ...next });
       markChange();
     },
@@ -392,26 +411,7 @@ export default function EpisodeEditor({
   );
 
   const readTime = estimateReadTime(wordCount);
-  const detailsForm = (
-    <EpisodeDetailsForm
-      values={{
-        description: fields.description,
-        contentWarning: fields.contentWarning,
-        coverImage: fields.coverImage,
-        aiUsageTag: fields.aiUsageTag,
-      }}
-      onChange={onDetailsChange}
-      readOnly={blocked}
-      meta={{
-        episodeId: episode.id,
-        seriesId: episode.series.id,
-        episodeNumber: episode.episodeNumber,
-        live,
-        wordCount,
-        readTime,
-      }}
-    />
-  );
+  const nextLabel = live ? "Next: Details" : "Next: Publish details";
 
   // ---- render --------------------------------------------------------------
 
@@ -423,16 +423,15 @@ export default function EpisodeEditor({
         status={episode.status}
         saveStatus={autosave.status}
         mode={mode}
+        step={step}
         hasUnsavedChanges={autosave.hasUnsavedChanges}
         readerView={readerView}
-        detailsOpen={isMobile ? mobileDetailsOpen : panelOpen}
         busy={busy}
         onBack={() => void leaveTo(`/writer-studio/series/${episode.series.id}`)}
         onRetry={() => void autosave.retryNow()}
+        onStepChange={goToStep}
         onToggleReaderView={() => setReaderView((value) => !value)}
-        onToggleDetails={toggleDetails}
         onPreview={() => void leaveTo(`/writer-studio/episodes/${episode.id}/preview`)}
-        onPublish={() => void goPublish()}
         onUpdateLive={() => void updateLive()}
         onViewLive={() => void leaveTo(`/episode/${episode.id}`)}
       />
@@ -460,14 +459,49 @@ export default function EpisodeEditor({
           {actionError}
         </p>
       ) : null}
-      {live ? (
+      {live && step === "write" ? (
         <p className="mx-auto mt-4 w-full max-w-[760px] px-4 text-sm text-[var(--studio-muted)]">
           This episode is live. Your edits are kept on this device until you press <strong>Update live</strong>.
         </p>
       ) : null}
 
-      <div className="flex flex-1">
-        <main className="min-w-0 flex-1 px-4 pb-40 pt-6 md:px-8">
+      {/* Step 2. The Write step below stays mounted (hidden) so the editor keeps its state. */}
+      {step === "publish" ? (
+        <main className="mx-auto w-full max-w-5xl px-4 pb-24 pt-6 md:px-8 md:pt-10">
+          <PublishStep
+            episode={{ id: episode.id, episodeNumber: episode.episodeNumber }}
+            series={{
+              id: episode.series.id,
+              title: episode.series.title,
+              live: episode.series.status === "PUBLISHED",
+              genre: episode.series.genre,
+              tags: episode.series.tags,
+              coverImage: episode.series.coverImage,
+            }}
+            title={fields.title}
+            wordCount={wordCount}
+            readTime={readTime}
+            opening={excerptText(editor?.getText() ?? documentToPlainText(initialContent), 70)}
+            live={live}
+            values={{
+              description: fields.description,
+              contentWarning: fields.contentWarning,
+              coverImage: fields.coverImage,
+              aiUsageTag: fields.aiUsageTag,
+            }}
+            readOnly={blocked}
+            busy={busy}
+            hasUnsavedChanges={autosave.hasUnsavedChanges}
+            onChange={onDetailsChange}
+            onEditWriting={() => goToStep("write")}
+            onPublish={publish}
+            onUpdateLive={() => void updateLive()}
+          />
+        </main>
+      ) : null}
+
+      <div className={step === "write" ? "flex flex-1" : "hidden"}>
+        <main className="min-w-0 flex-1 px-4 pb-48 pt-6 md:px-8">
           <div className="mx-auto max-w-[760px]">
             {!readerView && !isMobile ? <EditorToolbar editor={editor} mobile={false} /> : null}
 
@@ -496,12 +530,15 @@ export default function EpisodeEditor({
               <p className="theme-meta mt-2 text-sm">{episode.series.title}</p>
             </header>
 
-            <div className="reader-paper episode-editor px-5 py-7 sm:px-6 sm:py-8 md:px-12 md:py-12">
+            <div
+              className="reader-paper episode-editor series-accent px-5 py-7 sm:px-6 sm:py-8 md:px-12 md:py-12"
+              style={seriesAccentStyle(episode.series.themeColor)}
+            >
               {editor ? (
                 <EditorContent editor={editor} />
               ) : (
                 <div className="reading-body theme-body" aria-busy="true">
-                  <EpisodeContent content={initialContent} />
+                  <EpisodeContent content={initialContent} sceneBreak={sceneBreak.design} />
                 </div>
               )}
             </div>
@@ -509,26 +546,42 @@ export default function EpisodeEditor({
             <p className="theme-meta mt-4 text-center text-xs">
               {wordCount.toLocaleString()} words · about {readTime} min to read
             </p>
+
+            <div className="mt-8 flex flex-col items-center gap-2">
+              <button
+                type="button"
+                onClick={() => goToStep("publish")}
+                className="story-button-primary w-full sm:w-auto sm:px-8"
+              >
+                {nextLabel} →
+              </button>
+              <p className="theme-meta text-center text-xs">
+                {live ? "Description, image and AI label." : "Description, image, AI label, then publish."} Nothing you
+                write is lost going back and forth.
+              </p>
+            </div>
           </div>
         </main>
-
-        {!isMobile && panelOpen ? (
-          <aside
-            aria-label="Episode details"
-            className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-80 shrink-0 overflow-y-auto border-l border-[var(--studio-border)] bg-[var(--studio-surface)] p-5 md:block"
-          >
-            <h2 className="font-heading theme-heading mb-5 text-lg font-semibold">Episode details</h2>
-            {detailsForm}
-          </aside>
-        ) : null}
       </div>
 
-      {isMobile && !readerView ? <EditorToolbar editor={editor} mobile /> : null}
-
-      {isMobile ? (
-        <Sheet open={mobileDetailsOpen} title="Episode details" onRequestClose={() => setMobileDetailsOpen(false)}>
-          {detailsForm}
-        </Sheet>
+      {isMobile && !readerView && step === "write" ? (
+        <EditorToolbar
+          editor={editor}
+          mobile
+          footer={
+            <div className="flex min-h-11 items-center justify-between gap-3">
+              <span className="theme-meta text-xs">{wordCount.toLocaleString()} words</span>
+              <button
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => goToStep("publish")}
+                className="inline-flex min-h-11 items-center px-1 text-sm font-semibold text-[var(--accent)]"
+              >
+                {nextLabel} →
+              </button>
+            </div>
+          }
+        />
       ) : null}
     </div>
   );

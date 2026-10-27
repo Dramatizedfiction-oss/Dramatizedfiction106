@@ -70,6 +70,9 @@
     --paper-ink: #1f1d24;
     --paper-muted: #5c5765;
     --paper-rule: rgba(31, 29, 36, 0.14);
+    /* The default scene break's violet-to-blue line (Sweep F). */
+    --sb-brand-a: #7c3aed;
+    --sb-brand-b: #2563eb;
     --paper-glow: none;
 
     /* Writer Studio: aliases of the global tokens so the studio follows the theme. */
@@ -147,6 +150,8 @@
     --paper-ink: #e4dfe8;
     --paper-muted: #a39dad;
     --paper-rule: rgba(255, 255, 255, 0.12);
+    --sb-brand-a: #a78bfa;
+    --sb-brand-b: #60a5fa;
     --paper-glow: radial-gradient(900px 420px at 50% -140px, rgba(124, 58, 237, 0.16), transparent 70%);
 
     --status-draft: #a8a4b6;
@@ -372,12 +377,37 @@
     margin: 1.75em auto;
   }
 
-  /* Scene break: stored as <hr>, drawn as a quiet ornament. */
+  /* Scene break (Sweep F): stored as <hr>, drawn per genre by SceneBreakArt /
+     the editor's scene-break view (lib/scene-breaks.ts). Every design uses
+     the same box, so switching genres never moves the text. The SVG's ink is
+     the muted text color; accents use the series color (--sa inside a
+     .series-accent scope) or the site accent. No motion, no glow. */
+  .scene-break {
+    --sb-accent: color-mix(in srgb, var(--sa, hsl(var(--series-accent))) 75%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    height: 48px;
+    margin: 1.75em 0;
+    color: var(--paper-muted);
+    text-indent: 0;
+  }
+
+  .scene-break-art {
+    display: block;
+    width: min(200px, 70%);
+    height: 48px;
+    overflow: visible;
+  }
+
+  /* A bare <hr> (nothing renders one today): same space, quiet ornament. */
   .reading-body hr {
     border: 0;
-    height: auto;
-    margin: 2em 0;
+    height: 48px;
+    margin: 1.75em 0;
     text-align: center;
+    line-height: 48px;
     overflow: visible;
   }
 
@@ -449,8 +479,29 @@
     color: var(--text-secondary);
   }
 
-  .episode-editor .ProseMirror hr.ProseMirror-selectednode::after {
+  .episode-editor .ProseMirror hr.ProseMirror-selectednode::after,
+  .episode-editor .scene-break.ProseMirror-selectednode {
     color: hsl(var(--series-accent));
+  }
+
+  .episode-editor .scene-break.ProseMirror-selectednode {
+    outline: 1px dashed color-mix(in srgb, hsl(var(--series-accent)) 55%, transparent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  /* Editor-only: why the default break is shown (no genre / no design). */
+  .scene-break-note {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.9rem;
+    font-family: var(--font-sans, inherit);
+    font-size: 0.7rem;
+    line-height: 1.2;
+    text-align: center;
+    color: var(--text-secondary);
+    pointer-events: none;
   }
 
   .studio-status {

@@ -1,10 +1,13 @@
 import type { ReactNode } from "react";
 import type { BlockNode, EpisodeDocument, InlineNode } from "@/lib/episode-content";
+import type { SceneBreakDesign } from "@/lib/scene-breaks";
+import SceneBreakArt from "./SceneBreakArt";
 
 /*
  * Renders the episode content contract as React elements. Never uses
  * dangerouslySetInnerHTML: only the node types in lib/episode-content/types
- * can appear, and all text is escaped by React.
+ * can appear, and all text is escaped by React. Scene breaks are drawn in the
+ * series' design (lib/scene-breaks.ts, chosen by the page).
  */
 
 function renderInline(nodes: InlineNode[], keyPrefix: string): ReactNode[] {
@@ -19,7 +22,7 @@ function renderInline(nodes: InlineNode[], keyPrefix: string): ReactNode[] {
   });
 }
 
-function renderBlock(block: BlockNode, key: string): ReactNode {
+function renderBlock(block: BlockNode, key: string, sceneBreak: SceneBreakDesign): ReactNode {
   switch (block.type) {
     case "paragraph":
       return <p key={key}>{renderInline(block.children, key)}</p>;
@@ -28,14 +31,20 @@ function renderBlock(block: BlockNode, key: string): ReactNode {
     case "blockquote":
       return (
         <blockquote key={key}>
-          {block.children.map((paragraph, index) => renderBlock(paragraph, `${key}-${index}`))}
+          {block.children.map((paragraph, index) => renderBlock(paragraph, `${key}-${index}`, sceneBreak))}
         </blockquote>
       );
     case "sceneBreak":
-      return <hr key={key} aria-label="Scene break" />;
+      return <SceneBreakArt key={key} design={sceneBreak} uid={`sb-${key}`} />;
   }
 }
 
-export default function EpisodeContent({ content }: { content: EpisodeDocument }) {
-  return <>{content.map((block, index) => renderBlock(block, `b${index}`))}</>;
+export default function EpisodeContent({
+  content,
+  sceneBreak = "default",
+}: {
+  content: EpisodeDocument;
+  sceneBreak?: SceneBreakDesign;
+}) {
+  return <>{content.map((block, index) => renderBlock(block, `b${index}`, sceneBreak))}</>;
 }

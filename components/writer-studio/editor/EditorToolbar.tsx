@@ -8,9 +8,19 @@ import { useKeyboardInset, useModifierLabel } from "./use-viewport";
  * Formatting for exactly the content contract (lib/episode-content/types):
  * bold, italic, heading, quote and scene break, plus undo/redo. Buttons keep
  * the editor's selection (mousedown is prevented) and reflect the current
- * formatting via aria-pressed. On phones the bar docks above the keyboard.
+ * formatting via aria-pressed. On phones the bar docks above the keyboard,
+ * with an optional row on top of it (the Write step's "Next" button).
  */
-export default function EditorToolbar({ editor, mobile }: { editor: Editor | null; mobile: boolean }) {
+export default function EditorToolbar({
+  editor,
+  mobile,
+  footer,
+}: {
+  editor: Editor | null;
+  mobile: boolean;
+  /** Phones: a row docked above the tools (and so above the keyboard), e.g. "Next: Publish details". */
+  footer?: ReactNode;
+}) {
   const mod = useModifierLabel();
   const keyboardInset = useKeyboardInset();
   const state = useEditorState({
@@ -33,15 +43,14 @@ export default function EditorToolbar({ editor, mobile }: { editor: Editor | nul
 
   const style: CSSProperties | undefined = mobile ? { bottom: keyboardInset } : undefined;
 
-  return (
+  const tools = (
     <div
       role="toolbar"
       aria-label="Formatting"
-      style={style}
       className={
         mobile
-          ? "fixed inset-x-0 z-40 flex items-center justify-center gap-1 border-t border-[var(--studio-border)] bg-[var(--sidebar-bg)] px-2 py-1.5 backdrop-blur"
-          : "sticky top-14 z-30 flex flex-wrap items-center gap-1 rounded-xl border border-[var(--studio-border)] bg-[var(--sidebar-bg)] px-2 py-1.5 backdrop-blur"
+          ? "flex items-center justify-center gap-1 px-2 py-1.5"
+          : "sticky top-[102px] z-30 flex flex-wrap items-center gap-1 rounded-xl border border-[var(--studio-border)] bg-[var(--sidebar-bg)] px-2 py-1.5 backdrop-blur"
       }
     >
       <Tool label={`Undo (${mod}+Z)`} disabled={disabled || !state?.canUndo} onClick={() => chain().undo().run()}>
@@ -72,6 +81,18 @@ export default function EditorToolbar({ editor, mobile }: { editor: Editor | nul
       <Tool label="Scene break" disabled={disabled} onClick={() => chain().setHorizontalRule().run()}>
         ✦
       </Tool>
+    </div>
+  );
+
+  if (!mobile) return tools;
+
+  return (
+    <div
+      style={style}
+      className="fixed inset-x-0 z-40 border-t border-[var(--studio-border)] bg-[var(--sidebar-bg)] backdrop-blur"
+    >
+      {footer ? <div className="border-b border-[var(--studio-border)] px-3">{footer}</div> : null}
+      {tools}
     </div>
   );
 }

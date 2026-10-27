@@ -26,6 +26,8 @@ import {
 import { PUBLIC_EPISODE_WHERE } from "@/lib/content-visibility";
 import { parseEpisodeHtml } from "@/lib/episode-content";
 import { prisma } from "@/lib/prisma";
+import { sceneBreakFor } from "@/lib/scene-breaks";
+import { seriesAccentStyle } from "@/lib/series-accent";
 
 export default async function EpisodeReaderPage({
   params,
@@ -136,8 +138,11 @@ export default async function EpisodeReaderPage({
             headerActions={<ReportAiTagButton target={{ episodeId: episode.id }} currentTag={episode.aiUsageTag} subject={episode.title} />}
           >
             {canReadEpisode ? (
-              <div id="story-body" className="reading-body">
-                <EpisodeContent content={parseEpisodeHtml(episode.body)} />
+              <div id="story-body" className="reading-body series-accent" style={seriesAccentStyle(episode.series.themeColor)}>
+                <EpisodeContent
+                  content={parseEpisodeHtml(episode.body)}
+                  sceneBreak={sceneBreakFor(episode.series.genre, episode.series.tags).design}
+                />
               </div>
             ) : (
               <div className="rounded-2xl border border-[var(--paper-rule)] px-6 py-8 text-center">

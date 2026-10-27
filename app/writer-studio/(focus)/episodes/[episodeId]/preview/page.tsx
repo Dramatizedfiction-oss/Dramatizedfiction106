@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import EpisodeContent from "@/components/episode-content/EpisodeContent";
 import EpisodeReadingView from "@/components/episode-content/EpisodeReadingView";
+import { sceneBreakFor } from "@/lib/scene-breaks";
+import { seriesAccentStyle } from "@/lib/series-accent";
 import { getEpisodeForReview } from "@/lib/writer-studio/queries";
 import { requireStudioUser } from "@/lib/writer-studio/session";
 import { isLive } from "@/lib/writer-studio/status";
@@ -49,8 +51,11 @@ export default async function EpisodePreviewPage({ params }: { params: { episode
           contentWarning={episode.contentWarning}
         >
           {episode.content.document.length > 0 ? (
-            <div className="reading-body">
-              <EpisodeContent content={episode.content.document} />
+            <div className="reading-body series-accent" style={seriesAccentStyle(episode.series.themeColor)}>
+              <EpisodeContent
+                content={episode.content.document}
+                sceneBreak={sceneBreakFor(episode.series.genre, episode.series.tags).design}
+              />
             </div>
           ) : (
             <p className="reader-meta text-center">Nothing written yet.</p>

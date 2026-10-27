@@ -261,7 +261,9 @@ export async function getEpisodeForEdit(userId: string, episodeId: string) {
       lastSavedAt: true,
       publishedAt: true,
       seriesId: true,
-      series: { select: { id: true, title: true, themeColor: true } },
+      series: {
+        select: { id: true, title: true, status: true, themeColor: true, genre: true, tags: true, coverImage: true },
+      },
     },
   });
 
@@ -302,7 +304,7 @@ export async function getEpisodeForReview(userId: string, episodeId: string) {
       readTime: true,
       publishedAt: true,
       lastSavedAt: true,
-      series: { select: { id: true, title: true, status: true, themeColor: true } },
+      series: { select: { id: true, title: true, status: true, themeColor: true, genre: true, tags: true } },
     },
   });
 
