@@ -3,6 +3,7 @@ import { deserializeAiUsageTag } from "@/lib/ai-usage";
 import { PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
 import { analyzeEpisodeHtml, normalizeEpisodeHtml } from "@/lib/episode-content";
 import { prisma } from "@/lib/prisma";
+import { studioEpisodeLabel } from "@/lib/season-rules";
 import { decideContinueBlock } from "@/lib/writer-studio/continue-block";
 
 /*
@@ -28,7 +29,11 @@ const episodeRowSelect = {
   lastSavedAt: true,
   publishedAt: true,
   seriesId: true,
-  series: { select: { title: true } },
+  // Seasons (Sweep G): for "S2 E3" labels (studioEpisodeCode in lib/season-rules.ts).
+  seasonId: true,
+  seasonEpisodeNumber: true,
+  season: { select: { number: true } },
+  series: { select: { title: true, _count: { select: { seasons: true } } } },
 } satisfies Prisma.EpisodeSelect;
 
 export type StudioEpisodeRow = Prisma.EpisodeGetPayload<{ select: typeof episodeRowSelect }>;
@@ -101,7 +106,7 @@ export async function getWriterProfile(userId: string) {
 export async function getStudioHome(userId: string) {
   const since30 = new Date(Date.now() - 30 * DAY_MS);
 
-  const continueSeries = { select: { id: true, title: true, status: true } } as const;
+  const continueSeries = { select: { id: true, title: true, status: true, _count: { select: { seasons: true } } } } as const;
   const [drafts, draftCount, lastWritten, series, publishedCount, readerTotals, reads30] = await Promise.all([
     // Newest first by the writer's own saves; drafts[0] is the "Continue writing" draft.
     prisma.episode.findMany({
@@ -136,7 +141,7 @@ export async function getStudioHome(userId: string) {
   );
   const continueBlock = decideContinueBlock({
     now: new Date(),
-    latestDraft: drafts[0] ?? null,
+    latestDraft: drafts[0] ? { ...drafts[0], label: studioEpisodeLabel(drafts[0], drafts[0].series._count.seasons) } : null,
     draftCount,
     lastWritten,
     newestSeries: newestSeries
@@ -189,12 +194,24 @@ export async function getSeriesHub(userId: string, seriesId: string) {
         orderBy: [{ episodeNumber: "asc" }, { createdAt: "asc" }],
         select: episodeRowSelect,
       },
+      seasons: {
+        orderBy: { number: "asc" },
+        select: { id: true, number: true, title: true, description: true, status: true },
+      },
     },
   });
 
   if (!series) return null;
 
-  return { ...series, aiUsageTag: deserializeAiUsageTag(series.aiUsageTag) };
+  // Each season with its episodes in reading order (an episode without a season, which
+  // lib/seasons.ts repairs on the next change, is shown in the first season meanwhile).
+  const firstSeasonId = series.seasons[0]?.id;
+  const seasons = series.seasons.map((season) => ({
+    ...season,
+    episodes: series.episodes.filter((episode) => (episode.season ? episode.seasonId === season.id : season.id === firstSeasonId)),
+  }));
+
+  return { ...series, seasons, aiUsageTag: deserializeAiUsageTag(series.aiUsageTag) };
 }
 
 export const EPISODES_PAGE_SIZE = 30;
@@ -261,8 +278,20 @@ export async function getEpisodeForEdit(userId: string, episodeId: string) {
       lastSavedAt: true,
       publishedAt: true,
       seriesId: true,
+      seasonId: true,
+      seasonEpisodeNumber: true,
+      season: { select: { number: true } },
       series: {
-        select: { id: true, title: true, status: true, themeColor: true, genre: true, tags: true, coverImage: true },
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          themeColor: true,
+          genre: true,
+          tags: true,
+          coverImage: true,
+          seasons: { orderBy: { number: "asc" }, select: { id: true, number: true, title: true } },
+        },
       },
     },
   });
@@ -282,6 +311,9 @@ export async function getEpisodeForEdit(userId: string, episodeId: string) {
     lastSavedAt: episode.lastSavedAt.toISOString(),
     publishedAt: episode.publishedAt?.toISOString() ?? null,
     series: episode.series,
+    // Seasons (Sweep G): "S2 E3" once the series has more than one season, else "Episode 3".
+    seasonId: episode.seasonId,
+    label: studioEpisodeLabel(episode, episode.series.seasons.length),
   };
 }
 
@@ -330,17 +362,18 @@ export async function getShareableWork(userId: string) {
       episodes: {
         where: { status: "PUBLISHED" },
         orderBy: { episodeNumber: "asc" },
-        select: { id: true, episodeNumber: true },
+        select: { id: true, episodeNumber: true, seasonEpisodeNumber: true, season: { select: { number: true } } },
       },
+      _count: { select: { seasons: true } },
     },
   });
 
   return series
     .filter((item) => item.episodes.length > 0)
-    .map(({ episodes, ...item }) => ({
+    .map(({ episodes, _count, ...item }) => ({
       ...item,
       publishedEpisodes: episodes.length,
-      firstEpisode: episodes[0],
+      firstEpisode: { ...episodes[0], label: studioEpisodeLabel(episodes[0], _count.seasons) },
     }));
 }
 
@@ -362,10 +395,12 @@ export async function getStudioStats(userId: string) {
         id: true,
         title: true,
         episodeNumber: true,
+        seasonEpisodeNumber: true,
+        season: { select: { number: true } },
         readerCount: true,
         publishedAt: true,
         seriesId: true,
-        series: { select: { title: true } },
+        series: { select: { title: true, _count: { select: { seasons: true } } } },
       },
     }),
     prisma.readEvent.count({ where: { episode: { authorId: userId }, createdAt: { gte: since7 } } }),
@@ -383,6 +418,7 @@ export async function getStudioStats(userId: string) {
     series,
     episodes: episodes.map((episode) => ({
       ...episode,
+      label: studioEpisodeLabel(episode, episode.series._count.seasons),
       reads30: reads30ByEpisode.get(episode.id) ?? 0,
     })),
     totals: {

@@ -26,7 +26,15 @@ export type ContinueSeries = { id: string; title: string; status: string };
 export type ContinueInput = {
   now: Date;
   /** The most recently edited unpublished draft, if any. */
-  latestDraft: { id: string; title: string; episodeNumber: number; lastSavedAt: Date; series: ContinueSeries } | null;
+  latestDraft: {
+    id: string;
+    title: string;
+    episodeNumber: number;
+    /** "Episode 3", or "S2 E3" in a series with seasons (Sweep G). */
+    label?: string;
+    lastSavedAt: Date;
+    series: ContinueSeries;
+  } | null;
   /** All unpublished drafts, including latestDraft. */
   draftCount: number;
   /** The writer's most recently edited episode of any status, if any. */

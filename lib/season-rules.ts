@@ -41,6 +41,29 @@ export function episodeHeading(episode: { seasonNumber: number; numberInSeason: 
   return withSeason ? `Season ${episode.seasonNumber} · Episode ${episode.numberInSeason}` : `Episode ${episode.numberInSeason}`;
 }
 
+/**
+ * An episode's label in the Writer Studio, where the writer sees every season
+ * (drafts too): "S2 E3" once the series has more than one season, else the
+ * plain number as before. `seasonEpisodeNumber` falls back to the overall one.
+ */
+export function studioEpisodeCode(
+  episode: { episodeNumber: number; seasonEpisodeNumber: number | null; season: { number: number } | null },
+  seasonCount: number,
+) {
+  const seasonNumber = episode.season?.number ?? 1;
+  const numberInSeason = episode.seasonEpisodeNumber ?? episode.episodeNumber;
+  return seasonCount > 1 || seasonNumber !== 1 ? episodeCode({ seasonNumber, numberInSeason }, true) : String(numberInSeason);
+}
+
+/** The same as a label in sentences and headings: "S2 E3", or "Episode 3" for a one-season series. */
+export function studioEpisodeLabel(
+  episode: { episodeNumber: number; seasonEpisodeNumber: number | null; season: { number: number } | null },
+  seasonCount: number,
+) {
+  const code = studioEpisodeCode(episode, seasonCount);
+  return /^\d+$/.test(code) ? `Episode ${code}` : code;
+}
+
 /** Readers see a season once it has a published episode; the rest are the writer's drafts. */
 export function readerVisibleSeasons<T extends { publishedCount: number }>(seasons: readonly T[]) {
   return seasons.filter((season) => season.publishedCount > 0);
@@ -139,6 +162,17 @@ export function reorderSeasons(layout: SeasonLayout, order: readonly string[]): 
   const next = order.map((id) => byId.get(id));
   return next.every(Boolean) ? (next as SeasonLayout) : null;
 }
+
+/** What the season routes say when they refuse (code + message; 404 for NOT_FOUND, 409 otherwise). */
+export const SEASON_REFUSALS = {
+  NOT_FOUND: "Season or episode not found.",
+  LAST_SEASON: "A series always keeps at least one season.",
+  NOT_EMPTY: "Move this season's episodes to another season before deleting it.",
+  LIMIT: `A series can have up to ${MAX_SEASONS} seasons.`,
+  BAD_ORDER: "Send every season of this series exactly once.",
+} as const;
+
+export type SeasonRefusal = keyof typeof SEASON_REFUSALS;
 
 /** Why a season can't be deleted, or null when it can. */
 export function seasonDeleteBlocker(layout: SeasonLayout, seasonId: string): "NOT_FOUND" | "LAST_SEASON" | "NOT_EMPTY" | null {

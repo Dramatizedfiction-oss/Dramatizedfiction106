@@ -128,6 +128,129 @@ describe("seasons in the data", () => {
   });
 });
 
+describe("season routes (stage 2)", () => {
+  let seriesId = "";
+  let season1 = "";
+  let season2 = "";
+  const ids: string[] = [];
+
+  async function as(cookie: string | null, path: string, method: string, body?: unknown) {
+    const response = await fetch(`${BASE_URL}${path}`, {
+      method,
+      redirect: "manual",
+      headers: { ...(cookie ? { Cookie: cookie } : {}), "Content-Type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const text = await response.text();
+    let json: Record<string, any> | null = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      // not JSON: the assertions below will say so
+    }
+    return { status: response.status, json };
+  }
+
+  test("setup: a series with three episodes", async (t) => {
+    if (!requireServer(t)) return;
+    const series = await api("/api/writer-studio/series", "POST", { title: `${TAG} Routes`, genre: "mystery" });
+    seriesId = series.json!.series.id;
+    season1 = (await prisma.season.findFirstOrThrow({ where: { seriesId } })).id;
+    for (let i = 0; i < 3; i += 1) ids.push((await api("/api/writer-studio/episodes", "POST", { seriesId, title: `${TAG} r${i + 1}` })).json!.episode.id);
+  });
+
+  test("signed out 401, readers 403, other writers 404 — all JSON", async (t) => {
+    if (!requireServer(t) || !seriesId) return;
+    const reader = await makeUser("READER", "seasons-reader");
+    const other = await makeUser("WRITER", "seasons-other");
+    const readerCookie = await sessionCookie(reader.id);
+    const otherCookie = await sessionCookie(other.id);
+    const calls: [string, string, unknown][] = [
+      [`/api/writer-studio/series/${seriesId}/seasons`, "POST", { title: "x" }],
+      [`/api/writer-studio/series/${seriesId}/seasons/order`, "PUT", { seasonIds: [season1] }],
+      [`/api/writer-studio/seasons/${season1}`, "PATCH", { title: "x" }],
+      [`/api/writer-studio/seasons/${season1}`, "DELETE", undefined],
+      [`/api/writer-studio/episodes/${ids[0]}/season`, "POST", { seasonId: season1 }],
+    ];
+    for (const [path, method, body] of calls) {
+      const out = await as(null, path, method, body);
+      assert.equal(out.status, 401, `${method} ${path} signed out`);
+      assert.ok(out.json?.code, "JSON body");
+      assert.equal((await as(readerCookie, path, method, body)).status, 403, `${method} ${path} reader`);
+      const notOwner = await as(otherCookie, path, method, body);
+      assert.equal(notOwner.status, 404, `${method} ${path} other writer`);
+      assert.equal(notOwner.json?.code, "NOT_FOUND");
+    }
+    assert.equal(await prisma.season.count({ where: { seriesId } }), 1, "nothing changed");
+  });
+
+  test("add, rename, complete; titles are checked", async (t) => {
+    if (!requireServer(t) || !seriesId) return;
+    const added = await api(`/api/writer-studio/series/${seriesId}/seasons`, "POST", { title: "  The   Second ", description: "" });
+    assert.equal(added.status, 200);
+    season2 = added.json!.season.id;
+    assert.deepEqual(
+      await prisma.season.findUniqueOrThrow({ where: { id: season2 }, select: { number: true, title: true, description: true, status: true } }),
+      { number: 2, title: "The Second", description: null, status: "ONGOING" },
+    );
+    assert.equal((await api(`/api/writer-studio/series/${seriesId}/seasons`, "POST", { title: "x".repeat(61) })).status, 400);
+
+    const completed = await api(`/api/writer-studio/seasons/${season1}`, "PATCH", { status: "COMPLETE", title: "First" });
+    assert.equal(completed.status, 200);
+    const row = await prisma.season.findUniqueOrThrow({ where: { id: season1 } });
+    assert.equal(row.status, "COMPLETE");
+    assert.ok(row.completedAt);
+    assert.equal((await prisma.series.findUniqueOrThrow({ where: { id: seriesId } })).isComplete, false, "the series is untouched");
+    assert.equal((await api(`/api/writer-studio/seasons/${season1}`, "PATCH", { status: "DONE" })).status, 400);
+  });
+
+  test("move, create into a chosen season, reorder; refusals are 409 with a reason", async (t) => {
+    if (!requireServer(t) || !season2) return;
+    const moved = await api(`/api/writer-studio/episodes/${ids[2]}/season`, "POST", { seasonId: season2 });
+    assert.equal(moved.status, 200);
+    assert.equal(moved.json!.episode.season.number, 2);
+    assert.equal(moved.json!.episode.seasonEpisodeNumber, 1);
+
+    // A new episode into Season 1 lands at its end, before Season 2.
+    const created = await api("/api/writer-studio/episodes", "POST", { seriesId, seasonId: season1, title: `${TAG} r4` });
+    assert.equal(created.status, 200);
+    ids.push(created.json!.episode.id);
+    assert.deepEqual((await numbering(seriesId)).map(([id, n, code]) => [id, n, code]), [
+      [ids[0], 1, "S1E1"],
+      [ids[1], 2, "S1E2"],
+      [ids[3], 3, "S1E3"],
+      [ids[2], 4, "S2E1"],
+    ]);
+
+    // Another series' season is "not found", for creating and for moving.
+    const elsewhere = await prisma.season.findFirstOrThrow({ where: { seriesId: { not: seriesId } }, select: { id: true } });
+    assert.equal((await api("/api/writer-studio/episodes", "POST", { seriesId, seasonId: elsewhere.id })).status, 404);
+    assert.equal((await api(`/api/writer-studio/episodes/${ids[0]}/season`, "POST", { seasonId: elsewhere.id })).status, 404);
+
+    const badOrder = await api(`/api/writer-studio/series/${seriesId}/seasons/order`, "PUT", { seasonIds: [season2] });
+    assert.deepEqual([badOrder.status, badOrder.json?.code], [409, "BAD_ORDER"]);
+    const reordered = await api(`/api/writer-studio/series/${seriesId}/seasons/order`, "PUT", { seasonIds: [season2, season1] });
+    assert.equal(reordered.status, 200);
+    assert.equal((await numbering(seriesId))[0][0], ids[2], "Season 2's episode now opens the series");
+
+    const notEmpty = await api(`/api/writer-studio/seasons/${season1}`, "DELETE");
+    assert.deepEqual([notEmpty.status, notEmpty.json?.code], [409, "NOT_EMPTY"]);
+  });
+
+  test("an emptied season can be deleted; the last one can't", async (t) => {
+    if (!requireServer(t) || !season2) return;
+    // Season 2 (now first) holds one episode: move it out, then delete the empty season.
+    assert.equal((await api(`/api/writer-studio/episodes/${ids[2]}/season`, "POST", { seasonId: season1 })).status, 200);
+    assert.equal((await api(`/api/writer-studio/seasons/${season2}`, "DELETE")).status, 200);
+    const left = await prisma.season.findMany({ where: { seriesId }, select: { id: true, number: true } });
+    assert.deepEqual(left, [{ id: season1, number: 1 }], "the remaining season is renumbered to 1");
+    assert.equal(await prisma.episode.count({ where: { seriesId } }), 4, "no episode was lost");
+
+    const last = await api(`/api/writer-studio/seasons/${season1}`, "DELETE");
+    assert.deepEqual([last.status, last.json?.code], [409, "LAST_SEASON"]);
+  });
+});
+
 describe("older data", () => {
   test("a series made without seasons is repaired when it gets a new episode", async (t) => {
     if (!requireServer(t)) return;

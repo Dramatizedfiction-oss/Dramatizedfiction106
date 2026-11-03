@@ -66,7 +66,7 @@ export default async function StudioStatsPage() {
                       {episode.title}
                     </Link>
                     <span className="theme-meta block text-xs">
-                      {episode.series.title} · Episode {episode.episodeNumber}
+                      {episode.series.title} · {episode.label}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">{episode.readerCount.toLocaleString()}</td>

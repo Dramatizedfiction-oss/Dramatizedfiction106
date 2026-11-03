@@ -9,7 +9,7 @@ import type { AutosaveMode } from "./use-episode-autosave";
 
 export default function EditorTopBar({
   seriesTitle,
-  episodeNumber,
+  episodeLabel,
   status,
   saveStatus,
   mode,
@@ -26,7 +26,8 @@ export default function EditorTopBar({
   onViewLive,
 }: {
   seriesTitle: string;
-  episodeNumber: number;
+  /** "Episode 3", or "S2 E3" in a series with seasons. */
+  episodeLabel: string;
   status: string;
   saveStatus: SaveStatus;
   mode: AutosaveMode;
@@ -56,7 +57,7 @@ export default function EditorTopBar({
             {seriesTitle}
           </button>
           <span className="text-[var(--studio-muted)]">›</span>
-          <span className="shrink-0 text-sm text-[var(--studio-text)]">Episode {episodeNumber}</span>
+          <span className="shrink-0 text-sm text-[var(--studio-text)]">{episodeLabel}</span>
           <EpisodeStatusBadge status={status} />
         </div>
 

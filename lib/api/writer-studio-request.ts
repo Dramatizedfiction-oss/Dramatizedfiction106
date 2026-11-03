@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { isPhaseTwoActive } from "@/lib/phases";
+import { SEASON_REFUSALS, type SeasonRefusal } from "@/lib/season-rules";
 
 /*
  * Request helpers for app/api/writer-studio/* (auth/ownership live in
@@ -15,6 +16,14 @@ export function badRequest(message = "Invalid request.") {
 
 export function conflict(message: string) {
   return NextResponse.json({ error: message, code: "CONFLICT" }, { status: 409 });
+}
+
+/** A refused season change (Sweep G): 404 when something isn't there, 409 otherwise, with the reason as the code. */
+export function seasonRefused(reason: SeasonRefusal) {
+  return NextResponse.json(
+    { error: SEASON_REFUSALS[reason], code: reason },
+    { status: reason === "NOT_FOUND" ? 404 : 409 },
+  );
 }
 
 export function serverError() {

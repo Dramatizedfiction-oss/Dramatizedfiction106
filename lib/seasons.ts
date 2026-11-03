@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { numberLayout, type Numbering, type SeasonLayout } from "@/lib/season-rules";
+import { MAX_SEASONS, numberLayout, seasonDeleteBlocker, type Numbering, type SeasonLayout } from "@/lib/season-rules";
 
 /*
  * Seasons (Sweep G), server side. Every change to a series' seasons or to
@@ -95,20 +95,62 @@ export async function changeSeasonLayout<T extends string>(
   }, SEASON_TRANSACTION);
 }
 
+export type EpisodePlace = { seasonId: string; episodeNumber: number; seasonEpisodeNumber: number };
+
 /**
- * Where a new episode goes: the end of the latest season, which is also the
- * end of the series. Call inside a transaction that then creates the episode.
+ * Creates an episode at the end of a season (the latest one when `seasonId`
+ * is null) inside `tx`, under the series' season lock. `create` gets free
+ * numbers to insert with; when the season isn't the last, the whole series is
+ * renumbered afterwards. Returns null when `seasonId` isn't in this series.
  */
-export async function placeNewEpisode(tx: Tx, seriesId: string) {
+export async function createEpisodeInSeason<T extends { id: string }>(
+  tx: Tx,
+  seriesId: string,
+  seasonId: string | null,
+  create: (place: EpisodePlace) => Promise<T>,
+): Promise<T | null> {
   await lockSeriesSeasons(tx, seriesId);
-  const seasonId = await ensureSeasons(tx, seriesId);
+  await ensureSeasons(tx, seriesId);
+  const layout = await readLayout(tx, seriesId);
+  const target = seasonId ? layout.find((season) => season.id === seasonId) : layout.at(-1);
+  if (!target) return null;
+
   const [overall, within] = await Promise.all([
     tx.episode.aggregate({ where: { seriesId }, _max: { episodeNumber: true } }),
-    tx.episode.aggregate({ where: { seasonId }, _max: { seasonEpisodeNumber: true } }),
+    tx.episode.aggregate({ where: { seasonId: target.id }, _max: { seasonEpisodeNumber: true } }),
   ]);
-  return {
-    seasonId,
+  const created = await create({
+    seasonId: target.id,
     episodeNumber: (overall._max.episodeNumber ?? 0) + 1,
     seasonEpisodeNumber: (within._max.seasonEpisodeNumber ?? 0) + 1,
-  };
+  });
+  if (target !== layout.at(-1)) {
+    target.episodeIds.push(created.id);
+    await writeNumbering(tx, seriesId, numberLayout(layout));
+  }
+  return created;
+}
+
+/** Adds an empty season at the end of the series (a draft until it has a published episode). */
+export async function addSeason(seriesId: string, fields: { title?: string | null; description?: string | null }) {
+  return prisma.$transaction(async (tx) => {
+    await lockSeriesSeasons(tx, seriesId);
+    await ensureSeasons(tx, seriesId);
+    const count = await tx.season.count({ where: { seriesId } });
+    if (count >= MAX_SEASONS) return { ok: false as const, reason: "LIMIT" as const };
+    const season = await tx.season.create({
+      data: { seriesId, number: count + 1, title: fields.title ?? null, description: fields.description ?? null },
+    });
+    return { ok: true as const, season };
+  }, SEASON_TRANSACTION);
+}
+
+/** Deletes an empty season (never the last one) and closes the gap in the numbering. */
+export async function deleteSeason(seriesId: string, seasonId: string) {
+  return changeSeasonLayout(seriesId, async (layout, tx) => {
+    const blocker = seasonDeleteBlocker(layout, seasonId);
+    if (blocker) return blocker;
+    await tx.season.delete({ where: { id: seasonId } });
+    return layout.filter((season) => season.id !== seasonId);
+  });
 }

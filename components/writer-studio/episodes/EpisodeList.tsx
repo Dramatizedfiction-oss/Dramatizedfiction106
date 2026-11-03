@@ -2,6 +2,7 @@ import Link from "next/link";
 import AiTagBanner from "@/components/AiTagBanner";
 import { EyeIcon } from "@/components/icons";
 import EpisodeStatusBadge from "@/components/writer-studio/episodes/EpisodeStatusBadge";
+import { studioEpisodeCode } from "@/lib/season-rules";
 import { formatRelative, plural } from "@/lib/writer-studio/format";
 import type { StudioEpisodeRow } from "@/lib/writer-studio/queries";
 import { isLive } from "@/lib/writer-studio/status";
@@ -31,8 +32,12 @@ function EpisodeRow({ episode, showSeries }: { episode: StudioEpisodeRow; showSe
         href={`/writer-studio/episodes/${episode.id}`}
         className="flex min-w-0 flex-1 items-center gap-3 px-3 py-4 sm:gap-4 sm:px-4"
       >
-        <span className="w-6 shrink-0 text-center font-mono-df text-xs text-[var(--studio-muted)] sm:w-8">
-          {episode.episodeNumber}
+        <span
+          className={`shrink-0 text-center font-mono-df text-xs text-[var(--studio-muted)] ${
+            episode.series._count.seasons > 1 ? "w-12" : "w-6 sm:w-8"
+          }`}
+        >
+          {studioEpisodeCode(episode, episode.series._count.seasons)}
         </span>
         <span className="min-w-0 flex-1">
           <span className="theme-heading block truncate text-sm font-semibold">{episode.title}</span>

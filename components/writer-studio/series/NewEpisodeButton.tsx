@@ -7,15 +7,18 @@ import { createEpisode } from "@/lib/writer-studio/api";
 
 /**
  * Creates a draft episode in `seriesId` and opens it in the editor. The server
- * assigns the next episode number; nothing is created until the click.
+ * assigns the next episode number, at the end of `seasonId` (or the latest
+ * season); nothing is created until the click.
  */
 export default function NewEpisodeButton({
   seriesId,
+  seasonId,
   aiUsageTag,
   label = "New episode",
   variant = "primary",
 }: {
   seriesId: string;
+  seasonId?: string;
   aiUsageTag?: string;
   label?: string;
   variant?: "primary" | "secondary";
@@ -27,7 +30,7 @@ export default function NewEpisodeButton({
   async function handleClick() {
     setPending(true);
     setError(null);
-    const result = await createEpisode(seriesId, aiUsageTag);
+    const result = await createEpisode(seriesId, aiUsageTag, seasonId);
 
     if (!result.ok) {
       setError(result.message);

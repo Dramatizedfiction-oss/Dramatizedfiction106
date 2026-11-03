@@ -7,7 +7,9 @@ import { CheckIcon, SendIcon } from "@/components/icons";
 import EpisodeDetailsForm, { type EpisodeDetailsValues } from "@/components/writer-studio/editor/EpisodeDetailsForm";
 import NewEpisodeButton from "@/components/writer-studio/series/NewEpisodeButton";
 import type { AiUsageTag } from "@/lib/ai-usage";
+import { seasonLabel } from "@/lib/season-rules";
 import { knownSeriesTags } from "@/lib/series-tags";
+import { moveEpisodeToSeason } from "@/lib/writer-studio/api";
 import { plural } from "@/lib/writer-studio/format";
 
 /*
@@ -20,6 +22,79 @@ import { plural } from "@/lib/writer-studio/format";
  */
 
 export type PublishResult = { ok: true } | { ok: false; message: string };
+
+/**
+ * Which season the episode is in (Sweep G; only with two or more seasons).
+ * A change applies right away through the move route: into a later season
+ * the episode becomes its first, into an earlier one its last. A live
+ * episode asks first, since readers' order changes.
+ */
+function SeasonPicker({
+  episodeId,
+  live,
+  seasonId,
+  seasons,
+  onMoved,
+}: {
+  episodeId: string;
+  live: boolean;
+  seasonId: string | null;
+  seasons: { id: string; number: number; title: string | null }[];
+  onMoved: () => void;
+}) {
+  const [value, setValue] = useState(seasonId ?? seasons[0]?.id ?? "");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const current = seasons.findIndex((season) => season.id === value);
+
+  async function change(next: string) {
+    if (next === value) return;
+    const target = seasons.findIndex((season) => season.id === next);
+    const where = target > current ? "its first episode" : "its last episode";
+    if (live && !window.confirm(`Move this live episode to ${seasonLabel(seasons[target])} as ${where}? Readers will see the new numbering.`)) return;
+    setPending(true);
+    setError(null);
+    const result = await moveEpisodeToSeason(episodeId, next);
+    setPending(false);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    setValue(next);
+    onMoved();
+  }
+
+  return (
+    <section className={sectionClass} aria-labelledby="publish-season">
+      <label className="block">
+        <span id="publish-season" className="theme-heading mb-2 block text-sm font-semibold">
+          Season
+        </span>
+        <select
+          className="studio-field w-full px-3 py-2.5 text-sm"
+          value={value}
+          disabled={pending}
+          onChange={(event) => void change(event.target.value)}
+        >
+          {seasons.map((season) => (
+            <option key={season.id} value={season.id}>
+              {seasonLabel(season)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="theme-meta mt-2 text-xs leading-5" aria-live="polite">
+        {error ? (
+          <span className="text-[var(--status-danger)]">{error}</span>
+        ) : pending ? (
+          "Moving…"
+        ) : (
+          "Moving to a later season makes this its first episode; to an earlier one, its last."
+        )}
+      </p>
+    </section>
+  );
+}
 
 const sectionClass = "rounded-2xl border border-[var(--studio-border)] bg-[var(--studio-surface)] p-5";
 
@@ -39,9 +114,19 @@ export default function PublishStep({
   onEditWriting,
   onPublish,
   onUpdateLive,
+  onSeasonMoved,
 }: {
-  episode: { id: string; episodeNumber: number };
-  series: { id: string; title: string; live: boolean; genre: string; tags: string[]; coverImage: string | null };
+  /** label: "Episode 3", or "S2 E3" in a series with seasons. */
+  episode: { id: string; label: string; seasonId: string | null };
+  series: {
+    id: string;
+    title: string;
+    live: boolean;
+    genre: string;
+    tags: string[];
+    coverImage: string | null;
+    seasons: { id: string; number: number; title: string | null }[];
+  };
   title: string;
   wordCount: number;
   readTime: number;
@@ -55,6 +140,8 @@ export default function PublishStep({
   onEditWriting: () => void;
   onPublish: () => Promise<PublishResult>;
   onUpdateLive: () => void;
+  /** After the episode moved to another season (the page reloads its numbers). */
+  onSeasonMoved: () => void;
 }) {
   const [aiConfirmed, setAiConfirmed] = useState(false);
   const [state, setState] = useState<"idle" | "publishing" | "published">("idle");
@@ -87,7 +174,7 @@ export default function PublishStep({
         <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[var(--status-live)] text-[var(--status-live)]">
           <CheckIcon size={26} />
         </span>
-        <h1 className="font-heading theme-heading mt-6 text-3xl font-semibold">Episode {episode.episodeNumber} is live</h1>
+        <h1 className="font-heading theme-heading mt-6 text-3xl font-semibold">{episode.label} is live</h1>
         <p className="theme-meta mt-3 text-sm leading-6">Readers can now find it in {series.title}.</p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:items-start">
           <Link href={`/episode/${episode.id}`} className="story-button-secondary">
@@ -124,7 +211,7 @@ export default function PublishStep({
               {live ? "Published as" : "Will publish as"}
             </p>
             <p className="font-heading theme-heading mt-2 text-xl font-semibold">
-              Episode {episode.episodeNumber} of {series.title}
+              {episode.label} of {series.title}
             </p>
             <p className="theme-heading mt-3 break-words text-base">
               {title.trim() ? (
@@ -154,6 +241,10 @@ export default function PublishStep({
               ← Edit the title or text
             </button>
           </section>
+
+          {series.seasons.length > 1 ? (
+            <SeasonPicker episodeId={episode.id} live={live} seasonId={episode.seasonId} seasons={series.seasons} onMoved={onSeasonMoved} />
+          ) : null}
 
           <section className={sectionClass} aria-label="Episode details">
             <EpisodeDetailsForm values={values} onChange={onChange} readOnly={readOnly} episodeId={episode.id} live={live} />

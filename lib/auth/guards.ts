@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import type { Episode, Series } from "@prisma/client";
+import type { Episode, Season, Series } from "@prisma/client";
 import { auth, type AuthUser } from "@/auth";
 import { canBypassRenovation } from "@/lib/admin/policy";
 import { isRenovationMode } from "@/lib/phases";
@@ -182,6 +182,29 @@ export async function requireOwnedEpisode(
   }
 
   return { ok: true, episode };
+}
+
+/**
+ * Loads a season only if `userId` owns its series (Sweep G). Another writer's
+ * season is reported as not found, like series and episodes.
+ */
+export async function requireOwnedSeason(
+  seasonId: unknown,
+  userId: string,
+): Promise<GuardResult<{ season: Season }>> {
+  if (!isUsableId(seasonId) || !userId) {
+    return { ok: false, response: apiError("NOT_FOUND", "Season not found.") };
+  }
+
+  const season = await prisma.season.findFirst({
+    where: { id: seasonId, series: { authorId: userId } },
+  });
+
+  if (!season) {
+    return { ok: false, response: apiError("NOT_FOUND", "Season not found.") };
+  }
+
+  return { ok: true, season };
 }
 
 // Implemented in a client-safe module so sign-in UI can use it too.

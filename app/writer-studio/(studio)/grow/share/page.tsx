@@ -78,7 +78,7 @@ export default async function GrowSharePage() {
                     shareTitle={item.title}
                   />
                   <ShareLinkRow
-                    label={`Start at Episode ${item.firstEpisode.episodeNumber}`}
+                    label={`Start at ${item.firstEpisode.label}`}
                     description="Takes a new reader straight into the story."
                     path={`/episode/${item.firstEpisode.id}`}
                     shareTitle={item.title}

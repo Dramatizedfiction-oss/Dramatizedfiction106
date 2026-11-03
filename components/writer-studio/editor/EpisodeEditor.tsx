@@ -419,7 +419,7 @@ export default function EpisodeEditor({
     <div className="flex min-h-screen flex-col">
       <EditorTopBar
         seriesTitle={episode.series.title}
-        episodeNumber={episode.episodeNumber}
+        episodeLabel={episode.label}
         status={episode.status}
         saveStatus={autosave.status}
         mode={mode}
@@ -469,7 +469,7 @@ export default function EpisodeEditor({
       {step === "publish" ? (
         <main className="mx-auto w-full max-w-5xl px-4 pb-24 pt-6 md:px-8 md:pt-10">
           <PublishStep
-            episode={{ id: episode.id, episodeNumber: episode.episodeNumber }}
+            episode={{ id: episode.id, label: episode.label, seasonId: episode.seasonId }}
             series={{
               id: episode.series.id,
               title: episode.series.title,
@@ -477,7 +477,9 @@ export default function EpisodeEditor({
               genre: episode.series.genre,
               tags: episode.series.tags,
               coverImage: episode.series.coverImage,
+              seasons: episode.series.seasons,
             }}
+            onSeasonMoved={() => router.refresh()}
             title={fields.title}
             wordCount={wordCount}
             readTime={readTime}
@@ -507,7 +509,7 @@ export default function EpisodeEditor({
 
             <header className="mb-6 mt-8">
               <p className="eyebrow">
-                Episode {episode.episodeNumber} | {readTime} min read
+                {episode.label} | {readTime} min read
               </p>
               <input
                 value={fields.title}

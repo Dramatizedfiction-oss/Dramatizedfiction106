@@ -4,7 +4,10 @@ import { join } from "node:path";
 import { describe, test } from "node:test";
 import {
   SEASON_DESCRIPTION_MAX,
+  SEASON_REFUSALS,
   SEASON_TITLE_MAX,
+  studioEpisodeCode,
+  studioEpisodeLabel,
   displayedSeasonStatus,
   episodeCode,
   episodeHeading,
@@ -152,8 +155,56 @@ describe("Sweep G: data and routes", () => {
     const save = read("app/api/writer-studio/episodes/[episodeId]/route.ts");
     const create = read("app/api/writer-studio/episodes/route.ts");
     assert.doesNotMatch(save, /episodeNumber|seasonId/);
-    assert.doesNotMatch(create.split("export async function POST")[0], /episodeNumber|seasonId/);
-    assert.match(create, /placeNewEpisode\(tx, owned\.series\.id\)/);
+    // Creation may name a season (checked against the series' own layout), never a number.
+    assert.doesNotMatch(create.split("export async function POST")[0], /episodeNumber/);
+    assert.match(create, /createEpisodeInSeason\(tx, owned\.series\.id, input\.seasonId \?\? null/);
+    assert.match(create, /if \(!episode\) return apiError\("NOT_FOUND"/);
     assert.match(read("app/api/writer-studio/series/route.ts"), /seasons: \{ create: \{ number: 1 \} \}/);
+  });
+});
+
+describe("Sweep G stage 2: Studio", () => {
+  test("Studio labels: a plain number until there's a second season", () => {
+    const episode = (season: number, within: number) => ({ episodeNumber: 9, seasonEpisodeNumber: within, season: { number: season } });
+    assert.equal(studioEpisodeCode(episode(1, 3), 1), "3");
+    assert.equal(studioEpisodeCode(episode(1, 3), 2), "S1 E3");
+    assert.equal(studioEpisodeCode(episode(2, 1), 2), "S2 E1");
+    assert.equal(studioEpisodeLabel(episode(1, 3), 1), "Episode 3");
+    assert.equal(studioEpisodeLabel(episode(2, 1), 2), "S2 E1");
+    // Not yet repaired: fall back to the overall number in Season 1.
+    assert.equal(studioEpisodeCode({ episodeNumber: 4, seasonEpisodeNumber: null, season: null }, 1), "4");
+  });
+
+  test("refusals: 404 for missing things, 409 with a reason code otherwise", () => {
+    for (const code of ["NOT_FOUND", "LAST_SEASON", "NOT_EMPTY", "LIMIT", "BAD_ORDER"] as const) {
+      assert.ok(SEASON_REFUSALS[code].length > 0);
+    }
+    const helper = read("lib/api/writer-studio-request.ts");
+    assert.match(helper, /status: reason === "NOT_FOUND" \? 404 : 409/);
+  });
+
+  test("every season route is writer-only, owner-checked JSON, never a redirect", () => {
+    const routes = {
+      "app/api/writer-studio/series/[seriesId]/seasons/route.ts": /requireOwnedSeries\(params\.seriesId, guard\.user\.id\)/,
+      "app/api/writer-studio/series/[seriesId]/seasons/order/route.ts": /requireOwnedSeries\(params\.seriesId, guard\.user\.id\)/,
+      "app/api/writer-studio/seasons/[seasonId]/route.ts": /requireOwnedSeason\(params\.seasonId, guard\.user\.id\)/,
+      "app/api/writer-studio/episodes/[episodeId]/season/route.ts": /requireOwnedEpisode\(params\.episodeId, guard\.user\.id\)[\s\S]*requireOwnedSeries\(owned\.episode\.seriesId, guard\.user\.id\)/,
+    };
+    for (const [path, ownership] of Object.entries(routes)) {
+      const source = read(path);
+      const handlers = source.match(/export async function (POST|PUT|PATCH|DELETE)/g) ?? [];
+      assert.ok(handlers.length > 0, path);
+      assert.equal((source.match(/requireApiRole\("WRITER"\)/g) ?? []).length, handlers.length, path);
+      assert.match(source, ownership, path);
+      assert.doesNotMatch(source, /redirect\(/, path);
+    }
+    assert.match(read("lib/auth/guards.ts"), /where: \{ id: seasonId, series: \{ authorId: userId \} \}/);
+  });
+
+  test("the writing step stays free of seasons; the Publish step picks one", () => {
+    const step = read("components/writer-studio/publish/PublishStep.tsx");
+    assert.match(step, /series\.seasons\.length > 1 \? \(\s*<SeasonPicker/);
+    assert.match(step, /moveEpisodeToSeason\(episodeId, next\)/);
+    assert.doesNotMatch(read("components/writer-studio/editor/EpisodeEditor.tsx"), /SeasonPicker|moveEpisodeToSeason/);
   });
 });

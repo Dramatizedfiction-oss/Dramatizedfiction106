@@ -84,7 +84,7 @@ function ContinueWriting({ block }: { block: NonNullable<ContinueBlock> }) {
               <>
                 <span className="min-w-0 truncate">{series.title}</span>
                 <span aria-hidden>·</span>
-                <span>Episode {draft.episodeNumber}</span>
+                <span>{draft.label ?? `Episode ${draft.episodeNumber}`}</span>
                 <span aria-hidden>·</span>
                 <span>edited {formatRelative(draft.lastSavedAt)}</span>
               </>

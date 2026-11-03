@@ -93,12 +93,48 @@ export function updateSeries(seriesId: string, input: SeriesInput) {
   });
 }
 
-/** The server assigns the episode number and starts it as a draft. */
-export function createEpisode(seriesId: string, aiUsageTag?: string) {
+/** The server assigns the episode number and starts it as a draft, at the end of `seasonId` (default: the latest season). */
+export function createEpisode(seriesId: string, aiUsageTag?: string, seasonId?: string) {
   return request<{ episode: { id: string } }>("/api/writer-studio/episodes", {
     method: "POST",
-    json: { seriesId, ...(aiUsageTag ? { aiUsageTag } : {}) },
+    json: { seriesId, ...(aiUsageTag ? { aiUsageTag } : {}), ...(seasonId ? { seasonId } : {}) },
   });
+}
+
+// ---- seasons (Sweep G) ----------------------------------------------------------
+
+export type SeasonInput = { title?: string | null; description?: string | null; status?: "ONGOING" | "COMPLETE" };
+
+export function addSeason(seriesId: string, input: SeasonInput) {
+  return request<{ season: { id: string; number: number } }>(`/api/writer-studio/series/${encodeURIComponent(seriesId)}/seasons`, {
+    method: "POST",
+    json: input,
+  });
+}
+
+export function updateSeason(seasonId: string, input: SeasonInput) {
+  return request<{ season: { id: string } }>(`/api/writer-studio/seasons/${encodeURIComponent(seasonId)}`, {
+    method: "PATCH",
+    json: input,
+  });
+}
+
+export function deleteSeason(seasonId: string) {
+  return request<{ success: true }>(`/api/writer-studio/seasons/${encodeURIComponent(seasonId)}`, { method: "DELETE" });
+}
+
+export function reorderSeasons(seriesId: string, seasonIds: string[]) {
+  return request<{ seasonIds: string[] }>(`/api/writer-studio/series/${encodeURIComponent(seriesId)}/seasons/order`, {
+    method: "PUT",
+    json: { seasonIds },
+  });
+}
+
+export function moveEpisodeToSeason(episodeId: string, seasonId: string) {
+  return request<{ episode: { id: string; episodeNumber: number; seasonEpisodeNumber: number; seasonId: string; season: { number: number } } }>(
+    `/api/writer-studio/episodes/${encodeURIComponent(episodeId)}/season`,
+    { method: "POST", json: { seasonId } },
+  );
 }
 
 export type EpisodeSaveInput = {
