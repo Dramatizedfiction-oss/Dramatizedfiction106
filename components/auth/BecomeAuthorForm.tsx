@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { NETWORK_ERROR } from "@/components/auth/SignInForm";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { PROFILE_LIMITS } from "@/lib/profile";
 
@@ -20,18 +21,25 @@ export default function BecomeAuthorForm({ defaultDisplayName }: { defaultDispla
     setError(null);
     setIsSubmitting(true);
 
-    const response = await fetch("/api/become-author", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({
-        displayName,
-        bio,
-        acknowledged,
-      }),
-    });
+    let response: Response;
+    try {
+      response = await fetch("/api/become-author", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          displayName,
+          bio,
+          acknowledged,
+        }),
+      });
+    } catch {
+      setError(NETWORK_ERROR);
+      setIsSubmitting(false);
+      return;
+    }
 
     const payload = (await response.json().catch(() => null)) as
       | { error?: string; redirectTo?: string }

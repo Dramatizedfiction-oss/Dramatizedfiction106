@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
-import { safeCallbackPath } from "@/lib/safe-callback";
+import { NETWORK_ERROR, SERVER_ERROR } from "@/components/auth/SignInForm";
+import { safeCallbackPath, withCallback } from "@/lib/safe-callback";
 
 export default function SignUpForm() {
   const router = useRouter();
@@ -14,30 +15,42 @@ export default function SignUpForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Keeps the callback when switching to Sign in (read after mount: the form is client-only state).
+  const [signInHref, setSignInHref] = useState("/sign-in");
+  useEffect(() => {
+    setSignInHref(withCallback("/sign-in", new URLSearchParams(window.location.search).get("callbackUrl")));
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
-    const response = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({
-        name,
-        email,
-        password,
-      }),
-    });
+    let response: Response;
+    try {
+      response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+        }),
+      });
+    } catch {
+      setError(NETWORK_ERROR);
+      setIsSubmitting(false);
+      return;
+    }
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as
         | { error?: string }
         | null;
-      setError(payload?.error || "We couldn't create your account.");
+      setError(payload?.error || (response.status >= 500 ? SERVER_ERROR : "We couldn't create your account."));
       setIsSubmitting(false);
       return;
     }
@@ -123,7 +136,7 @@ export default function SignUpForm() {
 
       <p className="theme-meta text-sm">
         Already have an account?{" "}
-        <Link href="/sign-in" className="theme-heading font-medium">
+        <Link href={signInHref} className="theme-heading font-medium">
           Sign in
         </Link>
       </p>

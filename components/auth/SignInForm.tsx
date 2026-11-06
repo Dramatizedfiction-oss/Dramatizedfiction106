@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
-import { safeCallbackPath } from "@/lib/safe-callback";
+import { safeCallbackPath, withCallback } from "@/lib/safe-callback";
+
+export const NETWORK_ERROR = "We couldn't reach Dramatized Fiction. Check your connection and try again.";
+export const SERVER_ERROR = "Something went wrong on our side. Please try again in a moment.";
 
 export default function SignInForm() {
   const router = useRouter();
@@ -25,23 +28,32 @@ export default function SignInForm() {
     setIsSubmitting(true);
     setError(null);
 
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({
-        email,
-        password,
-      }),
-    });
+    let response: Response;
+    try {
+      response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+    } catch {
+      // Offline or the request never finished: say so instead of staying on "Signing in...".
+      setError(NETWORK_ERROR);
+      setIsSubmitting(false);
+      return;
+    }
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as
         | { error?: string }
         | null;
-      setError(payload?.error || "We couldn't sign you in with those credentials.");
+      // A server fault (5xx, no JSON) isn't a wrong password: don't say it is.
+      setError(payload?.error || (response.status >= 500 ? SERVER_ERROR : "We couldn't sign you in with those credentials."));
       setIsSubmitting(false);
       return;
     }
@@ -97,7 +109,7 @@ export default function SignInForm() {
 
         <p className="theme-meta text-sm">
           New here?{" "}
-          <Link href="/sign-up" className="theme-heading font-medium">
+          <Link href={withCallback("/sign-up", searchParams.get("callbackUrl"))} className="theme-heading font-medium">
             Create an account
           </Link>
         </p>

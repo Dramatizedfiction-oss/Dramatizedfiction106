@@ -44,3 +44,13 @@ export function safeCallbackPath(value: unknown, fallback = CALLBACK_FALLBACK): 
 
   return normalized;
 }
+
+/**
+ * `path` with the same-site callback carried along (Sweep 3), so switching
+ * between Sign in and Create account doesn't lose where the member was going.
+ * Anything unsafe or missing is dropped.
+ */
+export function withCallback(path: string, callback: string | null | undefined) {
+  const safe = safeCallbackPath(callback, "");
+  return safe ? `${path}?callbackUrl=${encodeURIComponent(safe)}` : path;
+}
