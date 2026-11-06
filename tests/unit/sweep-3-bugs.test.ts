@@ -44,6 +44,12 @@ test("BUG-04: relative times rendered on the server may differ in the browser wi
   assert.match(read("components/settings/AccountForms.tsx"), /suppressHydrationWarning>\s*Confirmed on/);
 });
 
+test("BUG-19: the episode page names the episode in the tab, published episodes only", () => {
+  const page = read("app/episode/[episodeId]/page.tsx");
+  assert.match(page, /export async function generateMetadata/);
+  assert.match(page, /where: \{ id: params\.episodeId, \.\.\.PUBLIC_EPISODE_WHERE \}/);
+});
+
 test("BUG-03: a page restored by Back after sign-out reloads instead of showing signed-in content", () => {
   const shell = read("components/app-shell/AppShell.tsx");
   assert.match(shell, /addEventListener\("pageshow"/);

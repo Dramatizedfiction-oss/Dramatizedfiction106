@@ -35,6 +35,18 @@ import { prisma } from "@/lib/prisma";
 import { sceneBreakFor } from "@/lib/scene-breaks";
 import { seriesAccentStyle } from "@/lib/series-accent";
 
+// Sweep 3: the tab and link previews name the episode (before, every episode read "Dramatized Fiction").
+// Same visibility rule as the page: only published episodes in published series.
+export async function generateMetadata({ params }: { params: { episodeId: string } }) {
+  const episode = await prisma.episode
+    .findFirst({
+      where: { id: params.episodeId, ...PUBLIC_EPISODE_WHERE },
+      select: { title: true, series: { select: { title: true } } },
+    })
+    .catch(() => null);
+  return episode ? { title: `${episode.title} · ${episode.series.title}` } : {};
+}
+
 export default async function EpisodeReaderPage({
   params,
   searchParams,

@@ -128,4 +128,8 @@ test("security headers are set for every path, CSP report-only", async () => {
   const csp = rule.headers.find((header) => header.key === "Content-Security-Policy-Report-Only")!.value;
   assert.match(csp, /frame-ancestors 'none'/);
   assert.match(csp, /object-src 'none'/);
+  // Sweep 3: the Google Fonts stylesheet and font files imported by app/globals.css are allowed.
+  assert.match(csp, /style-src [^;]*https:\/\/fonts\.googleapis\.com/);
+  assert.match(csp, /font-src [^;]*https:\/\/fonts\.gstatic\.com/);
+  assert.match(readFileSync("app/globals.css", "utf8"), /fonts\.googleapis\.com/);
 });
