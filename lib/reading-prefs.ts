@@ -15,11 +15,13 @@ export const READING_OPTIONS = {
   spacing: ["compact", "default", "relaxed"],
   width: ["narrow", "default", "wide"],
   motion: ["device", "always"],
+  /** Sweep I: comment counts on commented passages in the episode reader. */
+  markers: ["on", "off"],
 } as const;
 
 export type ReadingPrefs = { [K in keyof typeof READING_OPTIONS]: (typeof READING_OPTIONS)[K][number] };
 
-export const DEFAULT_READING_PREFS: ReadingPrefs = { size: "default", spacing: "default", width: "default", motion: "device" };
+export const DEFAULT_READING_PREFS: ReadingPrefs = { size: "default", spacing: "default", width: "default", motion: "device", markers: "on" };
 
 /** <html> attribute for each preference. */
 export const READING_ATTRIBUTES: Record<keyof ReadingPrefs, string> = {
@@ -27,6 +29,7 @@ export const READING_ATTRIBUTES: Record<keyof ReadingPrefs, string> = {
   spacing: "data-reading-spacing",
   width: "data-reading-width",
   motion: "data-reduce-motion",
+  markers: "data-passage-markers",
 };
 
 /** Keeps only known values; anything else falls back to the default. */

@@ -15,6 +15,7 @@ export default function EpisodeReadingView({
   authorName,
   authorHref,
   episodeNumber,
+  episodeLabel,
   readTime,
   title,
   aiUsageTag,
@@ -27,6 +28,8 @@ export default function EpisodeReadingView({
   authorName?: string | null;
   authorHref?: string;
   episodeNumber: number;
+  /** Sweep I: "Season 2 · Episode 3" in a series with seasons (else "Episode N"). */
+  episodeLabel?: string;
   readTime: number;
   title: string;
   aiUsageTag: string;
@@ -63,7 +66,7 @@ export default function EpisodeReadingView({
               <span aria-hidden> · </span>
             </>
           ) : null}
-          Episode {episodeNumber}
+          {episodeLabel ?? `Episode ${episodeNumber}`}
           <span aria-hidden> · </span>
           {readTime} min read
         </p>

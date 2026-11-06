@@ -31,12 +31,12 @@ function requireServer(t: { skip: (message: string) => void }) {
   return reachable;
 }
 
-async function api(path: string, method: string, body: unknown) {
+async function api(path: string, method: string, body?: unknown) {
   const response = await fetch(`${BASE_URL}${path}`, {
     method,
     redirect: "manual",
-    headers: { Cookie: writer.cookie, "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    headers: { Cookie: writer.cookie, ...(body === undefined ? {} : { "Content-Type": "application/json" }) },
+    body: body === undefined ? undefined : JSON.stringify(body),
   });
   return { status: response.status, json: (await response.json().catch(() => null)) as Record<string, any> | null };
 }

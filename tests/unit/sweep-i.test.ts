@@ -8,6 +8,13 @@ import { parseFrameChoice } from "@/lib/store/rules";
 import { prepareFrameImage } from "@/lib/uploads/frame-image";
 import { looksLikeSvg, sanitizeSvg } from "@/lib/uploads/svg-sanitize";
 import { displayedFrame } from "@/lib/writer-frames";
+import { parseEpisodeHtml } from "@/lib/episode-content";
+import { checkNote } from "@/lib/highlights";
+import { LIBRARY_SHELVES, parseLibraryShelf } from "@/lib/library-shelves";
+import { DEFAULT_READING_PREFS, sanitizeReadingPrefs } from "@/lib/reading-prefs";
+import { shortEpisodeLabel } from "@/lib/season-rules";
+import { readerSeasons, seasonOf } from "@/lib/series-page";
+import { anchorFromRange, markerBlocks, parseAnchor, PASSAGE_MAX, resolveAnchor, splitRuns, textBlocks } from "@/lib/text-anchor";
 
 const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 
@@ -129,5 +136,133 @@ describe("Sweep I stage 2: Store frames", () => {
     assert.match(me, /requireApiUser\(\)/);
     assert.match(me, /setMemberFrame\(guard\.user\.id/);
     assert.match(read("lib/store/service.ts"), /category: "FRAME", active: true/);
+  });
+});
+
+describe("Sweep I stage 3: passages, highlights and notes", () => {
+  const html = "<h2>One</h2><p>The rain fell. The rain <em>fell</em> again.</p><blockquote><p>Quoted<br>line</p></blockquote><hr><p>Last bit.</p>";
+  const blocks = textBlocks(parseEpisodeHtml(html));
+
+  test("text blocks: headings, paragraphs and quoted paragraphs in order, <br> as a line break", () => {
+    assert.deepEqual(blocks, ["One", "The rain fell. The rain fell again.", "Quoted\nline", "Last bit."]);
+  });
+
+  test("an anchor is the trimmed quote plus context, and finds the right repeat", () => {
+    const text = blocks[1];
+    const second = text.lastIndexOf("The rain fell");
+    const anchor = anchorFromRange(text, second - 1, second + "The rain fell".length + 1)!;
+    assert.equal(anchor.quote, "The rain fell");
+    assert.deepEqual(resolveAnchor(blocks, anchor), { block: 1, start: second, end: second + 13 });
+    const first = anchorFromRange(text, 0, 13)!;
+    assert.deepEqual(resolveAnchor(blocks, first), { block: 1, start: 0, end: 13 });
+  });
+
+  test("small edits elsewhere don't move a passage; removing it means it changed", () => {
+    const anchor = anchorFromRange(blocks[3], 0, 4)!;
+    const edited = textBlocks(parseEpisodeHtml("<p>A new opening.</p>" + html));
+    assert.deepEqual(resolveAnchor(edited, anchor), { block: 4, start: 0, end: 4 });
+    assert.equal(resolveAnchor(textBlocks(parseEpisodeHtml("<p>Nothing like it.</p>")), anchor), null);
+  });
+
+  test("anchors from the browser are checked strictly", () => {
+    assert.equal(parseAnchor({ quote: "x".repeat(PASSAGE_MAX + 1), prefix: "", suffix: "" }).ok, false);
+    assert.equal(parseAnchor({ quote: "   ", prefix: "", suffix: "" }).ok, false);
+    assert.equal(parseAnchor({ quote: "ok", prefix: "y".repeat(65), suffix: "" }).ok, false);
+    assert.equal(parseAnchor({ quote: "ok\u0000", prefix: "", suffix: "" }).ok, false);
+    assert.equal(parseAnchor({ quote: "two\nlines", prefix: "", suffix: "" }).ok, true);
+    assert.equal(parseAnchor(null).ok, false);
+  });
+
+  test("splitting runs at passage edges keeps every character, with overlapping passages", () => {
+    const pieces = splitRuns([5, 4], [
+      { start: 2, end: 7 },
+      { start: 6, end: 9 },
+    ]);
+    assert.deepEqual(
+      pieces.map((run) => run.map((p) => [p.start, p.end, p.covering.join("")])),
+      [
+        [[0, 2, ""], [2, 5, "0"]],
+        [[0, 1, "0"], [1, 2, "01"], [2, 4, "1"]],
+      ],
+    );
+  });
+
+  test("at most 30 paragraphs show a count, busiest first", () => {
+    const counts = new Map(Array.from({ length: 40 }, (_, i) => [i, i % 5] as [number, number]));
+    const shown = markerBlocks(counts);
+    assert.equal(shown.size, 30);
+    assert.ok([...shown].every((block) => (counts.get(block) ?? 0) >= 1));
+  });
+
+  test("notes are plain text up to 1,000 characters; blank means none", () => {
+    assert.deepEqual(checkNote("  "), { ok: true, note: null });
+    assert.deepEqual(checkNote(" hi \r\n there "), { ok: true, note: "hi\n there" });
+    assert.equal(checkNote("x".repeat(1001)).ok, false);
+    assert.equal(checkNote(5).ok, false);
+  });
+
+  test("Library has a Highlights section and markers are a reading preference (on by default)", () => {
+    assert.ok(LIBRARY_SHELVES.includes("highlights"));
+    assert.equal(parseLibraryShelf("highlights"), "highlights");
+    assert.equal(DEFAULT_READING_PREFS.markers, "on");
+    assert.equal(sanitizeReadingPrefs({ markers: "off" }).markers, "off");
+    assert.equal(sanitizeReadingPrefs({ markers: "maybe" }).markers, "on");
+  });
+
+  test("highlight routes are the member's own; passage comments are checked against the text", () => {
+    for (const file of ["app/api/me/highlights/route.ts", "app/api/me/highlights/[highlightId]/route.ts"]) assert.match(read(file), /requireApiUser\(\)/);
+    const service = read("lib/highlights.ts");
+    assert.match(service, /deleteMany\(\{ where: \{ id, userId \} \}\)/);
+    assert.match(service, /findFirst\(\{ where: \{ id, userId \}/);
+    assert.match(read("lib/comments.ts"), /PASSAGE_CHANGED/);
+  });
+});
+describe("Sweep I stage 4: seasons for readers", () => {
+  const seasons = [
+    { number: 1, title: "The Signal", description: null, status: "COMPLETE" as const },
+    { number: 2, title: null, description: null, status: "ONGOING" as const },
+    { number: 3, title: "Drafts only", description: null, status: "ONGOING" as const },
+  ];
+  const episodes = [
+    { season: 1, readTime: 3 },
+    { season: 1, readTime: 4 },
+    { season: 2, readTime: 5 },
+  ];
+
+  test("readers see seasons with a published episode, with their own counts and time", () => {
+    const { seasons: visible, withSeasonCodes } = readerSeasons(seasons, episodes, false);
+    assert.deepEqual(
+      visible.map((season) => [season.number, season.label, season.count, season.minutes, season.status]),
+      [
+        [1, "Season 1: The Signal", 2, 7, "COMPLETE"],
+        [2, "Season 2", 1, 5, "ONGOING"],
+      ],
+    );
+    assert.equal(withSeasonCodes, true);
+  });
+
+  test("a complete series shows every season complete; one season reads as before", () => {
+    assert.ok(readerSeasons(seasons, episodes, true).seasons.every((season) => season.status === "COMPLETE"));
+    const single = readerSeasons([seasons[0]], [{ season: 1, readTime: 2 }], false);
+    assert.equal(single.withSeasonCodes, false);
+    assert.equal(readerSeasons([], [{ season: 1, readTime: 2 }], false).seasons.length, 1);
+  });
+
+  test("an episode's season and number; older rows read as Season 1", () => {
+    assert.deepEqual(seasonOf({ episodeNumber: 8, seasonEpisodeNumber: 2, season: { number: 2 } }), { season: 2, numberInSeason: 2 });
+    assert.deepEqual(seasonOf({ episodeNumber: 4 }), { season: 1, numberInSeason: 4 });
+  });
+
+  test("short labels away from the series: Ep N in Season 1, S2 E3 later", () => {
+    assert.equal(shortEpisodeLabel({ episodeNumber: 3, seasonEpisodeNumber: 3, season: { number: 1 } }), "Ep 3");
+    assert.equal(shortEpisodeLabel({ episodeNumber: 9, seasonEpisodeNumber: 3, season: { number: 2 } }), "S2 E3");
+    assert.equal(shortEpisodeLabel({ episodeNumber: 5 }), "Ep 5");
+  });
+
+  test("next episode follows the series-wide order across seasons and brings its season", () => {
+    const next = read("lib/nextEpisode.ts");
+    assert.match(next, /orderBy: \{ episodeNumber: "asc" \}/);
+    assert.match(next, /season: \{ select: \{ number: true, title: true \} \}/);
+    assert.match(read("components/EpisodeTransitionCard.tsx"), /begins/);
   });
 });

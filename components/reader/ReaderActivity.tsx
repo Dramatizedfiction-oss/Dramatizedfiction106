@@ -81,7 +81,7 @@ export default function ReaderActivity({
                   ) : null}
                 </span>
                 <span className="theme-meta block truncate text-xs">
-                  {item.episode.seriesTitle} · Ep {item.episode.episodeNumber} · <time dateTime={item.at}>{timeAgo(item.at)}</time>
+                  {item.episode.seriesTitle} · {item.episode.episodeLabel} · <time dateTime={item.at}>{timeAgo(item.at)}</time>
                 </span>
                 {item.kind === "comment" ? (
                   <span className="theme-meta mt-1 line-clamp-3 block whitespace-pre-line break-words text-sm leading-6">{item.body}</span>

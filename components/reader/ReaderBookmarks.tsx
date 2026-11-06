@@ -100,7 +100,7 @@ export default function ReaderBookmarks({
               </span>
               <span className="min-w-0 flex-1">
                 <span className="theme-meta block truncate font-mono-df text-[10px] uppercase tracking-[0.18em]">
-                  {entry.seriesTitle} · Ep {entry.episodeNumber}
+                  {entry.seriesTitle} · {entry.episodeLabel}
                 </span>
                 <span className="theme-heading mt-0.5 block truncate font-heading text-lg font-semibold">{entry.episodeTitle}</span>
                 <span className="theme-meta mt-0.5 block text-xs">Saved {timeAgo(entry.bookmarkedAt)}</span>

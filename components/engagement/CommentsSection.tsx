@@ -6,6 +6,7 @@ import FramedAvatar from "@/components/avatar/FramedAvatar";
 import { profileHref } from "@/lib/profile-links";
 import type { CommentView } from "@/lib/comments";
 import { COMMENT_MAX_LENGTH, REPORT_NOTE_MAX_LENGTH, REPORT_REASONS, timeAgo } from "@/lib/engagement-rules";
+import { COMMENT_ADDED_EVENT, goToPassage } from "@/components/reader/passages";
 
 /*
  * Episode comments: composer, newest-first list with "Show more", and a ⋯
@@ -13,6 +14,8 @@ import { COMMENT_MAX_LENGTH, REPORT_NOTE_MAX_LENGTH, REPORT_REASONS, timeAgo } f
  * the series author and Board/CEO). Bodies are plain text: React escapes them
  * and line breaks are kept with whitespace-pre-line. Every action is
  * re-checked on the server; the menu only offers what the server would allow.
+ * A comment on a passage (Sweep I) shows its quote above the text; tapping it
+ * scrolls back to the passage and flashes it, or says the passage changed.
  */
 
 type Viewer = { id: string; isSeriesAuthor: boolean; isModerator: boolean } | null;
@@ -59,6 +62,18 @@ export default function CommentsSection({
     setComments((current) => [comment, ...current]);
     if (created) setTotal((value) => value + 1);
   }
+
+  // Comments posted from the passage composer (components/reader/PassageLayer.tsx).
+  const addedRef = useRef(added);
+  addedRef.current = added;
+  useEffect(() => {
+    const onAdded = (event: Event) => {
+      const detail = (event as CustomEvent<{ comment?: CommentView; created?: boolean }>).detail;
+      if (detail?.comment) addedRef.current(detail.comment, Boolean(detail.created));
+    };
+    window.addEventListener(COMMENT_ADDED_EVENT, onAdded);
+    return () => window.removeEventListener(COMMENT_ADDED_EVENT, onAdded);
+  }, []);
 
   function replaced(comment: CommentView) {
     setComments((current) => current.map((existing) => (existing.id === comment.id ? comment : existing)));
@@ -301,7 +316,7 @@ function CommentItem({
   const name = comment.author.name || "Reader";
 
   return (
-    <li className="py-4">
+    <li id={`comment-${comment.id}`} className="scroll-mt-24 py-4">
       <div className="flex items-start gap-3">
         <Link href={profileHref(comment.author)} className="shrink-0" tabIndex={-1} aria-hidden>
           <FramedAvatar user={comment.author} size="md" />
@@ -366,6 +381,8 @@ function CommentItem({
             ) : null}
           </div>
 
+          {comment.passage ? <PassageQuote commentId={comment.id} passage={comment.passage} /> : null}
+
           {panel === "edit" ? (
             <div className="mt-2">
               <CommentTextarea value={draft} onChange={setDraft} label="Edit your comment" autoFocus disabled={pending} />
@@ -404,6 +421,27 @@ function CommentItem({
         </div>
       </div>
     </li>
+  );
+}
+
+/** The quoted passage of a passage comment: tap to go back to it in the text. */
+function PassageQuote({ commentId, passage }: { commentId: string; passage: NonNullable<CommentView["passage"]> }) {
+  const [changed, setChanged] = useState(!passage.found);
+  return (
+    <div className="mt-2">
+      <button
+        type="button"
+        onClick={() => {
+          const root = document.getElementById("story-body");
+          if (!root || !goToPassage(root, { commentId, anchor: passage })) setChanged(true);
+        }}
+        className="passage-quote block w-full text-left transition hover:opacity-90"
+        aria-label={changed ? "Quoted passage (changed since)" : "Go to the quoted passage"}
+      >
+        <span className="line-clamp-4">{passage.quote}</span>
+      </button>
+      {changed ? <p className="reader-meta mt-1 text-xs">This passage was changed.</p> : null}
+    </div>
   );
 }
 

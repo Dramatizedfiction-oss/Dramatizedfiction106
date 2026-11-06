@@ -5,6 +5,7 @@ import { Badge, Panel } from "@/components/admin/ui";
 import UserAvatar from "@/components/UserAvatar";
 import { formatDate } from "@/lib/admin/format";
 import { reportReasonLabel } from "@/lib/engagement-rules";
+import { shortEpisodeLabel } from "@/lib/season-rules";
 import { AI_TAG_REPORT_PAGE_SIZE, listAiTagReports, openAiTagReportCount } from "@/lib/ai-tag-reports";
 import AiTagReportList from "@/components/admin/AiTagReportList";
 import { REPORT_PAGE_SIZE, listReports, openReportCount, parseReportFilter } from "@/lib/reports";
@@ -124,10 +125,16 @@ export default async function ReportsPage({
                         </Link>{" "}
                         on{" "}
                         <Link href={`/episode/${comment.episode.id}`} className="underline underline-offset-2">
-                          {comment.episode.series.title} · Ep {comment.episode.episodeNumber}: {comment.episode.title}
+                          {comment.episode.series.title} · {shortEpisodeLabel(comment.episode)}: {comment.episode.title}
                         </Link>{" "}
                         · {formatDate(comment.createdAt)}
                       </p>
+                      {comment.quote ? (
+                        <blockquote className="passage-quote mt-2 text-sm">
+                          <span className="sr-only">On the passage: </span>
+                          {comment.quote}
+                        </blockquote>
+                      ) : null}
                       <p className="theme-body mt-1 whitespace-pre-line break-words text-sm leading-6">{comment.body}</p>
                     </div>
                   </div>

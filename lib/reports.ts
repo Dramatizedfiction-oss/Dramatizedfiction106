@@ -60,10 +60,12 @@ export async function listReports(filter: ReportFilter, page = 1) {
           select: {
             id: true,
             body: true,
+            // Sweep I: the passage a passage comment quotes, so moderators see the context.
+            quote: true,
             createdAt: true,
             removedAt: true,
             user: { select: { id: true, name: true, image: true, role: true } },
-            episode: { select: { id: true, title: true, episodeNumber: true, series: { select: { title: true } } } },
+            episode: { select: { id: true, title: true, episodeNumber: true, seasonEpisodeNumber: true, season: { select: { number: true } }, series: { select: { title: true } } } },
             _count: { select: { reports: true } },
           },
         },

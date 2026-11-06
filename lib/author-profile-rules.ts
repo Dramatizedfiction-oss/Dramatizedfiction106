@@ -258,7 +258,16 @@ export type AboutCardData = { key: string; prompt: string; answer: string };
 export type LinkData = { key: string; label: string; url: string; subtext: string | null };
 
 export type OnSiteSeries = { id: string; title: string; coverImage: string | null; themeColor: string | null; aiUsageTag: string; episodeCount: number };
-export type OnSiteEpisode = { id: string; title: string; episodeNumber: number; aiUsageTag: string; seriesTitle: string; coverImage: string | null };
+export type OnSiteEpisode = {
+  id: string;
+  title: string;
+  episodeNumber: number;
+  /** Sweep I: "Ep 3" or "S2 E3" (lib/season-rules.ts shortEpisodeLabel). */
+  episodeLabel: string;
+  aiUsageTag: string;
+  seriesTitle: string;
+  coverImage: string | null;
+};
 export type OnSiteData = { series: OnSiteSeries[]; seriesTotal: number; episodes: OnSiteEpisode[]; episodesTotal: number };
 
 /** Whether a section appears for visitors: switched on and not empty. */

@@ -11,7 +11,10 @@ import {
   commentRateLimited,
 } from "@/lib/engagement-rules";
 import { failure, findPublicEpisode, isUsableId, type EngagementFailure } from "@/lib/engagement";
+import { screenCommentText } from "@/lib/comment-moderation";
+import { parseEpisodeHtml } from "@/lib/episode-content";
 import { prisma } from "@/lib/prisma";
+import { parseAnchor, resolveAnchor, textBlocks, type PassageAnchor } from "@/lib/text-anchor";
 import { hasRoleAccess, type AppRole } from "@/lib/roles";
 
 /*
@@ -28,6 +31,8 @@ export type CommentView = {
   createdAt: string;
   editedAt: string | null;
   author: { id: string; name: string | null; image: string | null; role: string; writerStatus: string; hideLevelFrame: boolean; selectedFrame: SelectedFrame | null };
+  /** Sweep I: the passage this comment is about, and whether it's still in the episode. */
+  passage: (PassageAnchor & { found: boolean }) | null;
 };
 
 const VISIBLE = { removedAt: null } satisfies Prisma.CommentWhereInput;
@@ -37,20 +42,31 @@ const commentSelect = {
   body: true,
   createdAt: true,
   editedAt: true,
+  quote: true,
+  quotePrefix: true,
+  quoteSuffix: true,
   // writerStatus picks the writer's avatar ring.
   user: { select: { id: true, name: true, image: true, role: true, ...FRAME_USER_SELECT } },
 } satisfies Prisma.CommentSelect;
 
 type CommentRow = Prisma.CommentGetPayload<{ select: typeof commentSelect }>;
 
-function toView(row: CommentRow): CommentView {
+function toView(row: CommentRow, blocks: readonly string[] | null = null): CommentView {
+  const anchor = row.quote ? { quote: row.quote, prefix: row.quotePrefix ?? "", suffix: row.quoteSuffix ?? "" } : null;
   return {
     id: row.id,
     body: row.body,
     createdAt: row.createdAt.toISOString(),
     editedAt: row.editedAt?.toISOString() ?? null,
     author: row.user,
+    passage: anchor ? { ...anchor, found: blocks ? resolveAnchor(blocks, anchor) !== null : true } : null,
   };
+}
+
+/** An episode's text blocks (lib/text-anchor.ts), for finding passages. */
+export async function episodeBlocks(episodeId: string) {
+  const episode = await prisma.episode.findUnique({ where: { id: episodeId }, select: { body: true } });
+  return episode ? textBlocks(parseEpisodeHtml(episode.body)) : [];
 }
 
 /**
@@ -76,25 +92,48 @@ export async function listComments(episodeId: string, cursor?: string | null) {
     prisma.comment.count({ where: { episodeId: episode.id, ...VISIBLE } }),
   ]);
 
-  const page = rows.slice(0, COMMENT_PAGE_SIZE).map(toView);
+  const shown = rows.slice(0, COMMENT_PAGE_SIZE);
+  // Only when a comment quotes a passage: is it still in the episode?
+  const blocks = shown.some((row) => row.quote) ? await episodeBlocks(episode.id) : null;
+  const page = shown.map((row) => toView(row, blocks));
   return { comments: page, total, nextCursor: rows.length > COMMENT_PAGE_SIZE ? page[page.length - 1].id : null };
 }
 
 type PostResult = { ok: true; comment: CommentView; created: boolean } | EngagementFailure;
 
-export async function postComment(userId: string, episodeId: unknown, rawBody: unknown, now = new Date()): Promise<PostResult> {
+export async function postComment(
+  userId: string,
+  episodeId: unknown,
+  rawBody: unknown,
+  now = new Date(),
+  /** Sweep I: a passage anchor ({ quote, prefix, suffix }) for a comment on a passage. */
+  rawPassage?: unknown,
+): Promise<PostResult> {
   const check = checkCommentBody(rawBody);
   if (!check.ok) return failure(400, "BAD_REQUEST", check.message);
+  const screened = await screenCommentText(check.body);
+  if (!screened.ok) return failure(400, "BAD_REQUEST", screened.message);
+
+  let passage: PassageAnchor | null = null;
+  if (rawPassage !== undefined && rawPassage !== null) {
+    const parsed = parseAnchor(rawPassage);
+    if (!parsed.ok) return failure(400, "BAD_REQUEST", parsed.message);
+    passage = parsed.anchor;
+  }
 
   const episode = await findPublicEpisode(episodeId);
   if (!episode) return failure(404, "NOT_FOUND", "That episode isn't available.");
   if (episode.locked) return failure(403, "LOCKED", "This episode can't be read right now, so comments are closed.");
+  // A passage must really be in the episode now.
+  if (passage && !resolveAnchor(await episodeBlocks(episode.id), passage)) {
+    return failure(409, "PASSAGE_CHANGED", "That passage isn't in the episode any more. Reload and try again.");
+  }
 
   const longestWindow = Math.max(...COMMENT_RATE_LIMITS.map((limit) => limit.windowMs));
   const recent = await prisma.comment.findMany({
     where: { userId, createdAt: { gte: new Date(now.getTime() - longestWindow) } },
     orderBy: { createdAt: "desc" },
-    select: { id: true, episodeId: true, body: true, createdAt: true, removedAt: true },
+    select: { id: true, episodeId: true, body: true, quote: true, createdAt: true, removedAt: true },
   });
 
   // A double tap (same text, same episode, moments apart) returns the comment already posted.
@@ -102,6 +141,7 @@ export async function postComment(userId: string, episodeId: unknown, rawBody: u
     (comment) =>
       comment.episodeId === episode.id &&
       comment.body === check.body &&
+      comment.quote === (passage?.quote ?? null) &&
       !comment.removedAt &&
       now.getTime() - comment.createdAt.getTime() < COMMENT_DUPLICATE_WINDOW_MS,
   );
@@ -115,7 +155,13 @@ export async function postComment(userId: string, episodeId: unknown, rawBody: u
   }
 
   const created = await prisma.comment.create({
-    data: { userId, episodeId: episode.id, body: check.body, createdAt: now },
+    data: {
+      userId,
+      episodeId: episode.id,
+      body: check.body,
+      createdAt: now,
+      ...(passage ? { quote: passage.quote, quotePrefix: passage.prefix, quoteSuffix: passage.suffix } : {}),
+    },
     select: commentSelect,
   });
   return { ok: true, comment: toView(created), created: true };
@@ -133,6 +179,8 @@ export async function findActionableComment(commentId: unknown) {
 export async function editComment(userId: string, commentId: unknown, rawBody: unknown): Promise<PostResult> {
   const check = checkCommentBody(rawBody);
   if (!check.ok) return failure(400, "BAD_REQUEST", check.message);
+  const screened = await screenCommentText(check.body);
+  if (!screened.ok) return failure(400, "BAD_REQUEST", screened.message);
   const comment = await findActionableComment(commentId);
   // Someone else's comment looks the same as a missing one.
   if (!comment || comment.userId !== userId) return failure(404, "NOT_FOUND", "Comment not found.");
@@ -185,6 +233,28 @@ export async function deleteComment(viewer: { id: string; role: AppRole }, comme
     audited: viewer.id !== comment.episode.series.authorId,
   });
   return { ok: true, outcome: "removed" };
+}
+
+export const PASSAGE_COMMENTS_LOADED = 300;
+
+/**
+ * Sweep I: the visible comments on passages of an episode, newest first (up
+ * to PASSAGE_COMMENTS_LOADED), each with where its passage is now. Comments
+ * whose passage was changed away are left out here (they still show in the
+ * comments list, marked as changed).
+ */
+export async function listPassageComments(episodeId: string, blocks: readonly string[]) {
+  const rows = await prisma.comment.findMany({
+    where: { episodeId, ...VISIBLE, quote: { not: null } },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: PASSAGE_COMMENTS_LOADED,
+    select: commentSelect,
+  });
+  return rows.flatMap((row) => {
+    const view = toView(row);
+    const range = view.passage ? resolveAnchor(blocks, view.passage) : null;
+    return range ? [{ comment: view, range }] : [];
+  });
 }
 
 /** Hides a comment and closes its open reports as actioned. */

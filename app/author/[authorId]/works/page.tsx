@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { shortEpisodeLabel } from "@/lib/season-rules";
 import AiTagBanner from "@/components/AiTagBanner";
 import { EpisodeRow } from "@/components/author-profile/WritingSections";
 import CoverImage from "@/components/series/CoverImage";
@@ -66,6 +67,8 @@ export default async function AuthorWorksPage({
             id: true,
             title: true,
             episodeNumber: true,
+            seasonEpisodeNumber: true,
+            season: { select: { number: true } },
             aiUsageTag: true,
             coverImage: true,
             series: { select: { title: true, coverImage: true } },
@@ -133,6 +136,7 @@ export default async function AuthorWorksPage({
                   id: episode.id,
                   title: episode.title,
                   episodeNumber: episode.episodeNumber,
+                  episodeLabel: shortEpisodeLabel(episode),
                   aiUsageTag: String(episode.aiUsageTag),
                   seriesTitle: episode.series.title,
                   coverImage: episode.coverImage || episode.series.coverImage,

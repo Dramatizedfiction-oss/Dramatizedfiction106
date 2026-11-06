@@ -1415,6 +1415,63 @@ html[data-reduce-motion="always"] *::after {
 }
 html[data-reduce-motion="always"] .frame-shimmer { animation: none; display: none; }
 
+/* Passages (Sweep I: components/reader/PassageLayer.tsx). Marks have no look of
+   their own, so the text stays clean; a paragraph's comments underline them
+   while open, and a linked or tapped passage flashes. The count sits after the
+   paragraph's last word. "Comment markers: off" in Reading & Appearance hides
+   the counts (the passages and comments are still there). */
+.passage-mark { background: transparent; color: inherit; border-radius: 2px; }
+.passage-mark[data-active="true"],
+.passage-target {
+  background: color-mix(in srgb, var(--sa, #7c3aed) 16%, transparent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--sa, #7c3aed) 75%, transparent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+.passage-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: 0.35rem;
+  min-height: 1.5rem;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--paper-rule);
+  color: var(--paper-muted);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.7rem;
+  line-height: 1;
+  vertical-align: 0.15em;
+  user-select: none;
+  -webkit-user-select: none;
+  position: relative;
+}
+/* A 44px tap target around the small pill. */
+.passage-count::after { content: ""; position: absolute; inset: -10px -6px; }
+.passage-count:hover,
+.passage-count:focus-visible { color: var(--paper-ink); border-color: var(--paper-muted); outline: none; }
+.passage-count:focus-visible { box-shadow: 0 0 0 2px var(--sa, #7c3aed); }
+html[data-passage-markers="off"] .passage-count { display: none; }
+.passage-quote {
+  border-left: 3px solid color-mix(in srgb, var(--sa, #7c3aed) 75%, transparent);
+  padding: 0.35rem 0 0.35rem 0.85rem;
+  font-style: italic;
+  color: var(--text-secondary);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.passage-flash { animation: passage-flash 2.2s ease-out 1; border-radius: 4px; }
+@keyframes passage-flash {
+  0%, 35% { background: color-mix(in srgb, var(--sa, #7c3aed) 30%, transparent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--sa, #7c3aed) 30%, transparent); }
+  100% { background: transparent; box-shadow: 0 0 0 4px transparent; }
+}
+/* Without motion: a steady outline instead of the fade. */
+@media (prefers-reduced-motion: reduce) {
+  .passage-flash { animation: none; outline: 2px solid var(--sa, #7c3aed); outline-offset: 3px; }
+}
+html[data-reduce-motion="always"] .passage-flash { animation: none !important; outline: 2px solid var(--sa, #7c3aed); outline-offset: 3px; }
+
 /* The series page's accent (lib/series-accent.ts sets the variables per series). */
 .series-accent { --sa: var(--sa-light, #7c3aed); --sa-ink: var(--sa-ink-light, #ffffff); --star-fill: var(--star-fill-light, #b45309); }
 .dark .series-accent { --sa: var(--sa-dark, #8b5cf6); --sa-ink: var(--sa-ink-dark, #ffffff); --star-fill: var(--star-fill-dark, #fbbf24); }

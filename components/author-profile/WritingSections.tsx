@@ -297,7 +297,7 @@ export function EpisodeRow({ episode }: { episode: OnSiteData["episodes"][number
       </div>
       <span className="min-w-0">
         <span className="theme-meta block truncate text-xs">
-          {episode.seriesTitle} · Episode {episode.episodeNumber}
+          {episode.seriesTitle} · {episode.episodeLabel}
         </span>
         <span className="theme-heading mt-0.5 block truncate font-medium">{episode.title}</span>
         <span className="mt-1 block">

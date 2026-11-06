@@ -134,8 +134,12 @@ describe("writer frames", () => {
     assert.match(css, /html\[data-reduce-motion="always"\] \.frame-shimmer/);
   });
 
-  test("frames are never stored: no frame column, computed from writerStatus", () => {
-    assert.doesNotMatch(read("prisma/schema.prisma"), /frame/i);
+  test("level frames are never stored: computed from writerStatus (only a chosen Store frame is, Sweep I)", () => {
+    const schema = read("prisma/schema.prisma");
+    // The only frame columns are the member's Store choice and "No frame".
+    const frameColumns = [...schema.matchAll(/^\s+(\w*[Ff]rame\w*)\s/gm)].map((match) => match[1]);
+    assert.deepEqual([...new Set(frameColumns)].sort(), ["hideLevelFrame", "selectedFrame", "selectedFrameId"]);
+    assert.match(read("lib/writer-frames.ts"), /FRAME_BY_LEVEL\[level\]/);
   });
 });
 

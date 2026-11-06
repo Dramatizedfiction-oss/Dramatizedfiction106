@@ -101,6 +101,7 @@ model User {
   feedShelvesUpdated       FeedShelf[]
   feedShelfItemsAdded      FeedShelfItem[]
   writerExposure           WriterExposure[]
+  highlights               Highlight[]
 
   @@index([selectedFrameId])
 }
@@ -465,6 +466,7 @@ model Episode {
   comments      Comment[]
   progress      ReadingProgress[]
   aiTagReports  AiTagReport[]
+  highlights    Highlight[]
   /// Sweep G. Nullable only until every writer of episodes sets it (stage 4 makes it required).
   seasonId      String?
   /// Number within its season (1, 2, …). episodeNumber stays the series-wide reading order.
@@ -539,6 +541,12 @@ model Comment {
   editedAt    DateTime?
   removedAt   DateTime?
   removedById String?
+  /// Sweep I: a comment on a passage. The exact quoted text (1-300 chars, a
+  /// hand-written CHECK) plus up to 64 characters before and after it, never
+  /// positions, so small episode edits don't break it (lib/text-anchor.ts).
+  quote       String?
+  quotePrefix String?
+  quoteSuffix String?
   episode     Episode         @relation(fields: [episodeId], references: [id], onDelete: Cascade)
   user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   removedBy   User?           @relation("CommentRemover", fields: [removedById], references: [id], onDelete: SetNull)
@@ -546,6 +554,27 @@ model Comment {
 
   @@index([episodeId, createdAt, id])
   @@index([userId, createdAt])
+}
+
+/// A passage a member saved, with an optional private note (Sweep I). Shown
+/// only to its owner (Library > Highlights). Anchored like a passage comment:
+/// quote + context, never positions. Quote 1-300 and note up to 1,000
+/// characters are hand-written CHECKs in the migration.
+model Highlight {
+  id          String   @id @default(cuid())
+  userId      String
+  episodeId   String
+  quote       String
+  quotePrefix String   @default("")
+  quoteSuffix String   @default("")
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  episode     Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([episodeId])
 }
 
 /// A member reporting a series' or episode's AI usage tag as wrong, reviewed in

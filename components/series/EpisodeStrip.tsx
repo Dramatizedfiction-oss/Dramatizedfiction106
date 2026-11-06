@@ -7,6 +7,7 @@ import BottomSheet from "@/components/ui/BottomSheet";
 import CoverImage from "@/components/series/CoverImage";
 import PlaceholderArt from "@/components/series/PlaceholderArt";
 import { coverThumbUrl } from "@/lib/cover-thumbs";
+import { episodeCode } from "@/lib/season-rules";
 
 /*
  * The series page's episode strip: a snap-scrolling row of cards with the next
@@ -16,8 +17,11 @@ import { coverThumbUrl } from "@/lib/cover-thumbs";
  * the same size: the title area always takes two lines (longer titles end in
  * "…") and the progress track is always there. The ⋯ menu has its own 48px
  * button beside the title, outside the card's link.
- * The season pill (and its bottom sheet) only appears when the series has more
- * than one season. Each card's menu: Bookmark (signed-in) and Share.
+ * The season pill (and its bottom sheet) only appears when readers can see
+ * more than one season (Sweep I): the sheet lists each season with its title,
+ * episode count and Complete/Ongoing, and choosing one shows its episodes.
+ * The strip opens on the season the reader is in, else the latest. Each
+ * card's menu: Bookmark (signed-in) and Share.
  */
 
 export type StripEpisode = {
@@ -27,13 +31,20 @@ export type StripEpisode = {
   readTime: number;
   coverImage: string | null;
   season: number;
+  /** The number readers see inside the season ("S2 E3"). */
+  numberInSeason: number;
   progress: number | null;
   bookmarked: boolean;
 };
 
-export function episodeLabel(episode: { season: number; episodeNumber: number }, multiSeason: boolean) {
-  return multiSeason ? `S${episode.season} · E${episode.episodeNumber}` : `E${episode.episodeNumber}`;
+export type StripSeason = { number: number; label: string; status: "ONGOING" | "COMPLETE"; count: number; minutes: number };
+
+export function episodeLabel(episode: { season: number; numberInSeason: number }, withSeasonCodes: boolean) {
+  return episodeCode({ seasonNumber: episode.season, numberInSeason: episode.numberInSeason }, withSeasonCodes);
 }
+
+const statusText = (status: StripSeason["status"]) => (status === "COMPLETE" ? "Complete" : "Ongoing");
+const countText = (count: number) => `${count} ${count === 1 ? "episode" : "episodes"}`;
 
 export default function EpisodeStrip({
   seriesId,
@@ -42,6 +53,8 @@ export default function EpisodeStrip({
   themeColor,
   episodes,
   seasons,
+  withSeasonCodes,
+  openingSeason,
   resumeEpisodeId,
   signedIn,
 }: {
@@ -50,13 +63,16 @@ export default function EpisodeStrip({
   seriesCover: string | null;
   themeColor: string | null;
   episodes: StripEpisode[];
-  seasons: { number: number; count: number }[];
+  seasons: StripSeason[];
+  withSeasonCodes: boolean;
+  openingSeason: number;
   resumeEpisodeId: string | null;
   signedIn: boolean;
 }) {
   const multiSeason = seasons.length > 1;
   const resume = episodes.find((episode) => episode.id === resumeEpisodeId) ?? null;
-  const [season, setSeason] = useState(resume?.season ?? seasons[0]?.number ?? 1);
+  const [season, setSeason] = useState(openingSeason);
+  const current = seasons.find((item) => item.number === season) ?? null;
   const [sheetOpen, setSheetOpen] = useState(false);
   const [menu, setMenu] = useState<string | null>(null);
   const [bookmarks, setBookmarks] = useState(() => new Set(episodes.filter((episode) => episode.bookmarked).map((episode) => episode.id)));
@@ -123,7 +139,7 @@ export default function EpisodeStrip({
             aria-haspopup="dialog"
             className="inline-flex min-h-11 min-w-[9rem] items-center justify-between gap-3 rounded-full border border-[var(--border-strong)] bg-[var(--surface-raised)] px-4 text-sm font-semibold text-[var(--text-primary)] transition hover:border-[var(--sa)]"
           >
-            Season {season}
+            <span className="sr-only">Choose a season. Showing </span>Season {season}
             <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 text-[var(--text-secondary)]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 8l5 5 5-5" />
             </svg>
@@ -139,6 +155,12 @@ export default function EpisodeStrip({
         ) : null}
       </div>
 
+      {multiSeason && current ? (
+        <p className="theme-meta mt-1 break-words text-sm">
+          {current.label} · {countText(current.count)} · {statusText(current.status)}
+        </p>
+      ) : null}
+
       <p className={notice ? "theme-meta mt-2 text-sm" : "sr-only"} aria-live="polite">
         {notice ?? ""}
       </p>
@@ -152,7 +174,7 @@ export default function EpisodeStrip({
               <StripCard
                 episode={episode}
                 continueCard={episode.id === resume?.id}
-                label={episodeLabel(episode, multiSeason)}
+                label={episodeLabel(episode, withSeasonCodes)}
                 seriesCover={seriesCover}
                 themeColor={themeColor}
                 menuOpen={menu === episode.id}
@@ -170,23 +192,25 @@ export default function EpisodeStrip({
       <BottomSheet open={sheetOpen} title="Choose a season" onClose={() => setSheetOpen(false)}>
         <ul className="space-y-1">
           {seasons.map((item) => {
-            const current = item.number === season;
+            const chosen = item.number === season;
             return (
               <li key={item.number}>
                 <button
                   type="button"
-                  aria-current={current ? "true" : undefined}
+                  aria-current={chosen ? "true" : undefined}
                   onClick={() => {
                     setSeason(item.number);
                     setSheetOpen(false);
                   }}
-                  className={`flex min-h-12 w-full items-center justify-between rounded-2xl px-4 text-left text-sm transition ${
-                    current ? "bg-[color-mix(in_srgb,var(--sa)_14%,transparent)] font-semibold" : "hover:bg-[var(--panel-hover)]"
+                  className={`flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl px-4 py-2 text-left text-sm transition ${
+                    chosen ? "bg-[color-mix(in_srgb,var(--sa)_14%,transparent)] font-semibold" : "hover:bg-[var(--panel-hover)]"
                   }`}
                 >
-                  <span>Season {item.number}</span>
-                  <span className="theme-meta text-xs">
-                    {item.count} {item.count === 1 ? "episode" : "episodes"}
+                  <span className="min-w-0 break-words">{item.label}</span>
+                  <span className="theme-meta shrink-0 text-right text-xs">
+                    {countText(item.count)}
+                    <br />
+                    {statusText(item.status)}
                   </span>
                 </button>
               </li>
@@ -247,7 +271,7 @@ function StripCard({
           <CoverImage
             sources={[coverThumbUrl(episode.coverImage), episode.coverImage, coverThumbUrl(seriesCover), seriesCover]}
             className="absolute inset-0 h-full w-full object-cover"
-            fallback={<PlaceholderArt themeColor={themeColor} number={episode.episodeNumber} kicker={label} title={episode.title} />}
+            fallback={<PlaceholderArt themeColor={themeColor} number={episode.numberInSeason} kicker={label} title={episode.title} />}
           />
           {continueCard ? (
             <span className="absolute left-3 top-3 rounded-full bg-[var(--sa)] px-2.5 py-1 font-mono-df text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--sa-ink)]">

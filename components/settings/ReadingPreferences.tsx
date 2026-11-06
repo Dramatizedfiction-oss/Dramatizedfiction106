@@ -51,6 +51,15 @@ const CONTROLS: { key: keyof ReadingPrefs; label: string; hint: string; options:
       { value: "always", label: "Always reduce" },
     ],
   },
+  {
+    key: "markers",
+    label: "Comment markers",
+    hint: "Small counts on passages readers have commented on. Hidden, the comments are still there below each episode.",
+    options: [
+      { value: "on", label: "Show" },
+      { value: "off", label: "Hide" },
+    ],
+  },
 ];
 
 export default function ReadingPreferences() {

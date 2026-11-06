@@ -1,6 +1,7 @@
 import { PUBLIC_EPISODE_WHERE } from "@/lib/content-visibility";
 import { ACTIVITY_PAGE_SIZE } from "@/lib/engagement-rules";
 import { prisma } from "@/lib/prisma";
+import { shortEpisodeLabel } from "@/lib/season-rules";
 
 /*
  * A member's Activity: their bookmarks, ratings and comments merged newest
@@ -9,7 +10,7 @@ import { prisma } from "@/lib/prisma";
  * canViewActivity). Each page reads at most PAGE_SIZE + 1 rows per table.
  */
 
-type EpisodeRef = { id: string; title: string; episodeNumber: number; seriesId: string; seriesTitle: string };
+type EpisodeRef = { id: string; title: string; episodeNumber: number; episodeLabel: string; seriesId: string; seriesTitle: string };
 
 export type ActivityItem =
   | { kind: "bookmark"; key: string; at: string; episode: EpisodeRef }
@@ -20,14 +21,24 @@ const episodeSelect = {
   id: true,
   title: true,
   episodeNumber: true,
+  seasonEpisodeNumber: true,
+  season: { select: { number: true } },
   series: { select: { id: true, title: true } },
 } as const;
 
-function ref(episode: { id: string; title: string; episodeNumber: number; series: { id: string; title: string } }): EpisodeRef {
+function ref(episode: {
+  id: string;
+  title: string;
+  episodeNumber: number;
+  seasonEpisodeNumber: number | null;
+  season: { number: number } | null;
+  series: { id: string; title: string };
+}): EpisodeRef {
   return {
     id: episode.id,
     title: episode.title,
     episodeNumber: episode.episodeNumber,
+    episodeLabel: shortEpisodeLabel(episode),
     seriesId: episode.series.id,
     seriesTitle: episode.series.title,
   };

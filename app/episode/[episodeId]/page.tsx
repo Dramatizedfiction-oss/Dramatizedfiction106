@@ -13,7 +13,13 @@ import BookmarkButton, { BookmarkProvider } from "@/components/engagement/Bookma
 import CommentsSection from "@/components/engagement/CommentsSection";
 import RatingControl from "@/components/engagement/RatingControl";
 import { isBookmarked } from "@/lib/bookmarks";
-import { listComments } from "@/lib/comments";
+import { listComments, listPassageComments } from "@/lib/comments";
+import PassageLayer from "@/components/reader/PassageLayer";
+import type { RenderedPassage } from "@/components/episode-content/EpisodeContent";
+import { findOwnHighlight } from "@/lib/highlights";
+import { markerBlocks, resolveAnchor, textBlocks } from "@/lib/text-anchor";
+import { episodeCode, episodeHeading, seasonLabel, showSeasonCodes } from "@/lib/season-rules";
+import { seasonOf } from "@/lib/series-page";
 import { starColors } from "@/lib/engagement-rules";
 import { viewerRating } from "@/lib/ratings";
 import { hasRoleAccess } from "@/lib/roles";
@@ -31,8 +37,11 @@ import { seriesAccentStyle } from "@/lib/series-accent";
 
 export default async function EpisodeReaderPage({
   params,
+  searchParams,
 }: {
   params: { episodeId: string };
+  /** Sweep I: ?highlight=<id> (your own) or ?passage=<commentId> jumps to a passage. */
+  searchParams?: { highlight?: string; passage?: string };
 }) {
   // Only published episodes in published series are ever readable here.
   const episode = await prisma.episode.findFirst({
@@ -40,6 +49,7 @@ export default async function EpisodeReaderPage({
     include: {
       series: true,
       author: { select: { id: true, name: true } },
+      season: { select: { number: true, title: true } },
     },
   });
 
@@ -105,13 +115,56 @@ export default async function EpisodeReaderPage({
 
   const seriesHref = `/series/${episode.seriesId}`;
 
+  // Seasons (Sweep G/I): labels read "S2 E3" only when readers can tell seasons apart.
+  const visibleSeasons = await prisma.season.findMany({
+    where: { seriesId: episode.seriesId, episodes: { some: { status: "PUBLISHED" } } },
+    select: { number: true },
+  });
+  const withSeasonCodes = showSeasonCodes(visibleSeasons.map((season) => season.number));
+  const here = seasonOf(episode);
+  const thisCode = { seasonNumber: here.season, numberInSeason: here.numberInSeason };
+  const nextHere = next ? seasonOf(next) : null;
+  const nextSummary = next
+    ? {
+        id: next.id,
+        title: next.title,
+        episodeNumber: next.episodeNumber,
+        label: episodeHeading({ seasonNumber: nextHere!.season, numberInSeason: nextHere!.numberInSeason }, withSeasonCodes),
+        seasonStart: withSeasonCodes && nextHere!.season !== here.season && next.season ? seasonLabel(next.season) : null,
+      }
+    : null;
+
   // Bookmarks, the viewer's rating and the first page of comments (one light query each).
   const isCreator = Boolean(viewerId) && (viewerId === episode.authorId || viewerId === episode.series.authorId);
-  const [bookmarked, myRating, firstComments] = await Promise.all([
+  // Passages (Sweep I): the text blocks, the passage comments found in them, and a linked passage.
+  const content = parseEpisodeHtml(episode.body);
+  const blocks = textBlocks(content);
+  const highlightParam = typeof searchParams?.highlight === "string" ? searchParams.highlight : null;
+  const passageParam = typeof searchParams?.passage === "string" && searchParams.passage.length <= 191 ? searchParams.passage : null;
+  const [bookmarked, myRating, firstComments, passageComments, linkedHighlight, linkedComment] = await Promise.all([
     viewerId ? isBookmarked(viewerId, episode.id) : false,
     viewerId && canReadEpisode && !isCreator ? viewerRating(viewerId, episode.id) : null,
     canReadEpisode ? listComments(episode.id) : null,
+    canReadEpisode ? listPassageComments(episode.id, blocks) : [],
+    viewerId && canReadEpisode && highlightParam ? findOwnHighlight(viewerId, highlightParam, episode.id) : null,
+    canReadEpisode && passageParam
+      ? prisma.comment.findFirst({
+          where: { id: passageParam, episodeId: episode.id, removedAt: null, quote: { not: null } },
+          select: { quote: true, quotePrefix: true, quoteSuffix: true },
+        })
+      : null,
   ]);
+  const passageCounts = new Map<number, number>();
+  for (const item of passageComments) passageCounts.set(item.range.block, (passageCounts.get(item.range.block) ?? 0) + 1);
+  const shownMarkers = markerBlocks(passageCounts);
+  const markers = Object.fromEntries([...passageCounts].filter(([block]) => shownMarkers.has(block)));
+  const passages: RenderedPassage[] = passageComments.map((item) => ({ ...item.range, ids: [item.comment.id] }));
+  const linked = linkedHighlight ?? linkedComment;
+  const linkedRange = linked?.quote
+    ? resolveAnchor(blocks, { quote: linked.quote, prefix: linked.quotePrefix ?? "", suffix: linked.quoteSuffix ?? "" })
+    : null;
+  if (linkedRange) passages.push({ ...linkedRange, ids: [], target: true });
+  const passageTarget = linked ? { found: Boolean(linkedRange), what: linkedHighlight ? ("highlight" as const) : ("comment" as const) } : null;
 
   return (
     <BookmarkProvider episodeId={episode.id} initialBookmarked={bookmarked} signedIn={Boolean(viewerId)}>
@@ -124,6 +177,22 @@ export default async function EpisodeReaderPage({
         {trackRead ? <ReadTracker episodeId={episode.id} /> : null}
         {/* How far the member has read (series page progress bars); signed-in only. */}
         {viewerId && canReadEpisode ? <ReadingProgressTracker episodeId={episode.id} targetId="story-body" /> : null}
+        {canReadEpisode ? (
+          <PassageLayer
+            episodeId={episode.id}
+            rootId="story-body"
+            signedIn={Boolean(viewerId)}
+            target={passageTarget}
+            comments={passageComments.map(({ comment, range }) => ({
+              id: comment.id,
+              block: range.block,
+              quote: comment.passage?.quote ?? "",
+              body: comment.body,
+              authorName: comment.author.name || "Reader",
+              createdAt: comment.createdAt,
+            }))}
+          />
+        ) : null}
         <main className="pb-24">
           <EpisodeReadingView
             seriesTitle={episode.series.title}
@@ -131,6 +200,7 @@ export default async function EpisodeReaderPage({
             authorName={episode.author.name}
             authorHref={`/author/${episode.author.id}`}
             episodeNumber={episode.episodeNumber}
+            episodeLabel={episodeHeading(thisCode, withSeasonCodes)}
             readTime={episode.readTime}
             title={episode.title}
             aiUsageTag={episode.aiUsageTag}
@@ -140,8 +210,10 @@ export default async function EpisodeReaderPage({
             {canReadEpisode ? (
               <div id="story-body" className="reading-body series-accent" style={seriesAccentStyle(episode.series.themeColor)}>
                 <EpisodeContent
-                  content={parseEpisodeHtml(episode.body)}
+                  content={content}
                   sceneBreak={sceneBreakFor(episode.series.genre, episode.series.tags).design}
+                  passages={passages}
+                  markers={markers}
                 />
               </div>
             ) : (
@@ -160,7 +232,9 @@ export default async function EpisodeReaderPage({
               <div className="reader-ornament" aria-hidden>
                 ✦ ✦ ✦
               </div>
-              <p className="reader-meta text-center">End of Episode {episode.episodeNumber}</p>
+              <p className="reader-meta text-center">
+                End of {withSeasonCodes ? episodeCode(thisCode, true) : `Episode ${here.numberInSeason}`}
+              </p>
               <div className="mt-5">
                 <BookmarkButton variant="pill" episodeTitle={episode.title} />
               </div>
@@ -197,11 +271,11 @@ export default async function EpisodeReaderPage({
               <div className="mt-14 border-t border-[var(--paper-rule)] pt-10">
                 <EpisodeTransitionCard
                   currentEpisodeId={episode.id}
-                  nextEpisode={
-                    next ? { id: next.id, title: next.title, episodeNumber: next.episodeNumber } : null
-                  }
+                  nextEpisode={nextSummary}
                   accessStatus={nextEpisodeAccessStatus}
                   phaseThreeActive={phaseThreeActive}
+                  seriesComplete={episode.series.isComplete}
+                  seriesTitle={episode.series.title}
                 />
               </div>
               <p className="mt-8 text-center">

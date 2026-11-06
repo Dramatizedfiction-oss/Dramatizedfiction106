@@ -33,7 +33,7 @@ export default async function SettingsPage() {
           <Row
             href="/settings/reading"
             title="Reading & Appearance"
-            description="Theme, text size, line spacing, reading width and motion on this device."
+            description="Theme, text size, line spacing, reading width, motion and comment markers on this device."
             icon={<BookOpenIcon size={18} />}
           />
           {signedIn ? (

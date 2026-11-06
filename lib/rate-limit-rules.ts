@@ -20,6 +20,12 @@ export const BOOKMARK_RATE_LIMITS: readonly RateLimitWindow[] = [
   { windowMs: 60 * 60_000, max: 200 },
 ];
 
+/** Saving highlights, per member (Sweep I). Passage comments use the comment limits. */
+export const HIGHLIGHT_RATE_LIMITS: readonly RateLimitWindow[] = [
+  { windowMs: 60_000, max: 30 },
+  { windowMs: 60 * 60_000, max: 300 },
+];
+
 /**
  * Failed sign-ins, per account (Sweep E): over either window, sign-in for that
  * account is refused with 429 before the password is checked.

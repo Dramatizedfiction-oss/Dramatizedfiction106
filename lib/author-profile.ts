@@ -10,6 +10,7 @@ import {
   type SectionSwitches,
   type SeriesCardInfo,
 } from "@/lib/author-profile-rules";
+import { shortEpisodeLabel } from "@/lib/season-rules";
 import { PUBLIC_EPISODE_WHERE, PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
 import { seriesRatingSummary } from "@/lib/engagement-rules";
 import { prisma } from "@/lib/prisma";
@@ -58,6 +59,8 @@ export const writingViewSelect = {
       id: true,
       title: true,
       episodeNumber: true,
+      seasonEpisodeNumber: true,
+      season: { select: { number: true } },
       aiUsageTag: true,
       coverImage: true,
       series: { select: { title: true, coverImage: true } },
@@ -96,6 +99,7 @@ export function onSiteData(row: Pick<WritingViewRow, "series" | "episodes" | "_c
       id: episode.id,
       title: episode.title,
       episodeNumber: episode.episodeNumber,
+      episodeLabel: shortEpisodeLabel(episode),
       aiUsageTag: String(episode.aiUsageTag),
       seriesTitle: episode.series.title,
       coverImage: episode.coverImage || episode.series.coverImage,

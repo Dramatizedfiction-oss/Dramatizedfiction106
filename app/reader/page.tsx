@@ -48,7 +48,11 @@ export default async function ReaderProfilePage({ searchParams }: { searchParams
   });
   if (!reader) redirect("/sign-in?callbackUrl=/reader");
   // A writer's profile is their author profile; their reading lives in its Reading view.
-  if (isWriterRole(reader.role)) redirect(profileHref(reader, "reading"));
+  // Writers' Library lives on their author page; keep a ?shelf= (e.g. Highlights) on the way.
+  if (isWriterRole(reader.role)) {
+    const shelf = parseLibraryShelf(searchParams?.shelf);
+    redirect(`${profileHref(reader, "reading")}${shelf !== "following" ? `&shelf=${shelf}` : ""}`);
+  }
 
   const isPublic = reader.readingProfileVisibility === "PUBLIC";
   const activityPublic = reader.activityVisibility === "PUBLIC";

@@ -7,6 +7,15 @@ import { seriesRating } from "@/lib/ratings";
 import { continuePoint } from "@/lib/reading-progress-rules";
 import { primaryRow, type RowKind } from "@/lib/series-rows-rules";
 import { SERIES_TAGS, knownSeriesTags } from "@/lib/series-tags";
+import {
+  displayedSeasonStatus,
+  episodeCode,
+  openingSeason,
+  readerVisibleSeasons,
+  seasonLabel,
+  showSeasonCodes,
+  type SeasonStatusValue,
+} from "@/lib/season-rules";
 
 /*
  * Data for the series page (app/series/[seriesId]). Server-only. Story text
@@ -15,10 +24,45 @@ import { SERIES_TAGS, knownSeriesTags } from "@/lib/series-tags";
  * bookmarks and progress in this series.
  */
 
-/** Seasons aren't in the data model yet: every episode is season 1. */
-export function seasonOf(_episode: { episodeNumber: number }) {
-  return 1;
+/**
+ * An episode's season for readers (Sweep G/I): its season's number and its
+ * number inside it. Older rows without a season read as Season 1 with the
+ * overall number, exactly as before seasons.
+ */
+export function seasonOf(episode: { episodeNumber: number; seasonEpisodeNumber?: number | null; season?: { number: number } | null }) {
+  return { season: episode.season?.number ?? 1, numberInSeason: episode.seasonEpisodeNumber ?? episode.episodeNumber };
 }
+
+type SeasonRow = { number: number; title: string | null; description: string | null; status: SeasonStatusValue };
+
+/**
+ * The seasons readers see (those with a published episode), each with its own
+ * count, reading time and displayed status (a complete series shows every
+ * season complete), plus whether labels need the season ("S2 E3").
+ */
+export function readerSeasons(
+  seasons: SeasonRow[],
+  episodes: { season: number; readTime: number }[],
+  seriesComplete: boolean,
+) {
+  const rows = (seasons.length ? seasons : [{ number: 1, title: null, description: null, status: "ONGOING" as const }]).map((season) => {
+    const own = episodes.filter((episode) => episode.season === season.number);
+    return {
+      number: season.number,
+      title: season.title,
+      description: season.description,
+      label: seasonLabel(season),
+      status: displayedSeasonStatus(season.status, seriesComplete),
+      count: own.length,
+      minutes: own.reduce((sum, episode) => sum + episode.readTime, 0),
+      publishedCount: own.length,
+    };
+  });
+  const visible = readerVisibleSeasons(rows);
+  return { seasons: visible, withSeasonCodes: showSeasonCodes(visible.map((season) => season.number)) };
+}
+
+export type ReaderSeason = ReturnType<typeof readerSeasons>["seasons"][number];
 
 /** The title of a published series (for the browser tab), or null. One small query. */
 export async function getPublicSeriesTitle(seriesId: string) {
@@ -45,8 +89,9 @@ export async function getSeriesPage(seriesId: string, viewerId: string | null) {
       episodes: {
         where: { status: "PUBLISHED" },
         orderBy: { episodeNumber: "asc" },
-        select: { id: true, title: true, episodeNumber: true, readTime: true, coverImage: true },
+        select: { id: true, title: true, episodeNumber: true, seasonEpisodeNumber: true, season: { select: { number: true } }, readTime: true, coverImage: true },
       },
+      seasons: { orderBy: { number: "asc" }, select: { number: true, title: true, description: true, status: true } },
     },
   });
   if (!series) return null;
@@ -64,25 +109,29 @@ export async function getSeriesPage(seriesId: string, viewerId: string | null) {
 
   const progress = new Map((viewer?.progress ?? []).map((row) => [row.episodeId, row.percent]));
   const bookmarked = new Set(viewer?.bookmarks ?? []);
-  const episodes = series.episodes.map((episode) => ({
+  const episodes = series.episodes.map(({ season, seasonEpisodeNumber, ...episode }) => ({
     ...episode,
-    season: seasonOf(episode),
+    ...seasonOf({ ...episode, season, seasonEpisodeNumber }),
     progress: progress.get(episode.id) ?? null,
     bookmarked: bookmarked.has(episode.id),
   }));
-  const seasons = [...new Set(episodes.map((episode) => episode.season))].map((number) => ({
-    number,
-    count: episodes.filter((episode) => episode.season === number).length,
-  }));
+  const { seasons, withSeasonCodes } = readerSeasons(series.seasons, episodes, series.isComplete);
+  // Continue works across seasons: it follows the series-wide reading order.
+  const resume = viewer ? continuePoint(series.episodes, viewer.progress) : null;
+  const resumeEpisode = resume ? episodes.find((episode) => episode.id === resume.episodeId) ?? null : null;
 
   return {
     series,
     rating,
     episodes,
     seasons,
+    withSeasonCodes,
+    /** The season the strip opens on: the reader's current one, else the latest. */
+    openingSeason: openingSeason(seasons, resume && resume.kind !== "again" ? (resumeEpisode?.season ?? null) : null),
     totalMinutes: episodes.reduce((sum, episode) => sum + episode.readTime, 0),
     following: viewer?.following ?? false,
-    resume: viewer ? continuePoint(series.episodes, viewer.progress) : null,
+    resume,
+    resumeCode: resumeEpisode ? episodeCode({ seasonNumber: resumeEpisode.season, numberInSeason: resumeEpisode.numberInSeason }, withSeasonCodes) : null,
     rails,
   };
 }
@@ -247,11 +296,13 @@ export async function getEpisodeList(seriesId: string, viewerId: string | null) 
       title: true,
       coverImage: true,
       themeColor: true,
+      isComplete: true,
       episodes: {
         where: PUBLIC_EPISODE_WHERE,
         orderBy: { episodeNumber: "asc" },
-        select: { id: true, title: true, episodeNumber: true, readTime: true, coverImage: true },
+        select: { id: true, title: true, episodeNumber: true, seasonEpisodeNumber: true, season: { select: { number: true } }, readTime: true, coverImage: true },
       },
+      seasons: { orderBy: { number: "asc" }, select: { number: true, title: true, description: true, status: true } },
     },
   });
   if (!series) return null;
@@ -262,8 +313,10 @@ export async function getEpisodeList(seriesId: string, viewerId: string | null) 
       })
     : [];
   const byEpisode = new Map(progress.map((row) => [row.episodeId, row.percent]));
-  return {
-    series,
-    episodes: series.episodes.map((episode) => ({ ...episode, season: seasonOf(episode), progress: byEpisode.get(episode.id) ?? null })),
-  };
+  const episodes = series.episodes.map(({ season, seasonEpisodeNumber, ...episode }) => ({
+    ...episode,
+    ...seasonOf({ ...episode, season, seasonEpisodeNumber }),
+    progress: byEpisode.get(episode.id) ?? null,
+  }));
+  return { series, episodes, ...readerSeasons(series.seasons, episodes, series.isComplete) };
 }

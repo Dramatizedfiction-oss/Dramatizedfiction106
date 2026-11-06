@@ -2,6 +2,7 @@ import { PUBLIC_EPISODE_WHERE } from "@/lib/content-visibility";
 import { BOOKMARK_PAGE_SIZE } from "@/lib/engagement-rules";
 import { findPublicEpisode } from "@/lib/engagement";
 import { prisma } from "@/lib/prisma";
+import { shortEpisodeLabel } from "@/lib/season-rules";
 
 /*
  * Bookmarks: a member saving an episode to their Bookmarks list. Not a
@@ -36,6 +37,8 @@ export type BookmarkEntry = {
   episodeId: string;
   episodeTitle: string;
   episodeNumber: number;
+  /** Sweep I: "Ep 3" or "S2 E3" (lib/season-rules.ts shortEpisodeLabel). */
+  episodeLabel: string;
   seriesId: string;
   seriesTitle: string;
   coverImage: string | null;
@@ -66,6 +69,8 @@ export async function listBookmarks(userId: string, before?: string | null) {
           id: true,
           title: true,
           episodeNumber: true,
+          seasonEpisodeNumber: true,
+          season: { select: { number: true } },
           coverImage: true,
           series: { select: { id: true, title: true, coverImage: true, themeColor: true } },
         },
@@ -78,6 +83,7 @@ export async function listBookmarks(userId: string, before?: string | null) {
     episodeId: episode.id,
     episodeTitle: episode.title,
     episodeNumber: episode.episodeNumber,
+    episodeLabel: shortEpisodeLabel(episode),
     seriesId: episode.series.id,
     seriesTitle: episode.series.title,
     coverImage: episode.coverImage ?? episode.series.coverImage,

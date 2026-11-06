@@ -2,17 +2,20 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import ReaderBookmarks from "@/components/reader/ReaderBookmarks";
+import ReaderHighlights from "@/components/reader/ReaderHighlights";
 import ReaderLibrary from "@/components/reader/ReaderLibrary";
 import ReaderPeople from "@/components/reader/ReaderPeople";
 import { ShelfHeading } from "@/components/reader/ShelfParts";
 import type { PersonEntry } from "@/lib/author-follows";
 import type { BookmarkEntry } from "@/lib/bookmarks";
+import type { HighlightEntry } from "@/lib/highlights";
 import { LIBRARY_SHELF_IDS, LIBRARY_SHELF_TITLES, type LibraryShelf } from "@/lib/library-shelves";
 import type { LibraryEntry } from "@/lib/series-follows";
 
 /*
- * The owner's Library (Sweep B2; one scrolling page since Sweep D): three
- * stacked sections, Followed Series, Bookmarks and Follows (writers), each
+ * The owner's Library (Sweep B2; one scrolling page since Sweep D): stacked
+ * sections, Followed Series, Bookmarks, Follows (writers) and, since Sweep I,
+ * Highlights (saved passages with private notes), each
  * with a live count and its first few items ("See all" for the rest). An old
  * or shared ?shelf= link scrolls to its section.
  */
@@ -22,17 +25,22 @@ export default function LibraryShelves({
   bookmarks,
   bookmarkTotal,
   people,
+  highlights,
+  highlightTotal,
 }: {
   initialShelf: LibraryShelf;
   series: LibraryEntry[];
   bookmarks: { bookmarks: BookmarkEntry[]; nextCursor: string | null };
   bookmarkTotal: number;
   people: PersonEntry[];
+  highlights: { highlights: HighlightEntry[]; nextCursor: string | null };
+  highlightTotal: number;
 }) {
   const [counts, setCounts] = useState<Record<LibraryShelf, number>>({
     following: series.length,
     bookmarks: bookmarkTotal,
     people: people.length,
+    highlights: highlightTotal,
   });
 
   // Stable callbacks so the sections' count effects don't loop.
@@ -42,6 +50,7 @@ export default function LibraryShelves({
   const onFollowing = useCallback((count: number) => updateCount("following", count), [updateCount]);
   const onBookmarks = useCallback((count: number) => updateCount("bookmarks", count), [updateCount]);
   const onPeople = useCallback((count: number) => updateCount("people", count), [updateCount]);
+  const onHighlights = useCallback((count: number) => updateCount("highlights", count), [updateCount]);
 
   // Instantly: the site's smooth scrolling would animate down the whole page.
   useEffect(() => {
@@ -61,6 +70,7 @@ export default function LibraryShelves({
       {section("following", <ReaderLibrary entries={series} onCountChange={onFollowing} />)}
       {section("bookmarks", <ReaderBookmarks initial={bookmarks} total={bookmarkTotal} onCountChange={onBookmarks} />)}
       {section("people", <ReaderPeople initial={people} onCountChange={onPeople} />)}
+      {section("highlights", <ReaderHighlights initial={highlights} total={highlightTotal} onCountChange={onHighlights} />)}
     </div>
   );
 }

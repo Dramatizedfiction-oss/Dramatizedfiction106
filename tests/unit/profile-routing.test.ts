@@ -37,7 +37,8 @@ describe("profile links", () => {
   });
 
   test("profile pages redirect to the right kind of profile", () => {
-    assert.match(read("app/reader/page.tsx"), /if \(isWriterRole\(reader\.role\)\) redirect\(profileHref\(reader, "reading"\)\)/);
+    // Sweep I: the writer redirect keeps a ?shelf= (e.g. Highlights).
+    assert.match(read("app/reader/page.tsx"), /if \(isWriterRole\(reader\.role\)\) \{[\s\S]*?redirect\(`\$\{profileHref\(reader, "reading"\)\}/);
     assert.match(read("app/reader/[readerId]/page.tsx"), /if \(isWriterRole\(reader\.role\)\) redirect\(profileHref\(reader, "reading"\)\)/);
     assert.match(read("app/author/[authorId]/page.tsx"), /if \(!isWriterRole\(author\.role\)\) redirect\(profileHref\(author\)\)/);
   });

@@ -64,6 +64,18 @@ export function studioEpisodeLabel(
   return /^\d+$/.test(code) ? `Episode ${code}` : code;
 }
 
+/**
+ * A short label for lists away from the series (Library, Activity, profiles,
+ * moderation): "S2 E3" from Season 2 on, else "Ep 3". Season 1's numbers are
+ * always the reading order, so this agrees with the series page without
+ * loading every season.
+ */
+export function shortEpisodeLabel(episode: { episodeNumber: number; seasonEpisodeNumber?: number | null; season?: { number: number } | null }) {
+  const season = episode.season?.number ?? 1;
+  const number = episode.seasonEpisodeNumber ?? episode.episodeNumber;
+  return season > 1 ? `S${season} E${number}` : `Ep ${number}`;
+}
+
 /** Readers see a season once it has a published episode; the rest are the writer's drafts. */
 export function readerVisibleSeasons<T extends { publishedCount: number }>(seasons: readonly T[]) {
   return seasons.filter((season) => season.publishedCount > 0);

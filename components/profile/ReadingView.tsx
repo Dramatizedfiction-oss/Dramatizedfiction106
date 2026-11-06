@@ -6,6 +6,7 @@ import ReaderProfileTabs from "@/components/reader/ReaderProfileTabs";
 import { listActivity } from "@/lib/activity";
 import { listFollowedAuthors } from "@/lib/author-follows";
 import { countBookmarks, listBookmarks } from "@/lib/bookmarks";
+import { countHighlights, listHighlights } from "@/lib/highlights";
 import type { LibraryShelf } from "@/lib/library-shelves";
 import { getLibrary } from "@/lib/series-follows";
 
@@ -35,18 +36,28 @@ export default async function ReadingView({
   shelf?: LibraryShelf;
 }) {
   if (isOwner) {
-    const [library, bookmarks, bookmarkTotal, people, activity] = await Promise.all([
+    const [library, bookmarks, bookmarkTotal, people, activity, highlights, highlightTotal] = await Promise.all([
       getLibrary(member.id),
       listBookmarks(member.id),
       countBookmarks(member.id),
       listFollowedAuthors(member.id),
       listActivity(member.id),
+      listHighlights(member.id),
+      countHighlights(member.id),
     ]);
     return (
       <ReaderProfileTabs
         panels={{
           library: (
-            <LibraryShelves initialShelf={shelf} series={library} bookmarks={bookmarks} bookmarkTotal={bookmarkTotal} people={people} />
+            <LibraryShelves
+              initialShelf={shelf}
+              series={library}
+              bookmarks={bookmarks}
+              bookmarkTotal={bookmarkTotal}
+              people={people}
+              highlights={highlights}
+              highlightTotal={highlightTotal}
+            />
           ),
           activity: <ReaderActivity readerId={member.id} initial={activity} />,
         }}

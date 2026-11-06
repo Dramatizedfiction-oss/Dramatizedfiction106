@@ -43,12 +43,18 @@ export default async function SeriesPage({ params }: { params: { seriesId: strin
   const page = await getSeriesPage(params.seriesId, viewerId);
   if (!page) notFound();
 
-  const { series, rating, episodes, seasons, totalMinutes, resume, rails } = page;
+  const { series, rating, episodes, seasons, withSeasonCodes, openingSeason, totalMinutes, resume, resumeCode, rails } = page;
+  // "Start reading" is the first episode in reading order (S1 E1); Continue follows that order across seasons.
   const first = episodes[0] ?? null;
   const main = resume
     ? {
         href: `/episode/${resume.episodeId}`,
-        label: resume.kind === "again" ? "Read again" : `Continue episode ${resume.episodeNumber}`,
+        label:
+          resume.kind === "again"
+            ? "Read again"
+            : withSeasonCodes && resumeCode
+              ? `Continue ${resumeCode}`
+              : `Continue episode ${resumeCode?.replace(/^E/, "") ?? resume.episodeNumber}`,
       }
     : first
       ? { href: `/episode/${first.id}`, label: "Start reading" }
@@ -122,6 +128,7 @@ export default async function SeriesPage({ params }: { params: { seriesId: strin
             </p>
 
             <p className="theme-meta mt-3 text-sm">
+              {seasons.length > 1 ? `${seasons.length} seasons · ` : ""}
               {episodes.length} {episodes.length === 1 ? "episode" : "episodes"}
               {totalMinutes > 0 ? <> · {formatMinutes(totalMinutes)}</> : null} · {series.isComplete ? "Complete" : "Ongoing"}
             </p>
@@ -182,6 +189,8 @@ export default async function SeriesPage({ params }: { params: { seriesId: strin
           themeColor={series.themeColor}
           episodes={episodes}
           seasons={seasons}
+          withSeasonCodes={withSeasonCodes}
+          openingSeason={openingSeason}
           resumeEpisodeId={resume && resume.kind !== "again" ? resume.episodeId : null}
           signedIn={Boolean(viewerId)}
         />
