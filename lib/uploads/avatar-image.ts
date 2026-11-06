@@ -1,5 +1,6 @@
 import sharp from "sharp";
 import { AVATAR_CROP_SIZE, AVATAR_MIN_SOURCE_SIDE, cropRect, type AvatarCrop } from "@/lib/avatar-crop";
+import { isOwnedImageUrl } from "./image-storage";
 import { ImageRejectedError, processImage } from "./process-image";
 
 /*
@@ -19,6 +20,20 @@ export async function prepareAvatarOriginal(bytes: Buffer) {
     );
   }
   return original;
+}
+
+/**
+ * Reads an image this app stored (an avatar original) back from blob storage,
+ * with its size. Only our own store's URLs are read, never anything else.
+ */
+export async function readStoredImage(url: string) {
+  if (!isOwnedImageUrl(url)) throw new ImageRejectedError("That image isn't one of ours.");
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) throw new ImageRejectedError("Couldn't read the stored image. Please try again.");
+  const data = Buffer.from(await response.arrayBuffer());
+  const meta = await sharp(data, { failOn: "error" }).metadata();
+  if (!meta.width || !meta.height) throw new ImageRejectedError("The stored image couldn't be read.");
+  return { data, width: meta.width, height: meta.height };
 }
 
 /** Cuts the circle's square out of the original and resizes it to 320px. */

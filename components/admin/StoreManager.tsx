@@ -4,7 +4,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ItemList from "@/components/author-profile/editor/ItemList";
 import { Badge, Notice, Panel } from "@/components/admin/ui";
+import AvatarCropper from "@/components/avatar/AvatarCropper";
+import UserAvatar from "@/components/UserAvatar";
 import ImageUploadField from "@/components/uploads/ImageUploadField";
+import type { AvatarCrop } from "@/lib/avatar-crop";
 import { STORE_ITEM_NAME_MAX } from "@/lib/store/rules";
 
 /*
@@ -18,7 +21,16 @@ import { STORE_ITEM_NAME_MAX } from "@/lib/store/rules";
  *     keep it. Removing one resets members using it to the default.
  * Everything is free: there are no prices here.
  */
-export type ManagedItem = { id: string; avatarId: string | null; name: string; imageUrl: string; active: boolean };
+export type ManagedItem = {
+  id: string;
+  avatarId: string | null;
+  name: string;
+  imageUrl: string;
+  active: boolean;
+  /** Sweep I: what the focus editor positions (the original, or the current image for older avatars). */
+  originalUrl: string;
+  crop: AvatarCrop | null;
+};
 type Row = ManagedItem & { key: string };
 
 export default function StoreManager({
@@ -41,6 +53,8 @@ export default function StoreManager({
   const [busy, setBusy] = useState(false);
   const [rows, setRows] = useState<Row[]>(() => items.map((item) => ({ ...item, key: item.id })));
   const [openKey, setOpenKey] = useState<string | null>(null);
+  /** An uploaded image waiting for its focus (Sweep I) before it's added. */
+  const [pending, setPending] = useState<string | null>(null);
 
   // A refresh after a change brings the server's list; adopt it.
   useEffect(() => setRows(items.map((item) => ({ ...item, key: item.id }))), [items]);
@@ -108,7 +122,10 @@ export default function StoreManager({
         </div>
       </Panel>
 
-      <Panel title="Add an avatar" description="Square images work best. JPEG, PNG or WebP, under 4 MB. It's resized to 512px and added at the end of the Store.">
+      <Panel
+        title="Add an avatar"
+        description="JPEG, PNG or WebP, under 4 MB. After uploading, position it inside the circle; members get it exactly as framed here. It's added at the end of the Store."
+      >
         <label className="mb-4 block max-w-sm">
           <span className="theme-heading mb-1 block text-sm font-semibold">Name</span>
           <input
@@ -119,21 +136,42 @@ export default function StoreManager({
             className="ui-input w-full px-3 py-2 text-base sm:text-sm"
           />
         </label>
-        <ImageUploadField
-          key={uploadKey}
-          label="Image"
-          purpose="platform-avatar"
-          shape="avatar"
-          value=""
-          onChange={async (url) => {
-            if (!url) return;
-            const ok = await request("/api/admin/avatars", { method: "POST", body: JSON.stringify({ url, label: label || "Avatar" }) }, "Added to the Store.");
-            if (ok) {
-              setLabel("");
+        {pending ? (
+          <AvatarCropper
+            src={pending}
+            initial={null}
+            safeZone
+            busy={busy}
+            error={null}
+            onCancel={() => {
+              setPending(null);
               setUploadKey((key) => key + 1);
-            }
-          }}
-        />
+            }}
+            onSave={async (crop) => {
+              const ok = await request(
+                "/api/admin/avatars",
+                { method: "POST", body: JSON.stringify({ url: pending, label: label || "Avatar", crop }) },
+                "Added to the Store.",
+              );
+              if (ok) {
+                setLabel("");
+                setPending(null);
+                setUploadKey((key) => key + 1);
+              }
+            }}
+          />
+        ) : (
+          <ImageUploadField
+            key={uploadKey}
+            label="Image"
+            purpose="platform-avatar"
+            shape="avatar"
+            value=""
+            onChange={(url) => {
+              if (url) setPending(url);
+            }}
+          />
+        )}
       </Panel>
 
       <Panel
@@ -183,8 +221,7 @@ export default function StoreManager({
                   {row.avatarId === readerDefaultId ? <Badge tone="accent">Reader default</Badge> : null}
                   {row.avatarId === writerDefaultId ? <Badge tone="accent">Writer default</Badge> : null}
                   {!row.active ? <Badge>Hidden</Badge> : null}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={row.imageUrl} alt="" className={`h-9 w-9 rounded-full border border-[var(--border-strong)] object-cover ${row.active ? "" : "opacity-50"}`} />
+                  <UserAvatar user={{ image: row.imageUrl }} size="md" className={`!h-9 !w-9 ${row.active ? "" : "opacity-50"}`} />
                 </span>
               ),
             })}
@@ -211,12 +248,32 @@ function ItemForm({
   onRemove: () => void;
 }) {
   const [name, setName] = useState(row.name);
+  const [focusing, setFocusing] = useState(false);
   const url = `/api/admin/store/items/${encodeURIComponent(row.id)}`;
+  if (focusing && row.avatarId) {
+    return (
+      <AvatarCropper
+        src={row.originalUrl}
+        initial={row.crop}
+        safeZone
+        busy={busy}
+        error={null}
+        onCancel={() => setFocusing(false)}
+        onSave={async (crop) => {
+          const ok = await request(
+            `/api/admin/avatars/${encodeURIComponent(row.avatarId!)}/focus`,
+            { method: "PUT", body: JSON.stringify(crop) },
+            `"${row.name}" re-focused. Members using it see the new framing.`,
+          );
+          if (ok) setFocusing(false);
+        }}
+      />
+    );
+  }
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={row.imageUrl} alt="" className="h-20 w-20 shrink-0 rounded-full border border-[var(--border-strong)] object-cover" />
+        <UserAvatar user={{ image: row.imageUrl }} size="xl" className="!h-20 !w-20" />
         <label className="block min-w-0 flex-1">
           <span className="theme-heading mb-1 block text-sm font-semibold">Name</span>
           <input value={name} onChange={(event) => setName(event.target.value)} maxLength={STORE_ITEM_NAME_MAX} className="ui-input w-full px-3 py-2 text-base sm:text-sm" />
@@ -231,6 +288,11 @@ function ItemForm({
         </button>
       </div>
       <div className="flex flex-wrap items-center gap-3">
+        {row.avatarId ? (
+          <button type="button" disabled={busy} onClick={() => setFocusing(true)} className="story-button-secondary min-h-11 disabled:opacity-50">
+            Adjust focus
+          </button>
+        ) : null}
         <button
           type="button"
           disabled={busy}
@@ -268,8 +330,7 @@ function DefaultPicker({
 }) {
   return (
     <div className="flex items-center gap-4">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={preview} alt="" className="h-16 w-16 shrink-0 rounded-full border border-[var(--border-strong)] object-cover" />
+      <UserAvatar user={{ image: preview }} size="lg" />
       <label className="block min-w-0 flex-1">
         <span className="theme-heading mb-1 block text-sm font-semibold">{title}</span>
         <select value={value} onChange={(event) => onChange(event.target.value)} className="ui-input w-full px-3 py-2 text-base sm:text-sm">

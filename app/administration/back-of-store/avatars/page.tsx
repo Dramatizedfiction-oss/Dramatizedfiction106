@@ -14,7 +14,14 @@ export default async function BackOfStoreAvatarsPage() {
     prisma.storeItem.findMany({
       where: { category: "AVATAR" },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-      select: { id: true, platformAvatarId: true, name: true, imageUrl: true, active: true },
+      select: {
+        id: true,
+        platformAvatarId: true,
+        name: true,
+        imageUrl: true,
+        active: true,
+        platformAvatar: { select: { originalUrl: true, cropX: true, cropY: true, zoom: true } },
+      },
     }),
     getPlatformSettings(),
   ]);
@@ -34,7 +41,20 @@ export default async function BackOfStoreAvatarsPage() {
         <h2 className="font-heading theme-heading text-2xl font-semibold">Avatars</h2>
       </div>
       <StoreManager
-        items={items.map((item) => ({ id: item.id, avatarId: item.platformAvatarId, name: item.name, imageUrl: item.imageUrl, active: item.active }))}
+        items={items.map((item) => {
+          const avatar = item.platformAvatar;
+          const crop = avatar && avatar.cropX !== null && avatar.cropY !== null && avatar.zoom !== null ? { x: avatar.cropX, y: avatar.cropY, zoom: avatar.zoom } : null;
+          return {
+            id: item.id,
+            avatarId: item.platformAvatarId,
+            name: item.name,
+            imageUrl: item.imageUrl,
+            active: item.active,
+            // Sweep I focus: avatars from before it are re-focused from their current image.
+            originalUrl: avatar?.originalUrl ?? item.imageUrl,
+            crop,
+          };
+        })}
         readerDefaultId={settings.defaultReaderAvatarId}
         writerDefaultId={settings.defaultWriterAvatarId}
         builtIn={BUILT_IN_AVATARS}

@@ -17,6 +17,15 @@ export const AVATAR_CROP_SIZE = 320;
 /** Photos smaller than this on their shorter side are refused (they would look blurry). */
 export const AVATAR_MIN_SOURCE_SIDE = 160;
 
+/**
+ * Frames (Sweep I). A framed avatar is a square box: the photo circle fills
+ * FRAME_PHOTO_SHARE of its width (the frame is drawn around it), and frame
+ * art may cover the photo's edge, but never inside FRAME_SAFE_SHARE of the
+ * photo's diameter: the "safe zone" the focus editor shows as its inner ring.
+ */
+export const FRAME_PHOTO_SHARE = 0.8;
+export const FRAME_SAFE_SHARE = 0.8;
+
 export type AvatarCrop = { x: number; y: number; zoom: number };
 
 export const CENTERED_CROP: AvatarCrop = { x: 0.5, y: 0.5, zoom: 1 };

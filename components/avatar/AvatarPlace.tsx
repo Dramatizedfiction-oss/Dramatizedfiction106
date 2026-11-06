@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import AvatarCropper from "@/components/avatar/AvatarCropper";
 import FramedAvatar from "@/components/avatar/FramedAvatar";
+import UserAvatar from "@/components/UserAvatar";
+import { frameFor } from "@/lib/writer-frames";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import type { AvatarCrop } from "@/lib/avatar-crop";
 import { defaultAvatarFor } from "@/lib/avatars";
@@ -61,6 +63,16 @@ export default function AvatarPlace({
     if (editing?.kind !== "new") return;
     const src = editing.src;
     return () => URL.revokeObjectURL(src);
+  }, [editing]);
+
+  // While the full-screen editor is open on a phone, the page behind it doesn't scroll.
+  useEffect(() => {
+    if (!editing || !window.matchMedia("(max-width: 639px)").matches) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
   }, [editing]);
 
   async function after(response: Response | null, saved: string) {
@@ -166,7 +178,13 @@ export default function AvatarPlace({
 
   if (editing) {
     return (
-      <section aria-labelledby={`${id}-crop`} className="mx-auto max-w-xl">
+      // Full screen on phones (Sweep I), an ordinary panel from `sm`.
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`${id}-crop`}
+        className="fixed inset-0 z-50 overflow-y-auto bg-[var(--bg-primary)] px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))] sm:static sm:z-auto sm:mx-auto sm:max-w-xl sm:overflow-visible sm:bg-transparent sm:p-0"
+      >
         <h2 id={`${id}-crop`} className="font-heading theme-heading text-center text-2xl font-semibold">
           {editing.kind === "new" ? "Position your photo" : "Adjust your photo"}
         </h2>
@@ -174,6 +192,7 @@ export default function AvatarPlace({
           <AvatarCropper
             src={editing.src}
             initial={editing.kind === "adjust" ? state.crop : null}
+            frameTier={frameFor(member)?.tier ?? null}
             busy={busy}
             error={cropError}
             onSave={(crop) => void save(crop)}
@@ -251,12 +270,10 @@ export default function AvatarPlace({
                       current ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--border-color)] hover:border-[var(--border-strong)]"
                     }`}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={avatar.url ?? defaultSrc}
-                      alt=""
-                      loading="lazy"
-                      className={`h-[72px] w-[72px] rounded-full border-2 bg-[var(--surface-raised)] object-cover ${current ? "border-[var(--accent)]" : "border-transparent"}`}
+                    <UserAvatar
+                      user={{ image: avatar.url ?? defaultSrc, role: member.role }}
+                      size="lg"
+                      className={`!h-[72px] !w-[72px] !border-2 ${current ? "!border-[var(--accent)]" : "!border-transparent"}`}
                     />
                     <span className="w-full truncate text-center text-xs text-[var(--text-primary)]">{avatar.label}</span>
                     {current ? <span className="font-mono-df text-[10px] uppercase tracking-[0.16em] text-[var(--accent)]">Current</span> : null}

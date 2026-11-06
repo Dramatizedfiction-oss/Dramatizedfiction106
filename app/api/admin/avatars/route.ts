@@ -5,7 +5,14 @@ import { jsonError, parseStrictBody } from "@/lib/api/json";
 import { requireApiRole } from "@/lib/auth/guards";
 
 // BOARD and CEO: add an uploaded image to the shared avatar library.
-const addSchema = z.object({ url: z.string().min(1).max(500), label: z.string().max(120) }).strict();
+const addSchema = z
+  .object({
+    url: z.string().min(1).max(500),
+    label: z.string().max(120),
+    // Sweep I: the focus chosen in the editor (centered when left out).
+    crop: z.object({ x: z.number().finite(), y: z.number().finite(), zoom: z.number().finite() }).strict().optional(),
+  })
+  .strict();
 
 export async function POST(request: Request) {
   const guard = await requireApiRole("BOARD");

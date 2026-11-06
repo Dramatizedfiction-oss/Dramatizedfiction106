@@ -62,6 +62,11 @@ const TIER_COLOR: Record<FrameTier, string> = {
   laureate: "var(--frame-gold)",
 };
 
+/** A level frame's art on its own, over a photo inset to 80% (decorated) or 84%: the focus editor's previews use it. */
+export function LevelFrameArt({ tier, decorated }: { tier: FrameTier; decorated: boolean }) {
+  return decorated ? <FrameArt tier={tier} /> : <RingArt tier={tier} />;
+}
+
 function Svg({ children }: { children: React.ReactNode }) {
   return (
     <svg aria-hidden="true" viewBox="0 0 100 100" className="pointer-events-none absolute inset-0 h-full w-full overflow-visible">

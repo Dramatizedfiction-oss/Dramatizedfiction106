@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import Sheet from "@/components/writer-studio/ui/Sheet";
+import UserAvatar from "@/components/UserAvatar";
 
 /*
  * The Store's item grid (Sweep B3). Tap an item to see it larger, then "Use
@@ -95,12 +96,10 @@ export default function StoreGrid({
                   using ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--border-color)] bg-[var(--bg-secondary)] hover:border-[var(--border-strong)]"
                 }`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={item.imageUrl}
-                  alt=""
-                  loading="lazy"
-                  className={`aspect-square w-full max-w-[96px] rounded-full border-2 bg-[var(--surface-raised)] object-cover ${using ? "border-[var(--accent)]" : "border-transparent"}`}
+                <UserAvatar
+                  user={{ image: item.imageUrl }}
+                  size="xl"
+                  className={`!aspect-square !h-auto !w-full max-w-[96px] !border-2 ${using ? "!border-[var(--accent)]" : "!border-transparent"}`}
                 />
                 <span className="w-full truncate text-center text-xs font-medium text-[var(--text-primary)]">{item.name}</span>
                 {using ? (
@@ -146,8 +145,7 @@ export default function StoreGrid({
       >
         {selected ? (
           <div className="flex flex-col items-center gap-4 py-4 text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={selected.imageUrl} alt={selected.name} className="h-40 w-40 rounded-full border border-[var(--border-strong)] bg-[var(--surface-raised)] object-cover" />
+            <UserAvatar user={{ image: selected.imageUrl }} size="2xl" label={selected.name} eager className="!h-40 !w-40" />
             <p className="theme-meta max-w-xs text-sm leading-6">
               {selectedIsCurrent ? "This is your avatar right now." : "Free to use. It replaces your current avatar right away, and you can change it any time."}
             </p>

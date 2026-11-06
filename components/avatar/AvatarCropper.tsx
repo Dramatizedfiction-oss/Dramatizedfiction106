@@ -9,8 +9,12 @@ import {
   cropLayout,
   dragCrop,
   zoomCrop,
+  FRAME_PHOTO_SHARE,
+  FRAME_SAFE_SHARE,
   type AvatarCrop,
 } from "@/lib/avatar-crop";
+import { LevelFrameArt } from "@/components/avatar/FramedAvatar";
+import type { FrameTier } from "@/lib/writer-frames";
 
 /*
  * Position a photo inside the avatar circle: drag to move (touch, pen or
@@ -23,10 +27,11 @@ const CIRCLE_VIEWPORT = 272;
 /** Book covers (Sweep 14): a 2:3 frame, 200 x 300 on screen. */
 const PORTRAIT_VIEWPORT = 200;
 const PORTRAIT_ASPECT = 2 / 3;
+/** The real sizes avatars appear at: profile headers (phones), comments, lists. */
 const PREVIEWS = [
-  { size: 80, label: "Profile" },
-  { size: 40, label: "Comments" },
-  { size: 24, label: "Lists" },
+  { size: 112, label: "Profile" },
+  { size: 48, label: "Comments" },
+  { size: 32, label: "Lists" },
 ];
 
 export default function AvatarCropper({
@@ -37,9 +42,15 @@ export default function AvatarCropper({
   onSave,
   onCancel,
   frame = "circle",
+  frameTier = null,
+  safeZone,
 }: {
+  /** Show the safe-zone ring even without a frame preview (library avatars: writers will wear frames). */
+  safeZone?: boolean;
   /** "circle" for avatars (default); "portrait" for 2:3 book covers. */
   frame?: "circle" | "portrait";
+  /** Sweep I: the frame this avatar is shown with, if any: adds the safe-zone ring and framed previews. */
+  frameTier?: FrameTier | null;
   src: string;
   initial: AvatarCrop | null;
   busy: boolean;
@@ -135,17 +146,29 @@ export default function AvatarCropper({
     } else if (event.key === "+" || event.key === "=") {
       event.preventDefault();
       setZoom(crop.zoom + 0.1);
-    } else if (event.key === "-") {
+    } else if (event.key === "-" || event.key === "_") {
       event.preventDefault();
       setZoom(crop.zoom - 0.1);
     }
   }
+
+  // Escape cancels, like closing any full-screen layer.
+  useEffect(() => {
+    function onKey(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape" && !busy) onCancel();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [busy, onCancel]);
+
+  const showSafeZone = !portrait && (safeZone ?? Boolean(frameTier));
 
   const layout = cropLayout(crop, width, height, VIEWPORT, aspect);
 
   return (
     <div className="flex flex-col items-center">
       <p className="theme-meta text-center text-sm">Drag to move. Pinch, scroll or use the slider to zoom.</p>
+      {showSafeZone ? <p className="theme-heading mt-1 text-center text-sm font-semibold">Keep the face inside the inner ring.</p> : null}
 
       <div
         role="application"
@@ -178,6 +201,14 @@ export default function AvatarCropper({
         ) : (
           <div aria-hidden className="pointer-events-none absolute inset-0 rounded-full shadow-[0_0_0_9999px_rgba(0,0,0,0.6)] ring-2 ring-white/90" />
         )}
+        {/* The safe zone: what stays visible when a frame covers the edge. */}
+        {showSafeZone ? (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute rounded-full border-2 border-dashed border-white/80"
+            style={{ inset: `${((1 - FRAME_SAFE_SHARE) / 2) * 100}%` }}
+          />
+        ) : null}
       </div>
 
       <label className="mt-5 flex w-full max-w-[320px] items-center gap-3">
@@ -196,21 +227,29 @@ export default function AvatarCropper({
       </label>
 
       {portrait ? null : (
-      <div className="mt-4 flex items-end gap-5" aria-label="Preview">
+      <div className="mt-4 flex items-end gap-5" role="group" aria-label="Preview at the sizes your avatar appears">
         {PREVIEWS.map((preview) => {
-          const small = cropLayout(crop, width, height, preview.size);
+          // Same proportions as FramedAvatar: the photo is inset inside the frame.
+          const decorated = preview.size >= 64;
+          const photo = frameTier ? Math.round(preview.size * (decorated ? FRAME_PHOTO_SHARE : 0.84)) : preview.size;
+          const small = cropLayout(crop, width, height, photo);
           return (
             <div key={preview.size} className="flex flex-col items-center gap-1.5">
-              <span
-                className="relative block overflow-hidden rounded-full border border-[var(--border-strong)] bg-[var(--surface-raised)]"
-                style={{ width: preview.size, height: preview.size }}
-              >
-                {ready ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={src} alt="" className="absolute max-w-none" style={{ width: small.width, height: small.height, left: small.left, top: small.top }} />
-                ) : null}
+              <span className="relative inline-flex items-center justify-center" style={{ width: preview.size, height: preview.size }}>
+                <span
+                  className={`relative block overflow-hidden rounded-full bg-[var(--surface-raised)] ${frameTier ? "" : "border border-[var(--border-strong)]"}`}
+                  style={{ width: photo, height: photo }}
+                >
+                  {ready ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={src} alt="" className="absolute max-w-none" style={{ width: small.width, height: small.height, left: small.left, top: small.top }} />
+                  ) : null}
+                </span>
+                {frameTier ? <LevelFrameArt tier={frameTier} decorated={decorated} /> : null}
               </span>
-              <span className="theme-meta text-[10px] uppercase tracking-[0.16em]">{preview.label}</span>
+              <span className="theme-meta text-[10px] uppercase tracking-[0.16em]">
+                {preview.label} · {preview.size}px
+              </span>
             </div>
           );
         })}

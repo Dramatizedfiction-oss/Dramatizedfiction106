@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "PlatformAvatar" ADD COLUMN     "cropX" DOUBLE PRECISION,
+ADD COLUMN     "cropY" DOUBLE PRECISION,
+ADD COLUMN     "originalUrl" TEXT,
+ADD COLUMN     "zoom" DOUBLE PRECISION;
+

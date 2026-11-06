@@ -655,6 +655,13 @@ model PlatformAvatar {
   id                String     @id @default(cuid())
   label             String
   url               String     @unique
+  /// Sweep I: the uploaded original (max 1024px) `url` is cut from, plus the
+  /// focus (circle center as 0-1 fractions, zoom; lib/avatar-crop.ts). All null
+  /// for avatars added before Sweep I: they show as uploaded (centered).
+  originalUrl       String?
+  cropX             Float?
+  cropY             Float?
+  zoom              Float?
   createdAt         DateTime   @default(now())
   createdById       String?
   createdBy         User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
