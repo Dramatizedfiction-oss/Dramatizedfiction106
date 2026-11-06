@@ -17,8 +17,8 @@ import { episodeCode } from "@/lib/season-rules";
  * the same size: the title area always takes two lines (longer titles end in
  * "…") and the progress track is always there. The ⋯ menu has its own 48px
  * button beside the title, outside the card's link.
- * The season pill (and its bottom sheet) only appears when readers can see
- * more than one season (Sweep I): the sheet lists each season with its title,
+ * The season pill (and its bottom sheet) appears whenever readers can see a
+ * season, even when there's only one (Sweep I): the sheet lists each season with its title,
  * episode count and Complete/Ongoing, and choosing one shows its episodes.
  * The strip opens on the season the reader is in, else the latest. Each
  * card's menu: Bookmark (signed-in) and Share.
@@ -69,7 +69,8 @@ export default function EpisodeStrip({
   resumeEpisodeId: string | null;
   signedIn: boolean;
 }) {
-  const multiSeason = seasons.length > 1;
+  // The season selector shows whenever the series has a visible season, even just one (user request after Sweep I).
+  const showSeasons = seasons.length > 0;
   const resume = episodes.find((episode) => episode.id === resumeEpisodeId) ?? null;
   const [season, setSeason] = useState(openingSeason);
   const current = seasons.find((item) => item.number === season) ?? null;
@@ -132,7 +133,7 @@ export default function EpisodeStrip({
         <h2 id="episodes-heading" className="font-heading theme-heading text-2xl font-semibold">
           Episodes
         </h2>
-        {multiSeason ? (
+        {showSeasons ? (
           <button
             type="button"
             onClick={() => setSheetOpen(true)}
@@ -155,7 +156,7 @@ export default function EpisodeStrip({
         ) : null}
       </div>
 
-      {multiSeason && current ? (
+      {showSeasons && current ? (
         <p className="theme-meta mt-1 break-words text-sm">
           {current.label} · {countText(current.count)} · {statusText(current.status)}
         </p>
