@@ -329,7 +329,7 @@ function CommentItem({
               </Link>
               <span className="reader-meta">
                 {" "}
-                · <time dateTime={comment.createdAt}>{timeAgo(comment.createdAt)}</time>
+                · <time dateTime={comment.createdAt} suppressHydrationWarning>{timeAgo(comment.createdAt)}</time>
                 {comment.editedAt ? " · edited" : ""}
               </span>
             </p>

@@ -103,7 +103,7 @@ export default function ReaderBookmarks({
                   {entry.seriesTitle} · {entry.episodeLabel}
                 </span>
                 <span className="theme-heading mt-0.5 block truncate font-heading text-lg font-semibold">{entry.episodeTitle}</span>
-                <span className="theme-meta mt-0.5 block text-xs">Saved {timeAgo(entry.bookmarkedAt)}</span>
+                <span className="theme-meta mt-0.5 block text-xs" suppressHydrationWarning>Saved {timeAgo(entry.bookmarkedAt)}</span>
               </span>
             </ShelfRow>
           );

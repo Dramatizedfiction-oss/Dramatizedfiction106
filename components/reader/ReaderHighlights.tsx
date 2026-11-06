@@ -176,7 +176,7 @@ function HighlightItem({
       ) : null}
       {!editing ? (
         <div className="mt-2 flex flex-wrap items-center gap-x-1">
-          <span className="theme-meta mr-auto text-xs">Saved {timeAgo(item.createdAt)}</span>
+          <span className="theme-meta mr-auto text-xs" suppressHydrationWarning>Saved {timeAgo(item.createdAt)}</span>
           <Link href={`/episode/${item.episodeId}?highlight=${encodeURIComponent(item.id)}`} className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-[var(--text-primary)] underline underline-offset-4">
             Go to passage
           </Link>

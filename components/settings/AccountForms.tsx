@@ -91,7 +91,7 @@ export function AgeConfirmation({ confirmedAt }: { confirmedAt: string | null })
         <span aria-hidden="true" className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[hsl(var(--series-accent))]">
           ✓
         </span>
-        <span className="theme-heading font-semibold">
+        <span className="theme-heading font-semibold" suppressHydrationWarning>
           Confirmed on {new Intl.DateTimeFormat("en", { day: "numeric", month: "long", year: "numeric" }).format(new Date(confirmed))}
         </span>
       </p>

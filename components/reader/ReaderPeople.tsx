@@ -70,7 +70,7 @@ export default function ReaderPeople({
                 <span className="theme-meta mt-0.5 block truncate font-mono-df text-[10px] uppercase tracking-[0.18em]">
                   {writerStatusLabel(person.writerStatus)}
                 </span>
-                <span className="theme-meta mt-0.5 block text-xs">Followed {timeAgo(person.followedAt)}</span>
+                <span className="theme-meta mt-0.5 block text-xs" suppressHydrationWarning>Followed {timeAgo(person.followedAt)}</span>
               </span>
             </ShelfRow>
           );
