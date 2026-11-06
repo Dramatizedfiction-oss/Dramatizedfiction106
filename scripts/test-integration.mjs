@@ -25,7 +25,16 @@ try {
 console.log(`[test-integration] Development database: ${target.dev.host} / ${target.dev.database}`);
 const result = spawnSync(
   process.execPath,
-  ["--test", "--test-concurrency=1", "--import", "./tests/setup/register.mjs", "tests/integration/*.test.ts"],
+  // Optional file names (e.g. `npm run test:integration -- tests/integration/sweep-i.test.ts`) run just those.
+  [
+    "--test",
+    "--test-concurrency=1",
+    "--import",
+    "./tests/setup/register.mjs",
+    ...(process.argv.slice(2).filter((arg) => /^tests\/integration\/[\w.-]+\.test\.ts$/.test(arg)).length
+      ? process.argv.slice(2).filter((arg) => /^tests\/integration\/[\w.-]+\.test\.ts$/.test(arg))
+      : ["tests/integration/*.test.ts"]),
+  ],
   {
     cwd: root,
     stdio: "inherit",
