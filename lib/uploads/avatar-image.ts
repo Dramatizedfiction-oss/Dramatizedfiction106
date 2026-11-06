@@ -1,5 +1,6 @@
 import sharp from "sharp";
 import { AVATAR_CROP_SIZE, AVATAR_MIN_SOURCE_SIDE, cropRect, type AvatarCrop } from "@/lib/avatar-crop";
+import { MAX_SOURCE_PIXELS, MAX_UPLOAD_BYTES } from "./image-purposes";
 import { isOwnedImageUrl } from "./image-storage";
 import { ImageRejectedError, processImage } from "./process-image";
 
@@ -28,10 +29,16 @@ export async function prepareAvatarOriginal(bytes: Buffer) {
  */
 export async function readStoredImage(url: string) {
   if (!isOwnedImageUrl(url)) throw new ImageRejectedError("That image isn't one of ours.");
-  const response = await fetch(url, { cache: "no-store" });
-  if (!response.ok) throw new ImageRejectedError("Couldn't read the stored image. Please try again.");
+  // Sweep 1: never follow a redirect away from our store, give up after 15 s,
+  // and refuse anything larger than an upload could ever be.
+  const response = await fetch(url, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15_000) }).catch(() => null);
+  if (!response?.ok) throw new ImageRejectedError("Couldn't read the stored image. Please try again.");
+  if (Number(response.headers.get("content-length") || 0) > MAX_UPLOAD_BYTES) {
+    throw new ImageRejectedError("The stored image is too large.");
+  }
   const data = Buffer.from(await response.arrayBuffer());
-  const meta = await sharp(data, { failOn: "error" }).metadata();
+  if (data.length > MAX_UPLOAD_BYTES) throw new ImageRejectedError("The stored image is too large.");
+  const meta = await sharp(data, { failOn: "error", limitInputPixels: MAX_SOURCE_PIXELS }).metadata();
   if (!meta.width || !meta.height) throw new ImageRejectedError("The stored image couldn't be read.");
   return { data, width: meta.width, height: meta.height };
 }

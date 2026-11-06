@@ -6,8 +6,9 @@ import {
   cleanOptionalText,
   conflict,
   isUniqueConstraintError,
-  optionalCount,
-  optionalText,
+  STUDIO_TEXT_LIMITS,
+  boundedText,
+  optionalReadTime,
   parseJsonBody,
   resolveLockedUpdate,
   serverError,
@@ -23,13 +24,13 @@ import { decideImageField, deleteReplacedImage } from "@/lib/uploads/image-stora
 // episode's number and season (Sweep G: only the season routes change them,
 // through lib/seasons.ts, which keeps the numbering whole).
 const updateEpisodeSchema = z.object({
-  title: optionalText,
-  description: optionalText,
-  contentWarning: optionalText,
-  body: optionalText,
-  coverImage: optionalText,
-  aiUsageTag: optionalText,
-  readTime: optionalCount,
+  title: boundedText(STUDIO_TEXT_LIMITS.episodeTitle),
+  description: boundedText(STUDIO_TEXT_LIMITS.episodeDescription),
+  contentWarning: boundedText(STUDIO_TEXT_LIMITS.contentWarning),
+  body: boundedText(STUDIO_TEXT_LIMITS.episodeBody),
+  coverImage: boundedText(STUDIO_TEXT_LIMITS.imageUrl),
+  aiUsageTag: boundedText(STUDIO_TEXT_LIMITS.aiUsageTag),
+  readTime: optionalReadTime,
   locked: z.boolean().optional(),
 });
 
@@ -50,7 +51,7 @@ export async function PATCH(
   const has = (key: keyof typeof input) => input[key] !== undefined && input[key] !== null;
 
   // A new cover must be an uploaded image; the stored one may be kept as is.
-  const cover = decideImageField(input.coverImage, owned.episode.coverImage);
+  const cover = decideImageField(input.coverImage, owned.episode.coverImage, "episode-cover");
   if (!cover.ok) return badRequest(cover.message);
 
   try {

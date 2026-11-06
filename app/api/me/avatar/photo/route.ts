@@ -3,6 +3,8 @@ import { z } from "zod";
 import { badRequest, parseJsonBody, serverError } from "@/lib/api/writer-studio-request";
 import { requireApiUser } from "@/lib/auth/guards";
 import { parseCrop } from "@/lib/avatar-crop";
+import { rateLimitedResponse, takeRateLimit } from "@/lib/rate-limit";
+import { UPLOAD_RATE_LIMITS } from "@/lib/rate-limit-rules";
 import { adjustPhoto, removePicture, setPhoto } from "@/lib/avatar-photo";
 import { MAX_UPLOAD_BYTES } from "@/lib/uploads/image-purposes";
 import { isImageStorageConfigured } from "@/lib/uploads/image-storage";
@@ -47,6 +49,7 @@ export async function POST(request: Request) {
     return fail(503, "STORAGE_NOT_CONFIGURED", "Photo uploads aren't set up yet. Please try again later.");
   }
 
+  if (!(await takeRateLimit(guard.user.id, "upload", UPLOAD_RATE_LIMITS))) return rateLimitedResponse();
   try {
     const state = await setPhoto(guard.user.id, Buffer.from(await file.arrayBuffer()), crop);
     return NextResponse.json(state);
@@ -68,6 +71,7 @@ export async function PATCH(request: Request) {
   const crop = parseCrop(body.data);
   if (!crop) return badRequest("Invalid photo position.");
 
+  if (!(await takeRateLimit(guard.user.id, "upload", UPLOAD_RATE_LIMITS))) return rateLimitedResponse();
   try {
     const result = await adjustPhoto(guard.user.id, crop);
     if (!result.ok) return fail(result.status, result.code, result.message);

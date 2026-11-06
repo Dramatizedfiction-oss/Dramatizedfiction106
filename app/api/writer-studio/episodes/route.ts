@@ -6,13 +6,16 @@ import {
   cleanOptionalText,
   conflict,
   isUniqueConstraintError,
-  optionalCount,
-  optionalText,
+  STUDIO_TEXT_LIMITS,
+  boundedText,
+  optionalReadTime,
   parseJsonBody,
   serverError,
 } from "@/lib/api/writer-studio-request";
 import { apiError, requireApiRole, requireOwnedSeries } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
+import { rateLimitedResponse, takeRateLimit } from "@/lib/rate-limit";
+import { STUDIO_CREATE_RATE_LIMITS } from "@/lib/rate-limit-rules";
 import { SEASON_TRANSACTION, createEpisodeInSeason } from "@/lib/seasons";
 import { decideImageField } from "@/lib/uploads/image-storage";
 
@@ -22,13 +25,13 @@ import { decideImageField } from "@/lib/uploads/image-storage";
 const createEpisodeSchema = z.object({
   seriesId: z.string().min(1).max(191),
   seasonId: z.string().min(1).max(191).optional(),
-  title: optionalText,
-  description: optionalText,
-  contentWarning: optionalText,
-  body: optionalText,
-  coverImage: optionalText,
-  aiUsageTag: optionalText,
-  readTime: optionalCount,
+  title: boundedText(STUDIO_TEXT_LIMITS.episodeTitle),
+  description: boundedText(STUDIO_TEXT_LIMITS.episodeDescription),
+  contentWarning: boundedText(STUDIO_TEXT_LIMITS.contentWarning),
+  body: boundedText(STUDIO_TEXT_LIMITS.episodeBody),
+  coverImage: boundedText(STUDIO_TEXT_LIMITS.imageUrl),
+  aiUsageTag: boundedText(STUDIO_TEXT_LIMITS.aiUsageTag),
+  readTime: optionalReadTime,
 });
 
 export async function POST(request: Request) {
@@ -45,8 +48,9 @@ export async function POST(request: Request) {
   const owned = await requireOwnedSeries(input.seriesId, guard.user.id);
   if (!owned.ok) return owned.response;
 
-  const cover = decideImageField(input.coverImage, null);
+  const cover = decideImageField(input.coverImage, null, "episode-cover");
   if (!cover.ok) return badRequest(cover.message);
+  if (!(await takeRateLimit(guard.user.id, "studio-create", STUDIO_CREATE_RATE_LIMITS))) return rateLimitedResponse();
 
   try {
     const episode = await prisma.$transaction(

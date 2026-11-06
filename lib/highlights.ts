@@ -5,7 +5,7 @@ import { failure, findPublicEpisode, isUsableId, type EngagementFailure } from "
 import { normalizeCommentBody } from "@/lib/engagement-rules";
 import { prisma } from "@/lib/prisma";
 import { takeRateLimit } from "@/lib/rate-limit";
-import { HIGHLIGHT_RATE_LIMITS } from "@/lib/rate-limit-rules";
+import { EDIT_RATE_LIMITS, HIGHLIGHT_RATE_LIMITS } from "@/lib/rate-limit-rules";
 import { shortEpisodeLabel } from "@/lib/season-rules";
 import { parseAnchor, resolveAnchor } from "@/lib/text-anchor";
 
@@ -160,6 +160,9 @@ export async function updateHighlightNote(userId: string, id: unknown, rawNote: 
   }
   const owned = await prisma.highlight.findFirst({ where: { id, userId }, select: { id: true } });
   if (!owned) return failure(404, "NOT_FOUND", "Highlight not found.");
+  if (!(await takeRateLimit(userId, "highlight-edit", EDIT_RATE_LIMITS))) {
+    return failure(429, "RATE_LIMITED", "You're changing notes very quickly. Wait a moment, then try again.");
+  }
   const updated = await prisma.highlight.update({ where: { id: owned.id }, data: { note: note.note }, select: entrySelect });
   return { ok: true, highlight: toEntry(updated) };
 }

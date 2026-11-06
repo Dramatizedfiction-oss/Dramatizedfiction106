@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { badRequest } from "@/lib/api/writer-studio-request";
 import { requireApiRole } from "@/lib/auth/guards";
 import { parseCrop } from "@/lib/avatar-crop";
+import { rateLimitedResponse, takeRateLimit } from "@/lib/rate-limit";
+import { UPLOAD_RATE_LIMITS } from "@/lib/rate-limit-rules";
 import { renderBookCover } from "@/lib/uploads/book-cover-image";
 import { MAX_UPLOAD_BYTES } from "@/lib/uploads/image-purposes";
 import { isImageStorageConfigured, storeImage } from "@/lib/uploads/image-storage";
@@ -44,6 +46,7 @@ export async function POST(request: Request) {
     return fail(503, "STORAGE_NOT_CONFIGURED", "Image uploads aren't set up yet. Please try again later.");
   }
 
+  if (!(await takeRateLimit(guard.user.id, "upload", UPLOAD_RATE_LIMITS))) return rateLimitedResponse();
   try {
     const cover = await renderBookCover(Buffer.from(await file.arrayBuffer()), crop);
     return NextResponse.json({ url: await storeImage("profile-book-cover", cover) });

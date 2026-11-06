@@ -91,5 +91,30 @@ export async function resolveLockedUpdate(requested: boolean | undefined) {
 /** Text the UI may send as a string, or omit; null is treated as omitted. */
 export const optionalText = z.string().nullable().optional();
 
+/** Like optionalText, with a server-side length limit (Sweep 1). */
+export const boundedText = (max: number) => z.string().max(max).nullable().optional();
+
+/**
+ * Server-side limits for Writer Studio text (Sweep 1). The titles and
+ * descriptions match the editor's own maxLength; the rest are generous caps
+ * so nothing unbounded reaches the database.
+ */
+export const STUDIO_TEXT_LIMITS = {
+  seriesTitle: 150,
+  seriesDescription: 2000,
+  genre: 60,
+  themeColor: 32,
+  aiUsageTag: 20,
+  imageUrl: 2048,
+  episodeTitle: 200,
+  episodeDescription: 1000,
+  contentWarning: 300,
+  /** About 150,000 words of HTML; Vercel refuses bodies over 4.5 MB anyway. */
+  episodeBody: 1_000_000,
+} as const;
+
 /** Non-negative integer; null (e.g. a cleared number input) is treated as omitted. */
 export const optionalCount = z.number().int().min(0).nullable().optional();
+
+/** Reading time in minutes, capped so it always fits the database's Int. */
+export const optionalReadTime = z.number().int().min(0).max(10_000).nullable().optional();

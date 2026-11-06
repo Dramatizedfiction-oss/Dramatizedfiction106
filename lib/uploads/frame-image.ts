@@ -13,6 +13,8 @@ import { MAX_SOURCE_PIXELS } from "./image-purposes";
  * served.
  */
 
+const SVG_RENDER_SECONDS = 5;
+
 export async function prepareFrameImage(bytes: Buffer): Promise<Buffer> {
   if (looksLikeSvg(bytes)) {
     const clean = sanitizeSvg(bytes.toString("utf8"));
@@ -25,6 +27,8 @@ export async function prepareFrameImage(bytes: Buffer): Promise<Buffer> {
       rendered = await source
         .resize(FRAME_IMAGE_SIZE, FRAME_IMAGE_SIZE, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
         .webp({ quality: 85, alphaQuality: 100 })
+        // Sweep 1: a drawing that takes longer than this is refused, not waited for.
+        .timeout({ seconds: SVG_RENDER_SECONDS })
         .toBuffer({ resolveWithObject: true });
     } catch (error) {
       if (error instanceof ImageRejectedError) throw error;

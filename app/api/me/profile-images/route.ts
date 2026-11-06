@@ -35,7 +35,7 @@ export async function PATCH(request: Request) {
     return badRequest("Choose a picture from the avatar library.");
   }
   const image = { value: nextImage };
-  const bannerImage = decideImageField(body.data.bannerImage, current.bannerImage);
+  const bannerImage = decideImageField(body.data.bannerImage, current.bannerImage, "profile-banner");
   if (!bannerImage.ok) return badRequest(bannerImage.message);
   // Switching away from an own photo (to a library avatar or the default)
   // removes the photo: its crop values are cleared and its files deleted.

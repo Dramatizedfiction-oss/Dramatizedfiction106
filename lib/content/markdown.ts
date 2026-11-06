@@ -34,7 +34,8 @@ const ESCAPABLE = /[\\*_[\]()#|>`\-.!+]/;
 /** A link target the site will follow, or null (the link then shows as plain text). */
 export function safeHref(raw: string): string | null {
   const href = raw.trim();
-  if (/^\/(?!\/)[^\s]*$/.test(href) || /^#[\w-]+$/.test(href)) return href;
+  // Site paths only: no backslashes, which browsers read as "/" ("/\evil.com" is "//evil.com").
+  if (/^\/(?!\/)[^\s\\]*$/.test(href) || /^#[\w-]+$/.test(href)) return href;
   if (/^mailto:[^\s@]+@[^\s@]+$/i.test(href)) return href;
   try {
     const url = new URL(href);

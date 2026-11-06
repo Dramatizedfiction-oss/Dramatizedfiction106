@@ -46,6 +46,8 @@ const CASE: Record<string, string> = {
 
 export const SVG_MAX_BYTES = 200 * 1024;
 const MAX_ELEMENTS = 5000;
+/** At most this many <use> copies in one frame (Sweep 1). */
+export const MAX_USES = 200;
 
 type Node = { type: string; name?: string; attribs?: Record<string, string>; children?: Node[] };
 
@@ -71,10 +73,33 @@ export function sanitizeSvg(source: string): string | null {
   if (!root) return null;
   let count = 0;
 
+  // Sweep 1: <use> copies are capped, and a <use> may not point at anything
+  // that itself contains a <use>. Nested copies multiply (10 x 10 x 10 ...),
+  // which can keep the renderer busy for minutes from a file of a few KB.
+  const tagName = (node: Node) => (node.type === "tag" && node.name ? node.name.toLowerCase() : "");
+  const hasUse = (node: Node): boolean => tagName(node) === "use" || (node.children ?? []).some(hasUse);
+  const amplifying = new Set<string>();
+  let uses = 0;
+  (function index(node: Node) {
+    if (tagName(node) === "use") uses++;
+    const id = node.attribs?.id;
+    if (id && hasUse(node)) amplifying.add(id);
+    (node.children ?? []).forEach(index);
+  })(root);
+  if (uses > MAX_USES) return null;
+  const referencedId = (attribs: Record<string, string> | undefined) => {
+    const ref = attribs?.href ?? attribs?.["xlink:href"] ?? "";
+    return ref.startsWith("#") ? ref.slice(1) : null;
+  };
+
   function build(node: Node): string {
     if (node.type !== "tag" || !node.name) return "";
     const name = node.name.toLowerCase();
     if (!ELEMENTS.has(name) || ++count > MAX_ELEMENTS) return "";
+    if (name === "use") {
+      const target = referencedId(node.attribs);
+      if (!target || amplifying.has(target)) return "";
+    }
     const attrs = Object.entries(node.attribs ?? {})
       .map(([key, value]) => [key.toLowerCase(), value] as const)
       .filter(([key, value]) => ATTRIBUTES.has(key) && safeValue(key, value))

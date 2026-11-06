@@ -4,7 +4,8 @@ import { serializeAiUsageTag } from "@/lib/ai-usage";
 import {
   badRequest,
   cleanOptionalText,
-  optionalText,
+  STUDIO_TEXT_LIMITS,
+  boundedText,
   parseJsonBody,
   serverError,
 } from "@/lib/api/writer-studio-request";
@@ -18,12 +19,12 @@ import { decideImageField, deleteReplacedImage } from "@/lib/uploads/image-stora
 // PUBLISHED only through the episode publish route). authorId, counters and
 // timestamps are server-controlled and stripped by the schema.
 const updateSeriesSchema = z.object({
-  title: optionalText,
-  description: optionalText,
-  genre: optionalText,
-  coverImage: optionalText,
-  themeColor: optionalText,
-  aiUsageTag: optionalText,
+  title: boundedText(STUDIO_TEXT_LIMITS.seriesTitle),
+  description: boundedText(STUDIO_TEXT_LIMITS.seriesDescription),
+  genre: boundedText(STUDIO_TEXT_LIMITS.genre),
+  coverImage: boundedText(STUDIO_TEXT_LIMITS.imageUrl),
+  themeColor: boundedText(STUDIO_TEXT_LIMITS.themeColor),
+  aiUsageTag: boundedText(STUDIO_TEXT_LIMITS.aiUsageTag),
   isComplete: z.boolean().optional(),
   // Sub tags: checked against the fixed list in lib/series-tags.ts below.
   tags: z.array(z.string().max(60)).max(10).optional(),
@@ -49,7 +50,7 @@ export async function PATCH(
   const has = (key: keyof typeof input) => input[key] !== undefined && input[key] !== null;
 
   // A new cover must be an uploaded image; the stored one may be kept as is.
-  const cover = decideImageField(input.coverImage, owned.series.coverImage);
+  const cover = decideImageField(input.coverImage, owned.series.coverImage, "series-cover");
   if (!cover.ok) return badRequest(cover.message);
 
   const tags = input.tags === undefined ? null : parseSeriesTags(input.tags);

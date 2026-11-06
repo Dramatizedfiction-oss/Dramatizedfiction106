@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { badRequest, seasonRefused, serverError } from "@/lib/api/writer-studio-request";
 import { requireApiRole, requireOwnedSeries } from "@/lib/auth/guards";
+import { rateLimitedResponse, takeRateLimit } from "@/lib/rate-limit";
+import { STUDIO_CREATE_RATE_LIMITS } from "@/lib/rate-limit-rules";
 import { parseSeasonFields } from "@/lib/season-rules";
 import { addSeason } from "@/lib/seasons";
 
@@ -19,6 +21,7 @@ export async function POST(request: Request, { params }: { params: { seriesId: s
   const raw = await request.json().catch(() => undefined);
   const parsed = parseSeasonFields(raw ?? {});
   if (!parsed.ok) return badRequest(parsed.message);
+  if (!(await takeRateLimit(guard.user.id, "studio-create", STUDIO_CREATE_RATE_LIMITS))) return rateLimitedResponse();
 
   try {
     const result = await addSeason(owned.series.id, parsed.fields);

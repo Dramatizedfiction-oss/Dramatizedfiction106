@@ -1,6 +1,7 @@
 import { del, put } from "@vercel/blob";
 import { randomUUID } from "crypto";
 import { coverThumbUrl } from "@/lib/cover-thumbs";
+import { prisma } from "@/lib/prisma";
 import type { ImagePurpose } from "./image-purposes";
 
 /*
@@ -43,8 +44,10 @@ export function isOwnedImageUrl(value: string | null | undefined): value is stri
   try {
     const url = new URL(value);
     if (url.protocol !== "https:" || !url.pathname.startsWith(IMAGE_PREFIX)) return false;
+    // Our own store only: with no store id configured, nothing counts as ours
+    // (another Blob store's files must never be accepted or deleted).
     const host = storeHost();
-    return host ? url.hostname === host : url.hostname.endsWith(BLOB_HOST_SUFFIX);
+    return host !== null && url.hostname === host;
   } catch {
     return false;
   }
@@ -78,13 +81,33 @@ export async function storeCoverThumb(coverUrl: string, data: Buffer, overwrite 
 }
 
 /**
- * Deletes a replaced/removed image, but only if it lives in our own store.
- * External and legacy URLs are never touched. Failures are logged, not thrown:
- * the record update that triggered this has already succeeded.
+ * True while any record still shows this image (Sweep 1). Image URLs are
+ * public, so a URL may have been copied onto another record; a file is only
+ * deleted once nothing uses it any more.
+ */
+export async function isImageStillUsed(url: string) {
+  const counts = await Promise.all([
+    prisma.user.count({ where: { OR: [{ image: url }, { bannerImage: url }, { avatarOriginalUrl: url }] } }),
+    prisma.authorProfile.count({ where: { profileImage: url } }),
+    prisma.series.count({ where: { coverImage: url } }),
+    prisma.episode.count({ where: { coverImage: url } }),
+    prisma.profileLibraryItem.count({ where: { coverImage: url } }),
+    prisma.platformAvatar.count({ where: { OR: [{ url }, { originalUrl: url }] } }),
+    prisma.storeItem.count({ where: { imageUrl: url } }),
+  ]);
+  return counts.some((count) => count > 0);
+}
+
+/**
+ * Deletes a replaced/removed image, but only if it lives in our own store and
+ * no record still uses it. External and legacy URLs are never touched.
+ * Failures are logged, not thrown: the record update that triggered this has
+ * already succeeded. Callers update or delete their row first.
  */
 export async function deleteReplacedImage(previous: string | null | undefined, next: string | null | undefined) {
   if (!previous || previous === next || !isOwnedImageUrl(previous) || !isImageStorageConfigured()) return;
   try {
+    if (await isImageStillUsed(previous)) return;
     // A cover's small copy goes with it (deleting a missing blob is a no-op).
     const thumb = coverThumbUrl(previous);
     await del(thumb ? [previous, thumb] : previous);
@@ -103,7 +126,12 @@ export type ImageFieldDecision =
  * the value already stored (so legacy external URLs keep working), or an image
  * uploaded to our store. Any other URL is rejected.
  */
-export function decideImageField(next: unknown, current: string | null | undefined): ImageFieldDecision {
+export function decideImageField(
+  next: unknown,
+  current: string | null | undefined,
+  /** The upload purpose this field takes: another purpose's image (a Store avatar, someone's cover) is refused. */
+  purpose: "series-cover" | "episode-cover" | "profile-banner",
+): ImageFieldDecision {
   if (next === undefined) return { ok: true, value: undefined };
   if (next === null) return { ok: true, value: null };
   if (typeof next !== "string") return { ok: false, message: "Invalid image." };
@@ -111,7 +139,9 @@ export function decideImageField(next: unknown, current: string | null | undefin
   const trimmed = next.trim();
   if (!trimmed) return { ok: true, value: null };
   if (current && trimmed === current) return { ok: true, value: current };
-  if (isOwnedImageUrl(trimmed)) return { ok: true, value: trimmed };
+  if (isOwnedImageUrl(trimmed) && new URL(trimmed).pathname.startsWith(`${IMAGE_PREFIX}${purpose}/`)) {
+    return { ok: true, value: trimmed };
+  }
 
   return { ok: false, message: "Use the image uploader to add a new image." };
 }

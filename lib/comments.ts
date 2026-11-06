@@ -14,6 +14,8 @@ import { failure, findPublicEpisode, isUsableId, type EngagementFailure } from "
 import { screenCommentText } from "@/lib/comment-moderation";
 import { parseEpisodeHtml } from "@/lib/episode-content";
 import { prisma } from "@/lib/prisma";
+import { takeRateLimit } from "@/lib/rate-limit";
+import { EDIT_RATE_LIMITS } from "@/lib/rate-limit-rules";
 import { parseAnchor, resolveAnchor, textBlocks, type PassageAnchor } from "@/lib/text-anchor";
 import { hasRoleAccess, type AppRole } from "@/lib/roles";
 
@@ -184,6 +186,10 @@ export async function editComment(userId: string, commentId: unknown, rawBody: u
   const comment = await findActionableComment(commentId);
   // Someone else's comment looks the same as a missing one.
   if (!comment || comment.userId !== userId) return failure(404, "NOT_FOUND", "Comment not found.");
+  // Sweep 1: edits are limited too (posting has its own limits above).
+  if (!(await takeRateLimit(userId, "comment-edit", EDIT_RATE_LIMITS))) {
+    return failure(429, "RATE_LIMITED", `${ERROR_COPY[429].title} Wait a moment, then try again.`);
+  }
 
   const updated = await prisma.comment.update({
     where: { id: comment.id },

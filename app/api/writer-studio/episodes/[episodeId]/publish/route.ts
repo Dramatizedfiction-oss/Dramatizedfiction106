@@ -4,7 +4,8 @@ import { serializeAiUsageTag } from "@/lib/ai-usage";
 import {
   badRequest,
   cleanOptionalText,
-  optionalText,
+  STUDIO_TEXT_LIMITS,
+  boundedText,
   parseJsonBody,
   resolveLockedUpdate,
   serverError,
@@ -17,11 +18,11 @@ import { decideImageField, deleteReplacedImage } from "@/lib/uploads/image-stora
 // The only route that publishes. status/publishedAt are set here by the
 // server; client-sent status, authorId, seriesId, counters are stripped.
 const publishEpisodeSchema = z.object({
-  title: optionalText,
-  description: optionalText,
-  coverImage: optionalText,
-  contentWarning: optionalText,
-  aiUsageTag: optionalText,
+  title: boundedText(STUDIO_TEXT_LIMITS.episodeTitle),
+  description: boundedText(STUDIO_TEXT_LIMITS.episodeDescription),
+  coverImage: boundedText(STUDIO_TEXT_LIMITS.imageUrl),
+  contentWarning: boundedText(STUDIO_TEXT_LIMITS.contentWarning),
+  aiUsageTag: boundedText(STUDIO_TEXT_LIMITS.aiUsageTag),
   locked: z.boolean().optional(),
 });
 
@@ -48,7 +49,7 @@ export async function POST(
   const episode = owned.episode;
   const has = (key: keyof typeof input) => input[key] !== undefined && input[key] !== null;
 
-  const cover = decideImageField(input.coverImage, episode.coverImage);
+  const cover = decideImageField(input.coverImage, episode.coverImage, "episode-cover");
   if (!cover.ok) return badRequest(cover.message);
 
   try {

@@ -27,6 +27,27 @@ export const HIGHLIGHT_RATE_LIMITS: readonly RateLimitWindow[] = [
 ];
 
 /**
+ * Image uploads of every kind, per member (Sweep 1): each one is resized on
+ * the server and stored, so they cost CPU and storage.
+ */
+export const UPLOAD_RATE_LIMITS: readonly RateLimitWindow[] = [
+  { windowMs: 60_000, max: 10 },
+  { windowMs: 60 * 60_000, max: 60 },
+];
+
+/** Editing comments and highlight notes, per member (Sweep 1). Posting has its own limits. */
+export const EDIT_RATE_LIMITS: readonly RateLimitWindow[] = [
+  { windowMs: 60_000, max: 10 },
+  { windowMs: 60 * 60_000, max: 120 },
+];
+
+/** Creating series, episodes and seasons in Writer Studio, per writer (Sweep 1). */
+export const STUDIO_CREATE_RATE_LIMITS: readonly RateLimitWindow[] = [
+  { windowMs: 60_000, max: 20 },
+  { windowMs: 60 * 60_000, max: 200 },
+];
+
+/**
  * Failed sign-ins, per account (Sweep E): over either window, sign-in for that
  * account is refused with 429 before the password is checked.
  */

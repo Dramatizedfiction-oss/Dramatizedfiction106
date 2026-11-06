@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { jsonError } from "@/lib/api/json";
 import { requireApiRole } from "@/lib/auth/guards";
+import { rateLimitedResponse, takeRateLimit } from "@/lib/rate-limit";
+import { UPLOAD_RATE_LIMITS } from "@/lib/rate-limit-rules";
 import { addFrameItem } from "@/lib/store/service";
 import { FRAME_UPLOAD_MAX_BYTES } from "@/lib/store/rules";
 import { prepareFrameImage } from "@/lib/uploads/frame-image";
@@ -34,6 +36,7 @@ export async function POST(request: Request) {
   if (file.size > FRAME_UPLOAD_MAX_BYTES) return jsonError(413, "TOO_LARGE", "That frame is too large. Please keep it under 1 MB.");
   if (!isImageStorageConfigured()) return jsonError(503, "STORAGE_UNAVAILABLE", "Image storage isn't set up yet.");
 
+  if (!(await takeRateLimit(guard.user.id, "upload", UPLOAD_RATE_LIMITS))) return rateLimitedResponse();
   try {
     const image = await prepareFrameImage(Buffer.from(await file.arrayBuffer()));
     const imageUrl = await storeImage("store-frame", image);

@@ -4,23 +4,26 @@ import { serializeAiUsageTag } from "@/lib/ai-usage";
 import {
   badRequest,
   cleanOptionalText,
-  optionalText,
+  STUDIO_TEXT_LIMITS,
+  boundedText,
   parseJsonBody,
   serverError,
 } from "@/lib/api/writer-studio-request";
 import { requireApiRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
+import { rateLimitedResponse, takeRateLimit } from "@/lib/rate-limit";
+import { STUDIO_CREATE_RATE_LIMITS } from "@/lib/rate-limit-rules";
 import { decideImageField } from "@/lib/uploads/image-storage";
 
 // authorId, status, counters and timestamps are server-controlled and
 // stripped by the schema.
 const createSeriesSchema = z.object({
-  title: optionalText,
-  description: optionalText,
-  genre: optionalText,
-  coverImage: optionalText,
-  themeColor: optionalText,
-  aiUsageTag: optionalText,
+  title: boundedText(STUDIO_TEXT_LIMITS.seriesTitle),
+  description: boundedText(STUDIO_TEXT_LIMITS.seriesDescription),
+  genre: boundedText(STUDIO_TEXT_LIMITS.genre),
+  coverImage: boundedText(STUDIO_TEXT_LIMITS.imageUrl),
+  themeColor: boundedText(STUDIO_TEXT_LIMITS.themeColor),
+  aiUsageTag: boundedText(STUDIO_TEXT_LIMITS.aiUsageTag),
 });
 
 export async function GET() {
@@ -49,8 +52,9 @@ export async function POST(request: Request) {
 
   const input = body.data;
 
-  const cover = decideImageField(input.coverImage, null);
+  const cover = decideImageField(input.coverImage, null, "series-cover");
   if (!cover.ok) return badRequest(cover.message);
+  if (!(await takeRateLimit(guard.user.id, "studio-create", STUDIO_CREATE_RATE_LIMITS))) return rateLimitedResponse();
 
   try {
     const series = await prisma.series.create({

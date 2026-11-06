@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { rateLimitedResponse, takeRateLimit } from "@/lib/rate-limit";
+import { UPLOAD_RATE_LIMITS } from "@/lib/rate-limit-rules";
 import { authorizeImageUpload } from "@/lib/uploads/authorize";
 import { IMAGE_PURPOSES, MAX_UPLOAD_BYTES, isImagePurpose } from "@/lib/uploads/image-purposes";
 import { isImageStorageConfigured, storeCoverThumb, storeImage } from "@/lib/uploads/image-storage";
@@ -55,6 +57,9 @@ export async function POST(request: Request) {
   if (file.size > MAX_UPLOAD_BYTES) {
     return fail("That image is too large. Please choose one under 4 MB.", 413, "TOO_LARGE");
   }
+
+  // Sweep 1: uploads are resized and stored, so they're limited per member.
+  if (!(await takeRateLimit(authorization.user.id, "upload", UPLOAD_RATE_LIMITS))) return rateLimitedResponse();
 
   try {
     const processed = await processImage(Buffer.from(await file.arrayBuffer()), purpose);
