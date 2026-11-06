@@ -3,7 +3,7 @@
 import Link from "next/link";
 import BrandMark from "@/components/brand/BrandMark";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AuthRestriction } from "@/auth";
 import AppSidebar, { type AppSidebarSeries } from "@/components/app-shell/AppSidebar";
 import ProfileMenu from "@/components/app-shell/ProfileMenu";
@@ -89,10 +89,36 @@ export default function AppShell({
     setPreference(theme === "dark" ? "light" : "dark");
   }
 
+  // Sweep 3: Back after signing out can restore a page from the browser's
+  // back/forward cache with the signed-in content still on screen (Safari
+  // keeps such pages). A page frozen mid-sign-out reloads; a page that was
+  // rendered for a member checks the session and reloads if it has ended.
+  const signingOutRef = useRef(false);
+  const renderedSignedIn = Boolean(user);
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+      if (signingOutRef.current) {
+        window.location.reload();
+        return;
+      }
+      if (!renderedSignedIn) return;
+      fetch("/api/auth/me", { credentials: "include", cache: "no-store" })
+        .then((response) => response.json())
+        .then((payload: { authenticated?: boolean }) => {
+          if (!payload.authenticated) window.location.reload();
+        })
+        .catch(() => undefined);
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, [renderedSignedIn]);
+
   // Shows "Logging out…" until the page reloads on the home page
   // (signOutAndGoHome always ends with a full load, even if the request fails).
   function handleSignOut() {
     if (isSigningOut) return;
+    signingOutRef.current = true;
     setIsSigningOut(true);
     setMobileOpen(false);
     void signOutAndGoHome();
