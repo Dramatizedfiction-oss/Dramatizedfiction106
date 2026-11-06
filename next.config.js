@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // A separate build folder for checking a production build while `npm run dev`
+  // keeps using .next (NEXT_DIST_DIR=.next-verify npm run build). Unset = .next.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // The app shows plain <img> tags (no next/image), so the image optimizer is
   // switched off: /_next/image answers 404. Next 14 has unpatched advisories in
   // that endpoint (fixed only in 15.5+), so it shouldn't be reachable.
