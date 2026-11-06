@@ -27,6 +27,9 @@ export const IMAGE_PURPOSES = {
   // with the admin's focus (lib/admin/avatars-service.ts). Avatars show at
   // 160px at most, so this stays small in storage.
   "platform-avatar": { label: "Store avatar", maxWidth: 1024, maxHeight: 1024, quality: 80, needsTarget: false },
+  // Store frames (Sweep I, BOARD and CEO): made only by /api/admin/store/frames
+  // (lib/uploads/frame-image.ts), never the general route. Stored at 512px.
+  "store-frame": { label: "Store frame", maxWidth: 1024, maxHeight: 1024, quality: 85, needsTarget: false },
 } as const;
 
 export type ImagePurpose = keyof typeof IMAGE_PURPOSES;

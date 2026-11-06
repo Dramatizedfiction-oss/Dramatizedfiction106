@@ -3,16 +3,22 @@
 import { useId } from "react";
 import UserAvatar, { AVATAR_SIZES, type UserAvatarSize } from "@/components/UserAvatar";
 import type { AvatarUser } from "@/lib/avatars";
-import { frameFor, type FrameTier } from "@/lib/writer-frames";
+import { displayedFrame, type FrameTier, type FrameUser } from "@/lib/writer-frames";
 
 /*
- * A profile picture with the writer's level frame around it (lib/writer-frames.ts).
- * Readers, or `frame={false}`, get the plain circle. The frame is inline SVG
- * drawn outside the photo, which is inset so the frame never covers the face.
- * Small sizes (under 48px) get a plain ring in the tier color instead of the
- * full design. Colors are theme tokens (--frame-*, app/globals.css) chosen for
- * at least 3:1 contrast on both themes; the Laureate shimmer stops under
- * reduced motion. The level is also given as text for screen readers.
+ * A profile picture with its frame around it (lib/writer-frames.ts
+ * `displayedFrame`): a Store frame the member chose (Sweep I), else the
+ * writer's level frame, else none. Readers without a Store frame, or
+ * `frame={false}`, get the plain circle.
+ *
+ * Level frames are inline SVG drawn outside the photo, which is inset so the
+ * frame never covers the face; small sizes (under 48px) get a plain ring in
+ * the tier color instead of the full design. Colors are theme tokens
+ * (--frame-*, app/globals.css) chosen for at least 3:1 contrast on both
+ * themes; the Laureate shimmer stops under reduced motion. Store frames are a
+ * square transparent image over the whole box, with the photo inset to 80%
+ * (FRAME_PHOTO_SHARE) at every size. The frame's name is also given as text
+ * for screen readers.
  */
 
 const DECORATED: UserAvatarSize[] = ["lg", "xl", "2xl"];
@@ -25,15 +31,29 @@ export default function FramedAvatar({
   frame = true,
   className = "",
 }: {
-  user: AvatarUser & { writerStatus?: string | null };
+  user: AvatarUser & FrameUser;
   size?: UserAvatarSize;
   label?: string;
   eager?: boolean;
   frame?: boolean;
   className?: string;
 }) {
-  const found = frame ? frameFor(user) : null;
+  const found = frame ? displayedFrame(user) : null;
   if (!found) return <UserAvatar user={user} size={size} label={label} eager={eager} className={className} />;
+
+  if (found.kind === "store") {
+    return (
+      <span
+        className={`relative inline-flex shrink-0 items-center justify-center ${AVATAR_SIZES[size]} ${className}`.trim()}
+        title={found.name}
+        data-frame="store"
+      >
+        <UserAvatar user={user} size={size} label={label} eager={eager} className="!h-[80%] !w-[80%] !border-0" />
+        <StoreFrameArt imageUrl={found.imageUrl} eager={eager} />
+        <span className="sr-only">Frame: {found.name}</span>
+      </span>
+    );
+  }
 
   const decorated = DECORATED.includes(size);
   return (
@@ -61,6 +81,22 @@ const TIER_COLOR: Record<FrameTier, string> = {
   gilded: "var(--frame-gold)",
   laureate: "var(--frame-gold)",
 };
+
+/** A Store frame's image over the whole box (decorative; the name is given as text). */
+export function StoreFrameArt({ imageUrl, eager }: { imageUrl: string; eager?: boolean }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={imageUrl}
+      alt=""
+      aria-hidden
+      draggable={false}
+      loading={eager ? "eager" : "lazy"}
+      decoding="async"
+      className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain"
+    />
+  );
+}
 
 /** A level frame's art on its own, over a photo inset to 80% (decorated) or 84%: the focus editor's previews use it. */
 export function LevelFrameArt({ tier, decorated }: { tier: FrameTier; decorated: boolean }) {

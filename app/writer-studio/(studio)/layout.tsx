@@ -14,6 +14,7 @@ export default async function StudioLayout({ children }: { children: React.React
         name={profile?.name || user.name || "Writer"}
         image={profile?.image ?? null}
         writerStatus={profile?.writerStatus ?? null}
+        frame={profile ? { hideLevelFrame: profile.hideLevelFrame, selectedFrame: profile.selectedFrame } : undefined}
       />
       <StudioNav />
       <div className="mt-8">{children}</div>

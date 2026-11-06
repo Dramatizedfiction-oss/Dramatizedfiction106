@@ -1,7 +1,9 @@
 import { AUDIT, recordAudit } from "@/lib/admin/audit";
 import { removePlatformAvatar } from "@/lib/admin/avatars-service";
 import { prisma } from "@/lib/prisma";
-import { checkReorder, cleanItemName, isStoreCategory, type StoreCategory } from "@/lib/store/rules";
+import { checkReorder, cleanItemName, isStoreCategory, type FrameChoice, type StoreCategory } from "@/lib/store/rules";
+import { screenStoreImage } from "@/lib/store/screening";
+import { deleteReplacedImage } from "@/lib/uploads/image-storage";
 
 /*
  * The Store (Sweep B3). Members browse active items; Board and CEO manage
@@ -71,14 +73,53 @@ export async function reorderStoreItems(actorId: string, category: unknown, ids:
  * using it, and a default set to it, fall back to the role default.
  */
 export async function removeStoreItem(actorId: string, id: string) {
-  const item = await prisma.storeItem.findUnique({ where: { id }, select: { id: true, platformAvatarId: true } });
+  const item = await prisma.storeItem.findUnique({ where: { id }, select: { id: true, platformAvatarId: true, imageUrl: true } });
   if (!item) return fail(404, "That item wasn't found.");
   if (item.platformAvatarId) {
     const result = await removePlatformAvatar(actorId, item.platformAvatarId);
     if (!result.ok) return fail(result.status, result.message);
   } else {
+    // A frame: members wearing it fall back (User.selectedFrameId is SET NULL), then its file goes.
     await prisma.storeItem.delete({ where: { id } });
+    await deleteReplacedImage(item.imageUrl, null);
   }
   await recordAudit(prisma, { action: AUDIT.STORE_ITEM_REMOVED, actorId, details: { storeItemId: id } });
   return { ok: true as const };
+}
+
+// ---- Frames (Sweep I) -----------------------------------------------------------
+
+/** Adds an uploaded frame (already made by lib/uploads/frame-image.ts) at the end of the Frames list. */
+export async function addFrameItem(actorId: string, input: { name: unknown; imageUrl: string }) {
+  const name = cleanItemName(input.name) ?? "Frame";
+  const screened = await screenStoreImage(input.imageUrl);
+  if (!screened.ok) return fail(400, screened.message);
+  const item = await prisma.$transaction(async (tx) => {
+    const last = await tx.storeItem.aggregate({ where: { category: "FRAME" }, _max: { sortOrder: true } });
+    const created = await tx.storeItem.create({
+      data: { category: "FRAME", name, imageUrl: input.imageUrl, sortOrder: (last._max.sortOrder ?? -1) + 1, createdById: actorId },
+      select: itemSelect,
+    });
+    await recordAudit(tx, { action: AUDIT.STORE_ITEM_ADDED, actorId, details: { storeItemId: created.id, category: "FRAME" } });
+    return created;
+  });
+  return { ok: true as const, item };
+}
+
+/**
+ * A member's own frame choice (only ever their own account). A Store frame
+ * must be an active Frames item; "level" shows the earned writer frame (for a
+ * reader that is no frame); "none" hides every frame.
+ */
+export async function setMemberFrame(userId: string, choice: FrameChoice) {
+  if (choice.kind === "store") {
+    const item = await prisma.storeItem.findFirst({ where: { id: choice.itemId, category: "FRAME", active: true }, select: { id: true } });
+    if (!item) return fail(404, "That frame isn't in the Store.");
+  }
+  const data =
+    choice.kind === "store"
+      ? { selectedFrameId: choice.itemId, hideLevelFrame: false }
+      : { selectedFrameId: null, hideLevelFrame: choice.kind === "none" };
+  await prisma.user.update({ where: { id: userId }, data });
+  return { ok: true as const, choice };
 }

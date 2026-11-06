@@ -6,7 +6,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import AvatarCropper from "@/components/avatar/AvatarCropper";
 import FramedAvatar from "@/components/avatar/FramedAvatar";
 import UserAvatar from "@/components/UserAvatar";
-import { frameFor } from "@/lib/writer-frames";
+import { displayedFrame, type SelectedFrame } from "@/lib/writer-frames";
 import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import type { AvatarCrop } from "@/lib/avatar-crop";
 import { defaultAvatarFor } from "@/lib/avatars";
@@ -36,7 +36,7 @@ export default function AvatarPlace({
   library,
   initialTab,
 }: {
-  member: { id: string; name: string; role: string; writerStatus: string | null };
+  member: { id: string; name: string; role: string; writerStatus: string | null; hideLevelFrame?: boolean; selectedFrame?: SelectedFrame | null };
   initial: PhotoState;
   /** The Store's active avatars, in Store order (lib/avatar-library.ts). */
   library: LibraryAvatar[];
@@ -192,7 +192,7 @@ export default function AvatarPlace({
           <AvatarCropper
             src={editing.src}
             initial={editing.kind === "adjust" ? state.crop : null}
-            frameTier={frameFor(member)?.tier ?? null}
+            wornFrame={displayedFrame(member)}
             busy={busy}
             error={cropError}
             onSave={(crop) => void save(crop)}
@@ -210,7 +210,7 @@ export default function AvatarPlace({
     <div>
       <div className="flex flex-col items-center text-center">
         <FramedAvatar
-          user={{ image: state.image, role: member.role, writerStatus: member.writerStatus }}
+          user={{ image: state.image, role: member.role, writerStatus: member.writerStatus, hideLevelFrame: member.hideLevelFrame, selectedFrame: member.selectedFrame }}
           size="2xl"
           label={`${member.name}'s avatar`}
           eager

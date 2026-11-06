@@ -1,3 +1,4 @@
+import { FRAME_USER_SELECT } from "@/lib/writer-frames";
 import type { Prisma, Role } from "@prisma/client";
 import { activeRestriction } from "@/lib/admin/policy";
 import { prisma } from "@/lib/prisma";
@@ -68,7 +69,7 @@ export async function listMembers(options: {
         name: true,
         image: true,
         role: true,
-        writerStatus: true,
+        ...FRAME_USER_SELECT,
         createdAt: true,
         restrictions: { where: { liftedAt: null }, select: restrictionSelect },
       },
@@ -99,7 +100,7 @@ export async function getMemberDetail(id: string) {
       name: true,
       image: true,
       role: true,
-      writerStatus: true,
+      ...FRAME_USER_SELECT,
       createdAt: true,
       updatedAt: true,
       _count: { select: { series: true, episodes: true } },

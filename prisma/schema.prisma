@@ -51,6 +51,14 @@ model User {
   avatarCropX              Float?
   avatarCropY              Float?
   avatarZoom               Float?
+  /// Sweep I: a Store frame (StoreItem, category FRAME) shown around the
+  /// avatar instead of the writer-level frame. Null = the level frame
+  /// (writers) or none (readers). A hidden frame isn't shown; deleting one
+  /// clears this.
+  selectedFrameId          String?
+  /// Sweep I: the member chose "No frame", so their level frame isn't shown either.
+  hideLevelFrame           Boolean        @default(false)
+  selectedFrame            StoreItem?     @relation("SelectedFrame", fields: [selectedFrameId], references: [id], onDelete: SetNull)
   passwordHash             String?
   accounts                 Account[]
   adImpressions            AdImpression[]
@@ -89,10 +97,12 @@ model User {
   rateLimitHits            RateLimitHit[]
   contentEdits             ContentItem[]
   contentRevisions         ContentRevision[]
-  storeItemsAdded          StoreItem[]
+  storeItemsAdded          StoreItem[]    @relation("StoreItemCreator")
   feedShelvesUpdated       FeedShelf[]
   feedShelfItemsAdded      FeedShelfItem[]
   writerExposure           WriterExposure[]
+
+  @@index([selectedFrameId])
 }
 
 model AuthorProfile {
@@ -688,7 +698,8 @@ model StoreItem {
   updatedAt        DateTime        @updatedAt
   createdById      String?
   platformAvatar   PlatformAvatar? @relation(fields: [platformAvatarId], references: [id], onDelete: Cascade)
-  createdBy        User?           @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy        User?           @relation("StoreItemCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  selectedBy       User[]          @relation("SelectedFrame")
 
   @@index([category, active, sortOrder])
 }

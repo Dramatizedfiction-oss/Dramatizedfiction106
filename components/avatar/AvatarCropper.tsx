@@ -13,8 +13,8 @@ import {
   FRAME_SAFE_SHARE,
   type AvatarCrop,
 } from "@/lib/avatar-crop";
-import { LevelFrameArt } from "@/components/avatar/FramedAvatar";
-import type { FrameTier } from "@/lib/writer-frames";
+import { LevelFrameArt, StoreFrameArt } from "@/components/avatar/FramedAvatar";
+import type { DisplayedFrame } from "@/lib/writer-frames";
 
 /*
  * Position a photo inside the avatar circle: drag to move (touch, pen or
@@ -42,7 +42,7 @@ export default function AvatarCropper({
   onSave,
   onCancel,
   frame = "circle",
-  frameTier = null,
+  wornFrame = null,
   safeZone,
 }: {
   /** Show the safe-zone ring even without a frame preview (library avatars: writers will wear frames). */
@@ -50,7 +50,7 @@ export default function AvatarCropper({
   /** "circle" for avatars (default); "portrait" for 2:3 book covers. */
   frame?: "circle" | "portrait";
   /** Sweep I: the frame this avatar is shown with, if any: adds the safe-zone ring and framed previews. */
-  frameTier?: FrameTier | null;
+  wornFrame?: DisplayedFrame | null;
   src: string;
   initial: AvatarCrop | null;
   busy: boolean;
@@ -161,7 +161,7 @@ export default function AvatarCropper({
     return () => window.removeEventListener("keydown", onKey);
   }, [busy, onCancel]);
 
-  const showSafeZone = !portrait && (safeZone ?? Boolean(frameTier));
+  const showSafeZone = !portrait && (safeZone ?? Boolean(wornFrame));
 
   const layout = cropLayout(crop, width, height, VIEWPORT, aspect);
 
@@ -193,7 +193,7 @@ export default function AvatarCropper({
             style={{ width: layout.width, height: layout.height, left: layout.left, top: layout.top }}
           />
         ) : (
-          <p className="absolute inset-0 flex items-center justify-center text-sm text-white/80">Loading photo…</p>
+          <p className="absolute inset-0 flex items-center justify-center text-sm text-white/80">Loading photoâ€¦</p>
         )}
         {/* The circle: everything outside it is dimmed. (A portrait frame is the whole viewport.) */}
         {portrait ? (
@@ -231,13 +231,13 @@ export default function AvatarCropper({
         {PREVIEWS.map((preview) => {
           // Same proportions as FramedAvatar: the photo is inset inside the frame.
           const decorated = preview.size >= 64;
-          const photo = frameTier ? Math.round(preview.size * (decorated ? FRAME_PHOTO_SHARE : 0.84)) : preview.size;
+          const photo = wornFrame ? Math.round(preview.size * (decorated || wornFrame.kind === "store" ? FRAME_PHOTO_SHARE : 0.84)) : preview.size;
           const small = cropLayout(crop, width, height, photo);
           return (
             <div key={preview.size} className="flex flex-col items-center gap-1.5">
               <span className="relative inline-flex items-center justify-center" style={{ width: preview.size, height: preview.size }}>
                 <span
-                  className={`relative block overflow-hidden rounded-full bg-[var(--surface-raised)] ${frameTier ? "" : "border border-[var(--border-strong)]"}`}
+                  className={`relative block overflow-hidden rounded-full bg-[var(--surface-raised)] ${wornFrame ? "" : "border border-[var(--border-strong)]"}`}
                   style={{ width: photo, height: photo }}
                 >
                   {ready ? (
@@ -245,10 +245,11 @@ export default function AvatarCropper({
                     <img src={src} alt="" className="absolute max-w-none" style={{ width: small.width, height: small.height, left: small.left, top: small.top }} />
                   ) : null}
                 </span>
-                {frameTier ? <LevelFrameArt tier={frameTier} decorated={decorated} /> : null}
+                {wornFrame?.kind === "level" ? <LevelFrameArt tier={wornFrame.tier} decorated={decorated} /> : null}
+                {wornFrame?.kind === "store" ? <StoreFrameArt imageUrl={wornFrame.imageUrl} eager /> : null}
               </span>
               <span className="theme-meta text-[10px] uppercase tracking-[0.16em]">
-                {preview.label} · {preview.size}px
+                {preview.label} Â· {preview.size}px
               </span>
             </div>
           );
@@ -270,7 +271,7 @@ export default function AvatarCropper({
           Cancel
         </button>
         <button type="button" onClick={() => onSave(crop)} disabled={!ready || busy} className="story-button-primary min-h-11 justify-center disabled:opacity-50">
-          {busy ? "Saving…" : "Save"}
+          {busy ? "Savingâ€¦" : "Save"}
         </button>
       </div>
     </div>

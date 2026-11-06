@@ -1,3 +1,4 @@
+import { FRAME_USER_SELECT } from "@/lib/writer-frames";
 import { PUBLIC_EPISODE_WHERE, PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
 import { seriesRatingSummary } from "@/lib/engagement-rules";
 import { eligibleSeries } from "@/lib/feed/eligibility";
@@ -40,7 +41,7 @@ export async function getSeriesPage(seriesId: string, viewerId: string | null) {
       isComplete: true,
       followers: true,
       authorId: true,
-      author: { select: { id: true, name: true, image: true, role: true, writerStatus: true } },
+      author: { select: { id: true, name: true, image: true, role: true, ...FRAME_USER_SELECT } },
       episodes: {
         where: { status: "PUBLISHED" },
         orderBy: { episodeNumber: "asc" },

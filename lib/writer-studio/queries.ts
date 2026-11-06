@@ -1,3 +1,4 @@
+import { FRAME_USER_SELECT } from "@/lib/writer-frames";
 import type { EpisodeStatus, Prisma } from "@prisma/client";
 import { deserializeAiUsageTag } from "@/lib/ai-usage";
 import { PUBLIC_SERIES_WHERE } from "@/lib/content-visibility";
@@ -99,7 +100,7 @@ function statusWhere(filter: EpisodeFilter): Prisma.EpisodeWhereInput {
 export async function getWriterProfile(userId: string) {
   return prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, name: true, image: true, writerStatus: true },
+    select: { id: true, name: true, image: true, ...FRAME_USER_SELECT },
   });
 }
 

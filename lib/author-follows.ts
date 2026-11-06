@@ -1,3 +1,4 @@
+import { FRAME_USER_SELECT } from "@/lib/writer-frames";
 import type { Prisma } from "@prisma/client";
 import { checkCanFollow, FOLLOWERS_PAGE_SIZE, FOLLOWERS_PREVIEW_COUNT } from "@/lib/author-follow-rules";
 import { failure, isUsableId, type EngagementFailure } from "@/lib/engagement";
@@ -91,7 +92,7 @@ export async function listFollowedAuthors(followerId: string): Promise<PersonEnt
     orderBy: { createdAt: "desc" },
     select: {
       createdAt: true,
-      author: { select: { id: true, name: true, image: true, role: true, writerStatus: true } },
+      author: { select: { id: true, name: true, image: true, role: true, ...FRAME_USER_SELECT } },
     },
   });
   return rows.map(({ createdAt, author }) => ({ ...author, followedAt: createdAt.toISOString() }));
@@ -99,7 +100,7 @@ export async function listFollowedAuthors(followerId: string): Promise<PersonEnt
 
 export type FollowerEntry = { id: string; name: string | null; image: string | null; role: string; writerStatus: string };
 
-const followerSelect = { id: true, name: true, image: true, role: true, writerStatus: true } satisfies Prisma.UserSelect;
+const followerSelect = { id: true, name: true, image: true, role: true, ...FRAME_USER_SELECT } satisfies Prisma.UserSelect;
 
 /** Followers who chose to be listed (and aren't restricted), newest first. Never emails or anything private. */
 function listedFollowersWhere(authorId: string, now: Date): Prisma.AuthorFollowWhereInput {

@@ -14,6 +14,7 @@ import type { ImagePurpose } from "./image-purposes";
  *   profile-image / profile-original  never here: made by /api/me/avatar/photo
  *   profile-book-cover              never here: made by /api/me/author-profile/book-cover
  *   platform-avatar                 BOARD and CEO (Administration's avatar library)
+ *   store-frame                     never here: made by /api/admin/store/frames (BOARD and CEO)
  */
 export async function authorizeImageUpload(
   purpose: ImagePurpose,
@@ -50,5 +51,11 @@ export async function authorizeImageUpload(
     }
     case "platform-avatar":
       return requireApiRole("BOARD");
+    case "store-frame": {
+      // Checked and made on the server by Back of the store's own route.
+      const guard = await requireApiRole("BOARD");
+      if (!guard.ok) return guard;
+      return { ok: false, response: apiError("FORBIDDEN", "Add frames in Administration › Back of the store › Frames.") };
+    }
   }
 }

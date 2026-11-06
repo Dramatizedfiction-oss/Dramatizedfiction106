@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@/auth";
+import FrameGrid from "@/components/store/FrameGrid";
 import StoreGrid from "@/components/store/StoreGrid";
 import { prisma } from "@/lib/prisma";
 import { ownProfileHref } from "@/lib/profile-links";
@@ -10,9 +11,10 @@ import { listStoreItems } from "@/lib/store/service";
 export const metadata: Metadata = { title: "Store" };
 
 /*
- * The Store (Sweep B3): items members can choose, by category (only Avatars
- * today). Open to everyone; choosing needs an account. Everything is free and
- * no prices are shown. Writer frames are earned by level, not sold here.
+ * The Store (Sweep B3): items members can choose, by category (Avatars, and
+ * Frames since Sweep I). Open to everyone; choosing needs an account.
+ * Everything is free and no prices are shown. Writer-level frames are earned,
+ * not sold; the Frames tab lets a writer keep theirs or wear another.
  * Sweep D2: browse and choose only (a member's own photo is made on the avatar
  * page, library avatars in Administration › Back of the store); not in the
  * sidebar, reached from the profile editors' Picture area.
@@ -25,7 +27,12 @@ export default async function StorePage({ searchParams }: { searchParams?: { cat
 
   const [items, member] = await Promise.all([
     listStoreItems(category),
-    userId ? prisma.user.findUnique({ where: { id: userId }, select: { image: true, avatarOriginalUrl: true } }) : null,
+    userId
+      ? prisma.user.findUnique({
+          where: { id: userId },
+          select: { image: true, avatarOriginalUrl: true, role: true, writerStatus: true, selectedFrameId: true, hideLevelFrame: true },
+        })
+      : null,
   ]);
 
   return (
@@ -66,6 +73,13 @@ export default async function StorePage({ searchParams }: { searchParams?: { cat
           </h2>
           <p className="theme-meta mt-1 text-sm">{info.description}</p>
           <div className="mt-3">
+            {category === "FRAME" ? (
+              <FrameGrid
+                items={items.map((item) => ({ id: item.id, name: item.name, imageUrl: item.imageUrl }))}
+                member={member ? { image: member.image, role: member.role, writerStatus: member.writerStatus } : null}
+                initial={{ selectedFrameId: member?.selectedFrameId ?? null, hideLevelFrame: member?.hideLevelFrame ?? false }}
+              />
+            ) : (
             <StoreGrid
               items={items.map((item) => ({ id: item.id, name: item.name, imageUrl: item.imageUrl }))}
               currentImage={member?.image ?? null}
@@ -73,6 +87,7 @@ export default async function StorePage({ searchParams }: { searchParams?: { cat
               signedIn={Boolean(userId)}
               emptyText={info.empty}
             />
+            )}
           </div>
         </section>
       </div>

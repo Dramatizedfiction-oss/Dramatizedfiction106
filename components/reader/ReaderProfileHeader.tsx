@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import FramedAvatar from "@/components/avatar/FramedAvatar";
+import type { SelectedFrame } from "@/lib/writer-frames";
 
 export type ReaderProfileHeaderData = {
   name: string | null;
@@ -7,6 +8,9 @@ export type ReaderProfileHeaderData = {
   role: string | null;
   /** Writers get their level's avatar frame. */
   writerStatus?: string | null;
+  /** Sweep I: a Store frame or "No frame" (lib/writer-frames.ts displayedFrame). */
+  hideLevelFrame?: boolean;
+  selectedFrame?: SelectedFrame | null;
   bio: string | null;
   bannerImage: string | null;
   createdAt: Date;
@@ -46,7 +50,9 @@ export default function ReaderProfileHeader({
             beside it, starting just under the banner edge so a long name never
             runs up into the banner image. */}
         <div className="-mt-12 flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:gap-4 md:-mt-16">
-          <FramedAvatar user={{ image: reader.image, role: reader.role, writerStatus: reader.writerStatus }} size="2xl" eager className="rounded-full bg-[var(--bg-secondary)] p-1" />
+          <FramedAvatar
+            user={{ image: reader.image, role: reader.role, writerStatus: reader.writerStatus, hideLevelFrame: reader.hideLevelFrame, selectedFrame: reader.selectedFrame }}
+            size="2xl" eager className="rounded-full bg-[var(--bg-secondary)] p-1" />
           <div className="min-w-0 sm:pt-14 md:pt-[4.5rem]">
             <p className="eyebrow">Reader Profile</p>
             <h1 className="font-heading theme-heading mt-2 break-words text-3xl font-semibold sm:text-4xl md:text-5xl">

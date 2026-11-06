@@ -7,6 +7,7 @@ import { photoState } from "@/lib/avatar-photo";
 import { prisma } from "@/lib/prisma";
 import { ownProfileHref } from "@/lib/profile-links";
 import { requireRole } from "@/lib/utils";
+import { FRAME_USER_SELECT } from "@/lib/writer-frames";
 
 /*
  * The avatar place: the signed-in member's own picture, opened from the
@@ -27,7 +28,7 @@ export default async function AvatarPage({ searchParams }: { searchParams?: { ta
         id: true,
         name: true,
         role: true,
-        writerStatus: true,
+        ...FRAME_USER_SELECT,
         image: true,
         avatarOriginalUrl: true,
         avatarCropX: true,
@@ -53,7 +54,14 @@ export default async function AvatarPage({ searchParams }: { searchParams?: { ta
         </Link>
         <h1 className="font-heading theme-heading mb-6 mt-1 text-3xl font-semibold md:text-4xl">Your avatar</h1>
         <AvatarPlace
-          member={{ id: member.id, name: member.name?.trim() || "Member", role: member.role, writerStatus: member.writerStatus }}
+          member={{
+            id: member.id,
+            name: member.name?.trim() || "Member",
+            role: member.role,
+            writerStatus: member.writerStatus,
+            hideLevelFrame: member.hideLevelFrame,
+            selectedFrame: member.selectedFrame,
+          }}
           initial={photoState(member)}
           library={library}
           initialTab={searchParams?.tab === "photo" ? "photo" : searchParams?.tab === "library" ? "library" : undefined}

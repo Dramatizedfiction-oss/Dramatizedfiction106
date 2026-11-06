@@ -1,3 +1,4 @@
+import { FRAME_USER_SELECT, type SelectedFrame } from "@/lib/writer-frames";
 import { ERROR_COPY } from "@/lib/error-copy";
 import type { Prisma } from "@prisma/client";
 import { AUDIT, recordAudit } from "@/lib/admin/audit";
@@ -26,7 +27,7 @@ export type CommentView = {
   body: string;
   createdAt: string;
   editedAt: string | null;
-  author: { id: string; name: string | null; image: string | null; role: string; writerStatus: string };
+  author: { id: string; name: string | null; image: string | null; role: string; writerStatus: string; hideLevelFrame: boolean; selectedFrame: SelectedFrame | null };
 };
 
 const VISIBLE = { removedAt: null } satisfies Prisma.CommentWhereInput;
@@ -37,7 +38,7 @@ const commentSelect = {
   createdAt: true,
   editedAt: true,
   // writerStatus picks the writer's avatar ring.
-  user: { select: { id: true, name: true, image: true, role: true, writerStatus: true } },
+  user: { select: { id: true, name: true, image: true, role: true, ...FRAME_USER_SELECT } },
 } satisfies Prisma.CommentSelect;
 
 type CommentRow = Prisma.CommentGetPayload<{ select: typeof commentSelect }>;

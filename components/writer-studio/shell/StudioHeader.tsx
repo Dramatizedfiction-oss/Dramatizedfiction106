@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PlusIcon } from "@/components/icons";
 import FramedAvatar from "@/components/avatar/FramedAvatar";
+import type { SelectedFrame } from "@/lib/writer-frames";
 import WriterStatusBadge from "@/components/writer-studio/shell/WriterStatusBadge";
 
 export default function StudioHeader({
@@ -8,11 +9,14 @@ export default function StudioHeader({
   name,
   image,
   writerStatus,
+  frame,
 }: {
   userId: string;
   name: string;
   image: string | null;
   writerStatus: string | null;
+  /** Sweep I: the writer's Store frame choice. */
+  frame?: { hideLevelFrame: boolean; selectedFrame: SelectedFrame | null };
 }) {
   return (
     <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
@@ -21,8 +25,8 @@ export default function StudioHeader({
         <div className="mt-2 flex min-w-0 items-center gap-3">
           {/* Everyone in the studio is WRITER or above, so the default is the writer one. */}
           {/* The writer's level frame: full design on wider screens, a ring on phones. */}
-          <FramedAvatar user={{ image, role: "WRITER", writerStatus }} size="lg" eager className="!hidden sm:!inline-flex" />
-          <FramedAvatar user={{ image, role: "WRITER", writerStatus }} size="md" eager className="sm:!hidden" />
+          <FramedAvatar user={{ image, role: "WRITER", writerStatus, ...frame }} size="lg" eager className="!hidden sm:!inline-flex" />
+          <FramedAvatar user={{ image, role: "WRITER", writerStatus, ...frame }} size="md" eager className="sm:!hidden" />
           <h1 className="font-heading theme-heading min-w-0 truncate text-3xl font-semibold md:text-4xl">{name}</h1>
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-4 text-sm">

@@ -1,3 +1,4 @@
+import { FRAME_USER_SELECT } from "@/lib/writer-frames";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -74,7 +75,7 @@ export default async function AuthorProfilePage({
         bio: true,
         image: true,
         role: true,
-        writerStatus: true,
+        ...FRAME_USER_SELECT,
         bannerImage: true,
         readingProfileVisibility: true,
         activityVisibility: true,
@@ -163,7 +164,7 @@ export default async function AuthorProfilePage({
           ) : null}
           <div className="-mt-12 flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-end sm:gap-4 md:-mt-16">
             <FramedAvatar
-              user={{ image: author.image, role: author.role, writerStatus: author.writerStatus }}
+              user={{ image: author.image, role: author.role, writerStatus: author.writerStatus, hideLevelFrame: author.hideLevelFrame, selectedFrame: author.selectedFrame }}
               size="2xl"
               eager
               className="rounded-full bg-[var(--bg-secondary)] p-1"

@@ -1,3 +1,4 @@
+import { FRAME_USER_SELECT } from "@/lib/writer-frames";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -31,7 +32,7 @@ export default async function ReaderProfilePage({ searchParams }: { searchParams
       name: true,
       image: true,
       role: true,
-      writerStatus: true,
+      ...FRAME_USER_SELECT,
       bio: true,
       bannerImage: true,
       createdAt: true,
