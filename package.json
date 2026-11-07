@@ -16,6 +16,7 @@
     "test": "node --test --import ./tests/setup/register.mjs \"tests/unit/*.test.ts\"",
     "test:integration": "node scripts/test-integration.mjs",
     "test:smoke": "node scripts/test-smoke.mjs",
+    "test:phone": "node scripts/test-phone.mjs",
     "seed:test": "node --import ./tests/setup/register.mjs scripts/seed-test.ts --db=main",
     "seed:test:clear": "node --import ./tests/setup/register.mjs scripts/seed-test-clear.ts --db=main",
     "seed:test:scratch": "node --import ./tests/setup/register.mjs scripts/seed-test.ts --db=scratch",
