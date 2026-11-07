@@ -32,7 +32,7 @@ export default function ErrorPage({
   return (
     <ErrorScene eyebrow={`Error ${code}`} title={copy.title} line={copy.line} action={action} fullScreen={fullScreen}>
       {code !== 404 && copy.action.kind !== "link" ? (
-        <a href="/" className="underline decoration-1 underline-offset-4 hover:text-white">
+        <a href="/" className="-my-3.5 inline-block py-3.5 underline decoration-1 underline-offset-4 hover:text-white">
           Or go home
         </a>
       ) : null}

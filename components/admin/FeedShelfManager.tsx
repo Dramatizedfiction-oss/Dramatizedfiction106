@@ -377,7 +377,7 @@ function ChipGroup({
               type="button"
               aria-pressed={on}
               onClick={() => onChange(on ? value.filter((item) => item !== option.value) : [...value, option.value])}
-              className={`min-h-11 rounded-full border px-3 text-xs capitalize transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${
+              className={`min-h-11 min-w-11 rounded-full border px-3 text-xs capitalize transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${
                 on
                   ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_14%,transparent)] text-[var(--text-primary)]"
                   : "border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--panel-hover)]"

@@ -122,7 +122,9 @@ export default function AppSidebar({
       className={`relative flex h-full flex-shrink-0 flex-col border-r border-[var(--border-color)] ${
         // The mobile drawer scrolls as a whole so the account controls stay
         // reachable on short screens; the desktop rail clips.
-        isMobile ? "overflow-y-auto overscroll-contain" : "overflow-hidden"
+        // Short screens (a phone on its side): the desktop rail scrolls as a
+        // whole too, so nothing is squeezed out (Sweep 4).
+        isMobile ? "overflow-y-auto overscroll-contain" : "overflow-hidden [@media(max-height:500px)]:overflow-y-auto"
       }`}
       style={{
         width: isMobile ? "100%" : showLabels ? 240 : 64,
@@ -257,7 +259,11 @@ export default function AppSidebar({
         )}
       </div>
 
-      <div className={`flex-1 space-y-1 px-2 pb-4 ${isMobile ? "" : "overflow-y-auto"}`}>
+      <div
+        className={`flex-1 space-y-1 px-2 pb-4 ${
+          isMobile ? "" : "overflow-y-auto [@media(max-height:500px)]:flex-none [@media(max-height:500px)]:overflow-visible"
+        }`}
+      >
         {trending.map((series, idx) => {
           const accent = safeHexColor(series.themeColor);
           const rankColor = RANK_COLORS[idx] || RANK_COLORS[2];

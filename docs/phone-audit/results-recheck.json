@@ -1,0 +1,114 @@
+[
+ {
+  "screen": "Writer profile editor",
+  "path": "/author/cmw5wmb9900h7g5wsg2pwkib0?edit=1",
+  "role": "writer",
+  "size": "320x568",
+  "finalPath": "/author/cmw5wmb9900h7g5wsg2pwkib0",
+  "findings": [
+   {
+    "kind": "tinyText",
+    "target": "span\"AI Free\"",
+    "detail": "9.5px"
+   },
+   {
+    "kind": "tinyText",
+    "target": "span\"AI Free\"",
+    "detail": "9.5px"
+   },
+   {
+    "kind": "tinyText",
+    "target": "span\"AI Free\"",
+    "detail": "9.5px"
+   },
+   {
+    "kind": "tinyText",
+    "target": "span\"AI Free\"",
+    "detail": "9.5px"
+   },
+   {
+    "kind": "tinyText",
+    "target": "span\"AI Free\"",
+    "detail": "9.5px"
+   }
+  ]
+ },
+ {
+  "screen": "Writer profile editor",
+  "path": "/author/cmw5wmb9900h7g5wsg2pwkib0?edit=1",
+  "role": "writer",
+  "size": "390x844",
+  "finalPath": "/author/cmw5wmb9900h7g5wsg2pwkib0",
+  "findings": [
+   {
+    "kind": "tinyText",
+    "target": "span\"AI Free\"",
+    "detail": "9.5px"
+   },
+   {
+    "kind": "tinyText",
+    "target": "span\"AI Free\"",
+    "detail": "9.5px"
+   },
+   {
+    "kind": "tinyText",
+    "target": "span\"AI Free\"",
+    "detail": "9.5px"
+   },
+   {
+    "kind": "tinyText",
+    "target": "span\"AI Free\"",
+    "detail": "9.5px"
+   },
+   {
+    "kind": "tinyText",
+    "target": "span\"AI Free\"",
+    "detail": "9.5px"
+   }
+  ]
+ },
+ {
+  "screen": "Writer profile editor",
+  "path": "/author/cmw5wmb9900h7g5wsg2pwkib0?edit=1",
+  "role": "writer",
+  "size": "812x375",
+  "finalPath": "/author/cmw5wmb9900h7g5wsg2pwkib0",
+  "findings": [
+   {
+    "kind": "tinyText",
+    "target": "p\"Trending This Week\"",
+    "detail": "10px"
+   },
+   {
+    "kind": "tinyText",
+    "target": "span\"Writer\"",
+    "detail": "10px"
+   },
+   {
+    "kind": "tinyText",
+    "target": "span\"AI Free\"",
+    "detail": "9.5px"
+   },
+   {
+    "kind": "tinyText",
+    "target": "span\"AI Free\"",
+    "detail": "9.5px"
+   },
+   {
+    "kind": "tinyText",
+    "target": "span\"AI Free\"",
+    "detail": "9.5px"
+   },
+   {
+    "kind": "tinyText",
+    "target": "span\"AI Free\"",
+    "detail": "9.5px"
+   },
+   {
+    "kind": "tinyText",
+    "target": "span\"AI Free\"",
+    "detail": "9.5px"
+   }
+  ]
+ }
+]

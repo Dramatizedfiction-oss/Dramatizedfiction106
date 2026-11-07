@@ -80,7 +80,7 @@ export default function ItemList<T extends { key: string }>({
                 dragKey === item.key ? "border-[hsl(var(--series-accent))] shadow-[var(--shadow-raised)]" : "border-[var(--border-color)]"
               }`}
             >
-              <div className="flex items-center gap-1 p-1.5">
+              <div className="flex flex-wrap items-center gap-1 p-1.5">
                 <button
                   type="button"
                   aria-label={`Reorder ${title}. Drag, or use the up and down arrow keys.`}
@@ -97,7 +97,7 @@ export default function ItemList<T extends { key: string }>({
                       move(index, index + 1);
                     }
                   }}
-                  className="flex h-11 w-9 shrink-0 cursor-grab touch-none items-center justify-center rounded-xl text-[var(--text-muted)] hover:bg-[var(--panel-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] active:cursor-grabbing"
+                  className="flex h-11 w-11 shrink-0 cursor-grab touch-none items-center justify-center rounded-xl text-[var(--text-muted)] hover:bg-[var(--panel-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] active:cursor-grabbing"
                 >
                   <svg aria-hidden viewBox="0 0 20 20" className="h-5 w-5" fill="currentColor">
                     {[5, 10, 15].flatMap((y) => [7, 13].map((x) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.5" />))}
@@ -107,7 +107,7 @@ export default function ItemList<T extends { key: string }>({
                   type="button"
                   aria-expanded={open}
                   onClick={() => onOpenKeyChange(open ? null : item.key)}
-                  className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl px-2 text-left hover:bg-[var(--panel-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+                  className="flex min-h-11 min-w-[9rem] flex-1 items-center gap-2 rounded-xl px-2 text-left hover:bg-[var(--panel-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
                 >
                   <span className="min-w-0 flex-1">
                     <span className={`theme-heading block text-sm font-semibold ${wrapTitles ? "break-words py-1 leading-snug" : "truncate"}`}>{title}</span>
@@ -118,23 +118,26 @@ export default function ItemList<T extends { key: string }>({
                     ›
                   </span>
                 </button>
-                <IconButton label={`Move ${title} up`} disabled={index === 0} onClick={() => move(index, index - 1)}>
-                  <path d="M5 12l5-5 5 5" />
-                </IconButton>
-                <IconButton label={`Move ${title} down`} disabled={index === items.length - 1} onClick={() => move(index, index + 1)}>
-                  <path d="M5 8l5 5 5-5" />
-                </IconButton>
-                <IconButton
-                  label={`Remove ${title}`}
-                  danger
-                  onClick={() => {
-                    onChange(items.filter((other) => other.key !== item.key));
-                    if (open) onOpenKeyChange(null);
-                    setAnnouncement(`${title} removed.`);
-                  }}
-                >
-                  <path d="M5 5l10 10M15 5L5 15" />
-                </IconButton>
+                {/* Kept together: on a very narrow screen they wrap below as a group instead of squeezing the name (Sweep 4). */}
+                <div className="ml-auto flex shrink-0 gap-1">
+                  <IconButton label={`Move ${title} up`} disabled={index === 0} onClick={() => move(index, index - 1)}>
+                    <path d="M5 12l5-5 5 5" />
+                  </IconButton>
+                  <IconButton label={`Move ${title} down`} disabled={index === items.length - 1} onClick={() => move(index, index + 1)}>
+                    <path d="M5 8l5 5 5-5" />
+                  </IconButton>
+                  <IconButton
+                    label={`Remove ${title}`}
+                    danger
+                    onClick={() => {
+                      onChange(items.filter((other) => other.key !== item.key));
+                      if (open) onOpenKeyChange(null);
+                      setAnnouncement(`${title} removed.`);
+                    }}
+                  >
+                    <path d="M5 5l10 10M15 5L5 15" />
+                  </IconButton>
+                </div>
               </div>
               {open ? (
                 <div className="border-t border-[var(--border-color)] p-4">
@@ -172,7 +175,7 @@ function IconButton({
       title={label}
       disabled={disabled}
       onClick={onClick}
-      className={`flex h-11 w-9 shrink-0 items-center justify-center rounded-xl transition hover:bg-[var(--panel-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] disabled:opacity-30 ${
+      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition hover:bg-[var(--panel-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] disabled:opacity-30 ${
         danger ? "text-[var(--status-danger)]" : "text-[var(--text-secondary)]"
       }`}
     >

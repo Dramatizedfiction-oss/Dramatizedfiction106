@@ -350,7 +350,7 @@ export default function AuthorProfileEditor({
             aria-label="Preview as a visitor"
             title="Preview as a visitor"
             onClick={() => setPreview((value) => !value)}
-            className={`ml-auto inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full border px-2.5 text-xs font-semibold transition sm:min-h-9 sm:px-3 ${
+            className={`ml-auto inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full border px-2.5 text-xs font-semibold transition sm:min-h-9 sm:px-3 pointer-coarse:!min-h-11 ${
               preview ? "border-transparent bg-[var(--text-primary)] text-[var(--bg-secondary)]" : "border-[var(--border-strong)] text-[var(--text-primary)] hover:bg-[var(--panel-hover)]"
             }`}
           >

@@ -86,7 +86,7 @@ export default async function StudioStatsPage() {
         <ul className="divide-y divide-[var(--studio-border)] rounded-2xl border border-[var(--studio-border)]">
           {series.map((item) => (
             <li key={item.id} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
-              <Link href={`/writer-studio/series/${item.id}`} className="theme-heading block truncate py-3 font-semibold leading-5 hover:underline">
+              <Link href={`/writer-studio/series/${item.id}`} className="theme-heading block min-w-11 truncate py-3 font-semibold leading-5 hover:underline">
                 {item.title}
               </Link>
               <span className="shrink-0 tabular-nums text-[var(--studio-muted)]">

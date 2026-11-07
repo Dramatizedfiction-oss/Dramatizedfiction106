@@ -931,9 +931,12 @@
     min-width: 2.75rem;
   }
 
-  /* Text fields and selects are at least a 44px tap target too. */
+  /* Text fields and selects are at least a 44px tap target too, including
+     ones without the shared classes (admin filters, Studio selects). */
   .ui-input,
-  .studio-field {
+  .studio-field,
+  select:not([multiple]),
+  input:is([type="text"], [type="search"], [type="email"], [type="url"], [type="password"], [type="number"], [type="tel"], :not([type])) {
     min-height: 44px;
   }
 

@@ -183,7 +183,15 @@ export async function auditPage(): Promise<Finding[]> {
   for (const el of all) {
     const s = getComputedStyle(el);
     if (s.overflowX === "visible" && s.overflowY === "visible") continue;
-    if (s.overflowX === "auto" || s.overflowX === "scroll" || s.overflowY === "auto" || s.overflowY === "scroll") continue;
+    if (s.overflowY === "auto" || s.overflowY === "scroll") {
+      // A scroll area squeezed to a sliver (e.g. a list given the leftover
+      // height on a short landscape screen) hides its content in practice.
+      if (el.clientHeight > 0 && el.clientHeight < 48 && el.scrollHeight > el.clientHeight + 4 && shown(el)) {
+        findings.push({ kind: "clipped", target: describe(el), detail: `scroll area squeezed to ${el.clientHeight}px for ${el.scrollHeight}px of content` });
+      }
+      continue;
+    }
+    if (s.overflowX === "auto" || s.overflowX === "scroll") continue;
     if (s.textOverflow === "ellipsis" || (s as any).webkitLineClamp !== "none") continue;
     const ownText = Array.from(el.childNodes).some((n) => n.nodeType === 3 && n.textContent && n.textContent.trim());
     if (!ownText) continue;

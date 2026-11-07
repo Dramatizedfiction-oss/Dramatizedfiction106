@@ -55,7 +55,18 @@ test("touch: 44px targets on any touch screen, no sticky hover, no double-tap de
   assert.match(css, /touch-action: manipulation;/);
   assert.match(css, /\.scrollbar-hide \{[^}]*overscroll-behavior-x: contain;/);
   assert.match(read("components/legal/LegalFooterLinks.tsx"), /min-h-11 min-w-11/);
-  assert.match(read("components/explore/ExploreRow.tsx"), /pointer-coarse:hidden/);
+  assert.match(read("components/explore/ExploreRow.tsx"), /pointer-coarse:!hidden/);
+});
+
+test("short landscape screens: the desktop rail scrolls as a whole instead of squeezing the trending list", () => {
+  const sidebar = read("components/app-shell/AppSidebar.tsx");
+  assert.match(sidebar, /"overflow-hidden \[@media\(max-height:500px\)\]:overflow-y-auto"/);
+  assert.match(sidebar, /\[@media\(max-height:500px\)\]:flex-none \[@media\(max-height:500px\)\]:overflow-visible/);
+});
+
+test("touch: list editor buttons and plain fields/selects are 44px", () => {
+  assert.doesNotMatch(read("components/author-profile/editor/ItemList.tsx"), /h-11 w-9/);
+  assert.match(css, /select:not\(\[multiple\]\),\s*input:is\(\[type="text"\]/);
 });
 
 test("text: long words break; focus and #links stop clear of the sticky header", () => {

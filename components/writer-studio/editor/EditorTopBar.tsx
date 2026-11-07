@@ -53,7 +53,7 @@ export default function EditorTopBar({
         </button>
 
         <div className="hidden min-w-0 items-center gap-2 md:flex">
-          <button type="button" onClick={onBack} className="-my-3 truncate py-3 text-sm text-[var(--studio-muted)] hover:text-[var(--studio-text)]">
+          <button type="button" onClick={onBack} className="-my-3 min-w-11 truncate py-3 text-sm text-[var(--studio-muted)] hover:text-[var(--studio-text)]">
             {seriesTitle}
           </button>
           <span className="text-[var(--studio-muted)]">›</span>
