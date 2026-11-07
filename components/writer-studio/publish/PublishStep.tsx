@@ -184,7 +184,7 @@ export default function PublishStep({
         </div>
         <Link
           href={`/writer-studio/series/${series.id}`}
-          className="theme-meta mt-4 inline-flex min-h-11 items-center text-sm transition hover:text-[var(--text-primary)]"
+          className="theme-meta mt-4 inline-flex min-h-11 min-w-11 items-center text-sm transition hover:text-[var(--text-primary)]"
         >
           Back to series
         </Link>
@@ -236,7 +236,7 @@ export default function PublishStep({
             <button
               type="button"
               onClick={onEditWriting}
-              className="theme-meta mt-3 inline-flex min-h-11 items-center text-sm transition hover:text-[var(--text-primary)]"
+              className="theme-meta mt-3 inline-flex min-h-11 min-w-11 items-center text-sm transition hover:text-[var(--text-primary)]"
             >
               ← Edit the title or text
             </button>
@@ -300,7 +300,7 @@ export default function PublishStep({
             </div>
             <Link
               href={`/writer-studio/series/${series.id}?edit=details`}
-              className="theme-meta mt-3 inline-flex min-h-11 items-center text-sm transition hover:text-[var(--text-primary)]"
+              className="theme-meta mt-3 inline-flex min-h-11 min-w-11 items-center text-sm transition hover:text-[var(--text-primary)]"
             >
               Edit series details →
             </Link>

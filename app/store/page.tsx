@@ -41,7 +41,7 @@ export default async function StorePage({ searchParams }: { searchParams?: { cat
         {userId ? (
           <Link
             href={ownProfileHref({ id: userId, role: session?.user?.role })}
-            className="-ml-1 mb-3 inline-flex min-h-11 items-center gap-1 px-1 text-sm font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            className="-ml-1 mb-3 inline-flex min-h-11 min-w-11 items-center gap-1 px-1 text-sm font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           >
             <span aria-hidden>‹</span> Back to your profile
           </Link>
@@ -56,7 +56,7 @@ export default async function StorePage({ searchParams }: { searchParams?: { cat
               key={item.id}
               href={`/store?category=${item.id}`}
               aria-current={item.id === category ? "page" : undefined}
-              className={`inline-flex min-h-11 shrink-0 items-center rounded-full border px-4 text-sm font-semibold transition ${
+              className={`inline-flex min-h-11 min-w-11 shrink-0 items-center rounded-full border px-4 text-sm font-semibold transition ${
                 item.id === category
                   ? "border-transparent bg-[var(--text-primary)] text-[var(--bg-secondary)]"
                   : "border-[var(--border-strong)] text-[var(--text-primary)] hover:bg-[var(--panel-hover)]"

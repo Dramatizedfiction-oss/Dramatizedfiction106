@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useCloseOnBack } from "./use-close-on-back";
 
 /**
  * An app-styled bottom sheet (a centered panel on wider screens). Built on
@@ -27,6 +28,7 @@ export default function BottomSheet({
     if (open && !dialog.open) dialog.showModal();
     if (!open && dialog.open) dialog.close();
   }, [open]);
+  useCloseOnBack(open, onClose);
 
   return (
     <dialog

@@ -120,7 +120,7 @@ export default async function SeriesPage({ params }: { params: { seriesId: strin
                 by{" "}
                 <Link
                   href={`/author/${series.authorId}`}
-                  className="font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 transition hover:decoration-2 focus-visible:decoration-2"
+                  className="-my-3 inline-block py-3 font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 transition hover:decoration-2 focus-visible:decoration-2"
                 >
                   {authorName}
                 </Link>
@@ -165,7 +165,7 @@ export default async function SeriesPage({ params }: { params: { seriesId: strin
             </div>
             {!viewerId && main ? (
               <p className="mt-3 text-sm">
-                <Link href={signInHref} className="font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 hover:decoration-2">
+                <Link href={signInHref} className="inline-flex min-h-11 items-center font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 hover:decoration-2">
                   Create a free account to save progress
                 </Link>
               </p>

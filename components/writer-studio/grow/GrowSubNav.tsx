@@ -16,7 +16,7 @@ export default function GrowSubNav() {
             key={section.href}
             href={section.href}
             aria-current={active ? "page" : undefined}
-            className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm transition ${
+            className={`inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-full border px-4 py-2 text-sm transition ${
               active
                 ? "border-[var(--studio-accent)] bg-[var(--accent-soft)] text-[var(--studio-text)]"
                 : "border-[var(--studio-border)] text-[var(--studio-muted)] hover:text-[var(--studio-text)]"

@@ -10,7 +10,7 @@ export default function LegalFooterLinks({ className = "" }: { className?: strin
           <li key={link.href}>
             <Link
               href={link.href}
-              className="inline-flex min-h-11 items-center text-xs text-[var(--text-muted)] underline-offset-4 transition hover:text-[var(--text-primary)] hover:underline"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center text-xs text-[var(--text-muted)] underline-offset-4 transition hover:text-[var(--text-primary)] hover:underline"
             >
               {link.label}
             </Link>

@@ -62,7 +62,7 @@ export default async function StudioStatsPage() {
               {episodes.map((episode) => (
                 <tr key={episode.id}>
                   <td className="px-4 py-3">
-                    <Link href={`/writer-studio/episodes/${episode.id}`} className="theme-heading inline-flex min-h-11 items-center font-semibold hover:underline">
+                    <Link href={`/writer-studio/episodes/${episode.id}`} className="theme-heading inline-flex min-h-11 min-w-11 items-center font-semibold hover:underline">
                       {episode.title}
                     </Link>
                     <span className="theme-meta block text-xs">

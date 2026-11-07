@@ -13,6 +13,7 @@ import { useAuthSession } from "@/components/providers/AuthSessionProvider";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { MenuIcon, SearchIcon } from "@/components/icons";
 import LegalFooterLinks from "@/components/legal/LegalFooterLinks";
+import { useCloseOnBack } from "@/components/ui/use-close-on-back";
 import type { AppShellUser, StudioLink } from "@/lib/navigation";
 import { getRoleLabel, hasRoleAccess, normalizeRole } from "@/lib/roles";
 
@@ -69,6 +70,8 @@ export default function AppShell({
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+  // Phones: Back closes the menu drawer instead of leaving the page (Sweep 4).
+  useCloseOnBack(mobileOpen && !isReaderRoute, () => setMobileOpen(false));
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -182,7 +185,7 @@ export default function AppShell({
       <div className="flex min-h-screen min-w-0 flex-1 flex-col overflow-x-clip">
         {!isReaderRoute ? (
           <header
-            className="sticky top-0 z-40 flex h-14 items-center gap-1 border-b border-[var(--border-color)] px-2 md:hidden"
+            className="sticky top-0 z-40 flex h-[calc(3.5rem+env(safe-area-inset-top))] items-center gap-1 border-b border-[var(--border-color)] px-2 pt-[env(safe-area-inset-top)] md:hidden"
             style={{ background: "var(--header-bg)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" }}
           >
             <button

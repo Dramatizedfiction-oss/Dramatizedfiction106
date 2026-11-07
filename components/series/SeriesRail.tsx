@@ -22,7 +22,7 @@ export default function SeriesRail({ title, cards, seeAllHref }: { title: string
         {seeAllHref ? (
           <Link
             href={seeAllHref}
-            className="ml-auto inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 hover:decoration-2"
+            className="ml-auto inline-flex min-h-11 min-w-11 shrink-0 items-center text-sm font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 hover:decoration-2"
           >
             See all
           </Link>

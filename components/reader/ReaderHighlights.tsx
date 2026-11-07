@@ -177,7 +177,7 @@ function HighlightItem({
       {!editing ? (
         <div className="mt-2 flex flex-wrap items-center gap-x-1">
           <span className="theme-meta mr-auto text-xs" suppressHydrationWarning>Saved {timeAgo(item.createdAt)}</span>
-          <Link href={`/episode/${item.episodeId}?highlight=${encodeURIComponent(item.id)}`} className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-[var(--text-primary)] underline underline-offset-4">
+          <Link href={`/episode/${item.episodeId}?highlight=${encodeURIComponent(item.id)}`} className="inline-flex min-h-11 min-w-11 items-center px-2 text-sm font-semibold text-[var(--text-primary)] underline underline-offset-4">
             Go to passage
           </Link>
           <button
@@ -186,11 +186,11 @@ function HighlightItem({
               setDraft(item.note ?? "");
               setEditing(true);
             }}
-            className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-[var(--text-primary)]"
+            className="inline-flex min-h-11 min-w-11 items-center px-2 text-sm font-semibold text-[var(--text-primary)]"
           >
             {item.note ? "Edit note" : "Add note"}
           </button>
-          <button type="button" onClick={() => void remove()} disabled={pending} className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-[var(--status-danger)]">
+          <button type="button" onClick={() => void remove()} disabled={pending} className="inline-flex min-h-11 min-w-11 items-center px-2 text-sm font-semibold text-[var(--status-danger)]">
             Delete
           </button>
         </div>

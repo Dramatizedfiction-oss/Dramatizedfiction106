@@ -76,6 +76,8 @@ export default function BecomeAuthorForm({ defaultDisplayName }: { defaultDispla
             onChange={(event) => setDisplayName(event.target.value)}
             maxLength={80}
             required
+            autoComplete="nickname"
+            enterKeyHint="next"
             className="ui-input w-full rounded-[18px] px-4 py-3 text-sm"
           />
         </label>
@@ -85,7 +87,7 @@ export default function BecomeAuthorForm({ defaultDisplayName }: { defaultDispla
             type="checkbox"
             checked={acknowledged}
             onChange={(event) => setAcknowledged(event.target.checked)}
-            className="mt-1"
+            className="mt-1 h-5 w-5 shrink-0"
             required
           />
           <span className="theme-meta leading-6">

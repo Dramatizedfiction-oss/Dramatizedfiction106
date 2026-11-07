@@ -17,7 +17,7 @@ export default async function ContentItemPage({ params }: { params: { key: strin
 
   return (
     <div>
-      <Link href="/administration/content" className="theme-meta -ml-2 inline-flex min-h-11 items-center rounded-full px-2 text-sm font-semibold hover:text-[var(--text-primary)]">
+      <Link href="/administration/content" className="theme-meta -ml-2 inline-flex min-h-11 min-w-11 items-center rounded-full px-2 text-sm font-semibold hover:text-[var(--text-primary)]">
         ‹ Content
       </Link>
       <div className="mt-2">

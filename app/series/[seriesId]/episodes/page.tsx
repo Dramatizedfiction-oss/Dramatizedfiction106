@@ -27,7 +27,7 @@ export default async function SeriesEpisodesPage({ params }: { params: { seriesI
     <main className="series-accent mx-auto max-w-3xl px-4 pb-16 pt-6 md:px-8" style={seriesAccentStyle(series.themeColor)}>
       <Link
         href={`/series/${series.id}`}
-        className="theme-meta -ml-2 inline-flex min-h-11 items-center gap-1 rounded-full px-2 text-sm transition hover:text-[var(--text-primary)]"
+        className="theme-meta -ml-2 inline-flex min-h-11 min-w-11 items-center gap-1 rounded-full px-2 text-sm transition hover:text-[var(--text-primary)]"
       >
         <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12.5 4.5L7 10l5.5 5.5" />

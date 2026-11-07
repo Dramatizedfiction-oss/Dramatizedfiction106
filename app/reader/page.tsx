@@ -94,7 +94,7 @@ export default async function ReaderProfilePage({ searchParams }: { searchParams
                 : "Others with your link see only your picture, name and bio."}{" "}
               <Link
                 href={`/reader/${reader.id}`}
-                className="inline-flex min-h-11 items-center font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 hover:decoration-2"
+                className="inline-flex min-h-11 min-w-11 items-center font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 hover:decoration-2"
               >
                 See what others see
               </Link>

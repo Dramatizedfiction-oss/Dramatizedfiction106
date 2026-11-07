@@ -32,7 +32,7 @@ export default function ExpandableText({ text, lines = 4, className = "" }: { te
           type="button"
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
-          className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 hover:decoration-2"
+          className="mt-1 inline-flex min-h-11 min-w-11 items-center text-sm font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 hover:decoration-2"
         >
           {open ? "Less" : "More"}
         </button>

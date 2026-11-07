@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useCloseOnBack } from "@/components/ui/use-close-on-back";
 
 /**
  * Side panel on desktop, full screen on mobile. Built on <dialog>, so focus
@@ -32,6 +33,8 @@ export default function Sheet({
     if (open && !dialog.open) dialog.showModal();
     if (!open && dialog.open) dialog.close();
   }, [open]);
+  // Phones: Back asks to close, like Escape (the owner may confirm unsaved changes).
+  useCloseOnBack(open, onRequestClose);
 
   return (
     <dialog

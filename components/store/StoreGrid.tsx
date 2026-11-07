@@ -129,7 +129,7 @@ export default function StoreGrid({
                 Close
               </button>
               {selectedIsCurrent ? (
-                <span className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-[var(--accent)]">Currently using</span>
+                <span className="inline-flex min-h-11 min-w-11 items-center px-2 text-sm font-semibold text-[var(--accent)]">Currently using</span>
               ) : signedIn ? (
                 <button type="button" onClick={() => void use(selected)} disabled={busy} className="story-button-primary min-h-11 disabled:opacity-60">
                   {busy ? "Applying…" : "Use this avatar"}

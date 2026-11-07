@@ -26,7 +26,7 @@ export default async function DeleteAccountPage() {
       <div className="mx-auto max-w-2xl">
         <Link
           href="/settings/account"
-          className="theme-meta -ml-2 inline-flex min-h-11 items-center gap-1 rounded-full px-2 text-sm transition hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--series-accent))]"
+          className="theme-meta -ml-2 inline-flex min-h-11 min-w-11 items-center gap-1 rounded-full px-2 text-sm transition hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--series-accent))]"
         >
           <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12.5 4.5L7 10l5.5 5.5" />

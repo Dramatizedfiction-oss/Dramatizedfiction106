@@ -2,6 +2,9 @@
 module.exports = {
   // The theme is chosen by the app (see lib/theme.ts), not only by the OS.
   darkMode: "class",
+  // Sweep 4: `hover:` styles only where a real hover exists, so a tapped
+  // button on a phone doesn't stay highlighted afterwards.
+  future: { hoverOnlyWhenSupported: true },
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -28,5 +31,11 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // Sweep 4: `pointer-coarse:` styles for touch screens of any width (a
+    // phone on its side gets the desktop layout but is still a finger).
+    function touchVariant({ addVariant }) {
+      addVariant("pointer-coarse", "@media (pointer: coarse)");
+    },
+  ],
 };

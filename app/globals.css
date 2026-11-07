@@ -190,6 +190,14 @@
   body {
     margin: 0;
     min-height: 100vh;
+    min-height: 100dvh;
+    /* Sweep 4: a word or URL longer than its line (titles, names, comments,
+       bios) breaks instead of pushing the page sideways. Only overflowing
+       words are broken; everything else wraps as before. */
+    overflow-wrap: break-word;
+    /* Landscape on notched phones (viewport-fit=cover): keep content off the notch. */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
     color: var(--text-primary);
     font-family: var(--font-body);
     background-color: var(--page-bg);
@@ -204,6 +212,19 @@
   input,
   textarea {
     font: inherit;
+  }
+
+  /* Sweep 4: taps on controls fire at once (no wait for a possible double-tap
+     zoom); pinch zoom still works everywhere. */
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  label,
+  summary,
+  [role="button"] {
+    touch-action: manipulation;
   }
 
   ::placeholder {
@@ -422,6 +443,7 @@
   /* The whole page is the reading surface: no card around the story. */
   .reader-page {
     min-height: 100vh;
+    min-height: 100dvh;
     background-color: var(--paper-bg);
     background-image: var(--paper-glow);
     background-repeat: no-repeat;
@@ -549,6 +571,12 @@
     background: var(--studio-raised);
     color: var(--studio-text);
     border-color: var(--studio-border);
+  }
+
+  /* Full screen on phones: clear of the notch, status bar and home indicator. */
+  .studio-sheet > div {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   .studio-sheet::backdrop {
@@ -821,6 +849,9 @@
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
+    /* Sweep 4: every swipe rail uses this. Swiping past a rail's end doesn't
+       turn into the browser's back gesture or bounce the page. */
+    overscroll-behavior-x: contain;
   }
 
   .text-balance {
@@ -871,6 +902,12 @@
 
 /* Phones. Shared touch and input rules; page layouts use Tailwind breakpoints. */
 @media (max-width: 767px) {
+  /* Sweep 4: a focused field, a #section link or scrollIntoView stops clear
+     of the sticky 56px header (and the notch), not underneath it. */
+  html {
+    scroll-padding-top: calc(4.5rem + env(safe-area-inset-top));
+  }
+
   /* iOS Safari zooms the page when a focused field's text is under 16px.
      (.font-heading fields, like the editor's title, are already larger.) */
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not(.font-heading),
@@ -879,6 +916,11 @@
     font-size: 16px !important;
   }
 
+}
+
+/* Touch screens of any width (Sweep 4: a phone on its side is 812px wide and
+   gets the desktop layout, but it is still a finger). */
+@media (max-width: 767px), (pointer: coarse) {
   /* Comfortable touch targets in the menu drawer and Writer Studio tools. */
   .sidebar-link {
     min-height: 44px;
@@ -892,6 +934,14 @@
   /* Text fields and selects are at least a 44px tap target too. */
   .ui-input,
   .studio-field {
+    min-height: 44px;
+  }
+
+  /* Every shared button, including compact ones (py-1.5 / py-2), whatever
+     padding a page gives it. */
+  .story-button,
+  .story-button-primary,
+  .story-button-secondary {
     min-height: 44px;
   }
 }
@@ -1490,6 +1540,14 @@ html[data-reduce-motion="always"] .passage-flash { animation: none !important; o
   color: var(--text-primary);
 }
 .bottom-sheet::backdrop { background: rgb(0 0 0 / 0.45); }
+/* Clear of the home indicator on phones (0 elsewhere). */
+.bottom-sheet > div { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+
+/* Sweep 4: a modal <dialog> (bottom sheets, Studio sheets) makes the page
+   behind inert but doesn't stop it scrolling; lock it while one is open, and
+   keep a sheet's own scrolling from chaining to the page. */
+html:has(dialog[open]) { overflow: hidden; }
+dialog { overscroll-behavior: contain; }
 @media (min-width: 640px) {
   .bottom-sheet { margin: auto; border-radius: 1.5rem; }
 }

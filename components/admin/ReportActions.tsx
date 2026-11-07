@@ -40,7 +40,7 @@ export default function ReportActions({ reportId, commentRemoved }: { reportId: 
           type="button"
           onClick={() => void act("REMOVE_COMMENT")}
           disabled={busy}
-          className="inline-flex min-h-11 items-center rounded-full border border-[color-mix(in_srgb,var(--status-danger)_45%,transparent)] px-4 text-sm font-semibold text-[var(--status-danger)] transition hover:bg-[color-mix(in_srgb,var(--status-danger)_8%,transparent)] disabled:opacity-50"
+          className="inline-flex min-h-11 min-w-11 items-center rounded-full border border-[color-mix(in_srgb,var(--status-danger)_45%,transparent)] px-4 text-sm font-semibold text-[var(--status-danger)] transition hover:bg-[color-mix(in_srgb,var(--status-danger)_8%,transparent)] disabled:opacity-50"
         >
           Remove comment
         </button>

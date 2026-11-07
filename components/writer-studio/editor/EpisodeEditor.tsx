@@ -560,7 +560,7 @@ export default function EpisodeEditor({
                 placeholder="Untitled episode"
                 aria-label="Episode title"
                 maxLength={200}
-                className="font-heading theme-heading mt-3 w-full bg-transparent text-3xl font-semibold outline-none placeholder:text-[var(--studio-muted)] sm:text-4xl md:text-5xl"
+                className="font-heading theme-heading mt-3 min-h-11 w-full bg-transparent text-3xl font-semibold outline-none placeholder:text-[var(--studio-muted)] sm:text-4xl md:text-5xl"
               />
               <p className="theme-meta mt-2 text-sm">{episode.series.title}</p>
             </header>
@@ -610,7 +610,7 @@ export default function EpisodeEditor({
                 type="button"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => goToStep("publish")}
-                className="inline-flex min-h-11 items-center px-1 text-sm font-semibold text-[var(--accent)]"
+                className="inline-flex min-h-11 min-w-11 items-center px-1 text-sm font-semibold text-[var(--accent)]"
               >
                 {nextLabel} →
               </button>

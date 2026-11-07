@@ -242,7 +242,7 @@ export default function PassageLayer({
                     flash(item);
                   }
                 }}
-                className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-[var(--text-primary)] underline underline-offset-4"
+                className="mt-1 inline-flex min-h-11 min-w-11 items-center text-sm font-semibold text-[var(--text-primary)] underline underline-offset-4"
               >
                 Show in comments
               </button>

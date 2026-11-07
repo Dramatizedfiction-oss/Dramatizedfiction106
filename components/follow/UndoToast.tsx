@@ -6,7 +6,7 @@
  */
 export default function UndoToast({ message, onUndo }: { message: string | null; onUndo: () => void }) {
   return (
-    <div aria-live="polite" className="pointer-events-none fixed inset-x-4 bottom-4 z-50 flex justify-center">
+    <div aria-live="polite" className="pointer-events-none fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 flex justify-center">
       {message ? (
         <div className="pointer-events-auto flex min-h-12 max-w-md min-w-0 items-center gap-3 rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-raised)] py-1 pl-4 pr-1 text-sm text-[var(--text-primary)] shadow-[var(--shadow-raised)]">
           <span className="min-w-0 truncate">{message}</span>

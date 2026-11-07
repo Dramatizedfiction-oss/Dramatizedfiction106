@@ -29,7 +29,7 @@ export default function StepIndicator({
                 type="button"
                 onClick={() => onStepChange(item.id)}
                 aria-current={current ? "step" : undefined}
-                className={`inline-flex min-h-11 items-center gap-2 rounded-full px-2 text-sm transition ${
+                className={`inline-flex min-h-11 min-w-11 items-center gap-2 rounded-full px-2 text-sm transition ${
                   current ? "font-semibold text-[var(--studio-text)]" : "text-[var(--studio-muted)] hover:text-[var(--studio-text)]"
                 }`}
               >

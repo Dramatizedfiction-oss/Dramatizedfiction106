@@ -74,6 +74,7 @@ export default function SignUpForm() {
           onChange={(event) => setName(event.target.value)}
           className="ui-input w-full rounded-[18px] px-4 py-3 text-sm"
           autoComplete="name"
+          enterKeyHint="next"
           required
         />
       </label>
@@ -88,6 +89,7 @@ export default function SignUpForm() {
           onChange={(event) => setEmail(event.target.value)}
           className="ui-input w-full rounded-[18px] px-4 py-3 text-sm"
           autoComplete="email"
+          enterKeyHint="next"
           required
         />
       </label>
@@ -102,6 +104,7 @@ export default function SignUpForm() {
           onChange={(event) => setPassword(event.target.value)}
           className="ui-input w-full rounded-[18px] px-4 py-3 text-sm"
           autoComplete="new-password"
+          enterKeyHint="go"
           minLength={8}
           required
         />
@@ -136,7 +139,7 @@ export default function SignUpForm() {
 
       <p className="theme-meta text-sm">
         Already have an account?{" "}
-        <Link href={signInHref} className="theme-heading font-medium">
+        <Link href={signInHref} className="theme-heading -my-3.5 inline-block py-3.5 font-medium">
           Sign in
         </Link>
       </p>

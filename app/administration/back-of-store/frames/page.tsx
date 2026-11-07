@@ -18,7 +18,7 @@ export default async function BackOfStoreFramesPage() {
     <div className="space-y-6">
       <div>
         <nav aria-label="Breadcrumb" className="theme-meta text-sm">
-          <Link href={BACK_OF_STORE_PATH} className="inline-flex min-h-11 items-center font-semibold text-[var(--text-primary)] underline underline-offset-4">
+          <Link href={BACK_OF_STORE_PATH} className="inline-flex min-h-11 min-w-11 items-center font-semibold text-[var(--text-primary)] underline underline-offset-4">
             Back of the store
           </Link>
           <span aria-hidden className="mx-2">

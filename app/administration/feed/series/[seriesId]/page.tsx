@@ -34,7 +34,7 @@ export default async function FeedSeriesBreakdownPage({ params }: { params: { se
 
   return (
     <div className="space-y-6">
-      <Link href="/administration/feed" className="theme-meta inline-flex min-h-11 items-center text-sm hover:text-[var(--accent)]">
+      <Link href="/administration/feed" className="theme-meta inline-flex min-h-11 min-w-11 items-center text-sm hover:text-[var(--accent)]">
         ← Feed
       </Link>
       <header className="space-y-2">

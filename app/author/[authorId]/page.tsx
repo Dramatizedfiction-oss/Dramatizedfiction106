@@ -123,10 +123,10 @@ export default async function AuthorProfilePage({
           className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-2 text-sm md:mb-4 md:rounded-2xl md:border"
         >
           <span className="theme-meta mr-auto basis-full sm:basis-auto">You&apos;re seeing your profile as visitors do.</span>
-          <Link href="/writer-studio" className="inline-flex min-h-11 items-center font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4">
+          <Link href="/writer-studio" className="inline-flex min-h-11 min-w-11 items-center font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4">
             ‹ Back to Studio
           </Link>
-          <Link href={`${ownPath}?edit=1`} className="inline-flex min-h-11 items-center font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4">
+          <Link href={`${ownPath}?edit=1`} className="inline-flex min-h-11 min-w-11 items-center font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4">
             Edit profile
           </Link>
         </nav>

@@ -97,7 +97,7 @@ export default function WriterPolicyAcknowledgment({
               <button
                 type="submit"
                 disabled={!canContinue}
-                className="story-button-primary px-5 py-2.5 disabled:opacity-50"
+                className="story-button-primary min-h-11 px-5 py-2.5 disabled:opacity-50"
               >
                 {submitting ? "Submitting..." : "Continue"}
               </button>
@@ -105,7 +105,7 @@ export default function WriterPolicyAcknowledgment({
               <Link
                 href={continueHref}
                 className={[
-                  "px-5 py-2.5",
+                  "min-h-11 px-5 py-2.5",
                   accepted
                     ? "story-button-primary"
                     : "story-button cursor-not-allowed border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-muted)]"
@@ -119,7 +119,7 @@ export default function WriterPolicyAcknowledgment({
 
             <Link
               href={signInHref}
-              className="text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+              className="inline-flex min-h-11 items-center text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
             >
               Already have an account? Sign in
             </Link>

@@ -120,7 +120,7 @@ export function LegalArticle({
             );
           })}
           <div className="surface-section pt-6">
-            <a href="#top" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 hover:decoration-2">
+            <a href="#top" className="inline-flex min-h-11 min-w-11 items-center text-sm font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 hover:decoration-2">
               Back to top
             </a>
           </div>

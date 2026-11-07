@@ -18,7 +18,7 @@ export default function RestrictedScreen({ restriction }: { restriction: AuthRes
   const banned = restriction.kind === "BAN";
 
   return (
-    <main className="app-canvas flex min-h-screen items-center justify-center px-5 py-16">
+    <main className="app-canvas flex min-h-screen min-h-dvh items-center justify-center px-5 py-16">
       <section className="theme-panel w-full max-w-lg rounded-[28px] border p-6 sm:p-8">
         <p className="eyebrow">Account status</p>
         <h1 className="font-heading theme-heading mt-3 text-3xl font-semibold">

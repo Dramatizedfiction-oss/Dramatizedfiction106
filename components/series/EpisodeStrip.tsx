@@ -149,7 +149,7 @@ export default function EpisodeStrip({
         {episodes.length > 0 ? (
           <Link
             href={`/series/${seriesId}/episodes`}
-            className="ml-auto inline-flex min-h-11 items-center text-sm font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 hover:decoration-2"
+            className="ml-auto inline-flex min-h-11 min-w-11 items-center text-sm font-semibold text-[var(--text-primary)] underline decoration-1 underline-offset-4 hover:decoration-2"
           >
             See all
           </Link>

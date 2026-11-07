@@ -41,7 +41,11 @@ export default function EditorToolbar({
   const disabled = !editor || !state;
   const chain = () => editor!.chain().focus();
 
-  const style: CSSProperties | undefined = mobile ? { bottom: keyboardInset } : undefined;
+  // With the keyboard closed, the bar clears the home indicator (Sweep 4);
+  // with it open, it sits right on the keyboard.
+  const style: CSSProperties | undefined = mobile
+    ? { bottom: keyboardInset, paddingBottom: keyboardInset > 0 ? undefined : "env(safe-area-inset-bottom)" }
+    : undefined;
 
   const tools = (
     <div

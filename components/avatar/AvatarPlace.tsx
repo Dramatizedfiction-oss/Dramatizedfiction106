@@ -285,7 +285,7 @@ export default function AvatarPlace({
               <li className="theme-meta col-span-full text-center text-sm">The library is empty for now. You can upload your own photo instead.</li>
             ) : null}
             <li className="col-span-full text-center">
-              <Link href="/store" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--text-primary)] underline underline-offset-4">
+              <Link href="/store" className="inline-flex min-h-11 min-w-11 items-center text-sm font-semibold text-[var(--text-primary)] underline underline-offset-4">
                 Browse them in the Store
               </Link>
             </li>
@@ -336,7 +336,7 @@ export default function AvatarPlace({
           type="button"
           onClick={() => void removePhoto()}
           disabled={busy || !state.image}
-          className="inline-flex min-h-11 items-center px-3 text-sm font-semibold text-[var(--text-secondary)] underline underline-offset-4 transition hover:text-[var(--text-primary)] disabled:no-underline disabled:opacity-50"
+          className="inline-flex min-h-11 min-w-11 items-center px-3 text-sm font-semibold text-[var(--text-secondary)] underline underline-offset-4 transition hover:text-[var(--text-primary)] disabled:no-underline disabled:opacity-50"
         >
           {hasPhoto ? "Remove photo, use default" : "Use the default avatar"}
         </button>

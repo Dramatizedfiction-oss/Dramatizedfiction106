@@ -128,6 +128,10 @@ export default function AppSidebar({
         width: isMobile ? "100%" : showLabels ? 240 : 64,
         background: "var(--sidebar-bg)",
         transition: "width 280ms ease",
+        // Phone drawer: clear of the status bar, notch and home indicator (Sweep 4).
+        ...(isMobile
+          ? { paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)", paddingLeft: "env(safe-area-inset-left)" }
+          : {}),
       }}
     >
       {/* Brand and the expand/collapse (desktop) or close (mobile) control. */}
@@ -156,7 +160,7 @@ export default function AppSidebar({
           <button
             type="button"
             onClick={onToggleExpanded}
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--text-muted)] transition hover:bg-[var(--panel-hover)] hover:text-[var(--text-primary)] ${
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--text-muted)] pointer-coarse:h-11 pointer-coarse:w-11 transition hover:bg-[var(--panel-hover)] hover:text-[var(--text-primary)] ${
               showLabels ? "ml-auto" : ""
             }`}
             aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
@@ -281,7 +285,7 @@ export default function AppSidebar({
                 />
               ) : null}
               <span
-                className="relative z-10 w-4 flex-shrink-0 text-center font-mono-df text-[10px] font-bold"
+                className="relative z-10 w-6 flex-shrink-0 text-center font-mono-df text-xs font-bold"
                 style={{ color: rankColor }}
               >
                 #{idx + 1}
@@ -297,7 +301,7 @@ export default function AppSidebar({
                   >
                     {series.title}
                   </span>
-                  <span className="mt-0.5 block font-mono-df text-[10px]" style={{ color: "var(--text-muted)" }}>
+                  <span className="mt-0.5 block font-mono-df text-xs" style={{ color: "var(--text-muted)" }}>
                     {series.reads > 0 ? `${series.reads.toLocaleString()} reads` : "New"}
                   </span>
                 </span>
@@ -306,7 +310,7 @@ export default function AppSidebar({
           );
         })}
         {trending.length === 0 && showLabels ? (
-          <p className="px-3 py-2 font-mono-df text-[11px] text-[var(--text-muted)]">No series yet.</p>
+          <p className="px-3 py-2 font-mono-df text-xs text-[var(--text-muted)]">No series yet.</p>
         ) : null}
       </div>
 
@@ -332,14 +336,14 @@ export default function AppSidebar({
               <Link
                 href="/sign-up"
                 onClick={onClose}
-                className="py-2 text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+                className="flex min-h-11 items-center py-2 text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
               >
                 Create account
               </Link>
               <Link
                 href="/settings"
                 onClick={onClose}
-                className="flex items-center gap-1.5 py-2 text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+                className="flex min-h-11 items-center gap-1.5 py-2 text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
               >
                 <SettingsIcon size={14} />
                 Settings

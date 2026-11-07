@@ -57,7 +57,7 @@ export default function ReaderChrome({
       <div
         ref={barRef}
         onFocusCapture={() => setHidden(false)}
-        className={`sticky top-0 z-30 border-b transition-[transform,background-color,border-color] duration-300 motion-reduce:transition-none ${
+        className={`sticky top-0 z-30 border-b pt-[env(safe-area-inset-top)] transition-[transform,background-color,border-color] duration-300 motion-reduce:transition-none ${
           hidden ? "-translate-y-full" : "translate-y-0"
         } ${scrolled ? "border-[var(--paper-rule)] backdrop-blur-md" : "border-transparent"}`}
         style={scrolled ? { backgroundColor: "color-mix(in srgb, var(--paper-bg) 92%, transparent)" } : undefined}

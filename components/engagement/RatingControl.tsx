@@ -115,7 +115,7 @@ export default function RatingControl({
           <p>
             <Link
               href={`/sign-in?callbackUrl=${encodeURIComponent(`/episode/${episodeId}`)}`}
-              className="inline-flex min-h-11 items-center font-semibold text-[var(--paper-ink)] underline underline-offset-4"
+              className="inline-flex min-h-11 min-w-11 items-center font-semibold text-[var(--paper-ink)] underline underline-offset-4"
             >
               Sign in to rate
             </Link>
@@ -133,7 +133,7 @@ export default function RatingControl({
             <button
               type="button"
               onClick={() => choose(null)}
-              className="inline-flex min-h-11 items-center px-1 underline underline-offset-4 hover:text-[var(--paper-ink)]"
+              className="inline-flex min-h-11 min-w-11 items-center px-1 underline underline-offset-4 hover:text-[var(--paper-ink)]"
             >
               Clear
             </button>

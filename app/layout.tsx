@@ -37,6 +37,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  // Sweep 4: lets env(safe-area-inset-*) report the notch and home-indicator
+  // areas (they read 0 without it); the shell and fixed bars pad by them.
+  // Zoom stays allowed (no maximumScale / userScalable).
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: dark)", color: "#0b0a10" },
     { media: "(prefers-color-scheme: light)", color: "#f4f4f7" },

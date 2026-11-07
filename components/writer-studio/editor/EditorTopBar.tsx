@@ -46,14 +46,14 @@ export default function EditorTopBar({
   const live = mode === "live";
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--studio-border)] bg-[var(--header-bg)] backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b pt-[env(safe-area-inset-top)] border-[var(--studio-border)] bg-[var(--header-bg)] backdrop-blur-xl">
       <div className="flex h-14 items-center gap-2 px-2 md:gap-3 md:px-4">
         <button type="button" onClick={onBack} className="studio-tool shrink-0" aria-label={`Back to ${seriesTitle}`} title="Back to series">
           <ArrowLeftIcon size={18} />
         </button>
 
         <div className="hidden min-w-0 items-center gap-2 md:flex">
-          <button type="button" onClick={onBack} className="truncate text-sm text-[var(--studio-muted)] hover:text-[var(--studio-text)]">
+          <button type="button" onClick={onBack} className="-my-3 truncate py-3 text-sm text-[var(--studio-muted)] hover:text-[var(--studio-text)]">
             {seriesTitle}
           </button>
           <span className="text-[var(--studio-muted)]">›</span>

@@ -99,7 +99,7 @@ export default function CoverSeriesCard({
             {series.title}
           </h3>
           {series.authorName ? (
-            <p className="mt-1 font-mono-df text-[10px] tracking-wide text-white/80">
+            <p className="mt-1 truncate font-mono-df text-xs tracking-wide text-white/80">
               by {series.authorName}
             </p>
           ) : null}

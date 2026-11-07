@@ -324,7 +324,8 @@ function CommentItem({
         <div className="min-w-0 flex-1">
           <div className="flex items-start gap-2">
             <p className="min-w-0 flex-1 text-sm leading-6">
-              <Link href={profileHref(comment.author)} className="font-semibold text-[var(--paper-ink)] hover:underline">
+              {/* Taller tap area without moving anything (padding offset by negative margin). */}
+              <Link href={profileHref(comment.author)} className="-my-3.5 inline-block py-3.5 font-semibold text-[var(--paper-ink)] hover:underline">
                 {name}
               </Link>
               <span className="reader-meta">

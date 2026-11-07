@@ -80,7 +80,7 @@ export default async function AuthorWorksPage({
 
   return (
     <main className="px-4 py-6 md:px-6 lg:px-8">
-      <Link href={`/author/${author.id}`} className="theme-meta inline-flex min-h-11 items-center text-sm font-semibold hover:text-[var(--text-primary)]">
+      <Link href={`/author/${author.id}`} className="theme-meta inline-flex min-h-11 min-w-11 items-center text-sm font-semibold hover:text-[var(--text-primary)]">
         ‹ {name}
       </Link>
       <h1 className="font-heading theme-heading mt-1 text-3xl font-semibold">On Dramatized Fiction</h1>
@@ -91,7 +91,7 @@ export default async function AuthorWorksPage({
             key={key}
             href={`${base}?tab=${key}`}
             aria-current={tab === key ? "page" : undefined}
-            className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-semibold transition ${
+            className={`inline-flex min-h-11 min-w-11 items-center rounded-full border px-4 text-sm font-semibold transition ${
               tab === key
                 ? "border-transparent bg-[var(--text-primary)] text-[var(--bg-secondary)]"
                 : "border-[var(--border-strong)] text-[var(--text-primary)] hover:bg-[var(--panel-hover)]"

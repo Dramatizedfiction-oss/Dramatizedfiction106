@@ -14,7 +14,7 @@ export default async function FeedSignalsPage() {
 
   return (
     <div className="space-y-6">
-      <Link href="/administration/feed" className="theme-meta inline-flex min-h-11 items-center text-sm hover:text-[var(--accent)]">
+      <Link href="/administration/feed" className="theme-meta inline-flex min-h-11 min-w-11 items-center text-sm hover:text-[var(--accent)]">
         ← Feed
       </Link>
       <p className="theme-meta max-w-2xl text-sm leading-6">

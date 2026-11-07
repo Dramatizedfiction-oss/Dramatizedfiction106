@@ -35,7 +35,7 @@ export default async function AuthorFollowersPage({
 
   return (
     <main className="px-4 py-6 md:px-6 lg:px-8">
-      <Link href={`/author/${author.id}`} className="theme-meta inline-flex min-h-11 items-center text-sm font-semibold hover:text-[var(--text-primary)]">
+      <Link href={`/author/${author.id}`} className="theme-meta inline-flex min-h-11 min-w-11 items-center text-sm font-semibold hover:text-[var(--text-primary)]">
         ‹ {name}
       </Link>
       <h1 className="font-heading theme-heading mt-1 text-3xl font-semibold">Followers</h1>

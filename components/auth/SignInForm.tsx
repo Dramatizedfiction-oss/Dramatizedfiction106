@@ -75,6 +75,7 @@ export default function SignInForm() {
             onChange={(event) => setEmail(event.target.value)}
             className="ui-input w-full rounded-[18px] px-4 py-3 text-sm"
             autoComplete="email"
+            enterKeyHint="next"
             required
           />
         </label>
@@ -89,6 +90,7 @@ export default function SignInForm() {
             onChange={(event) => setPassword(event.target.value)}
             className="ui-input w-full rounded-[18px] px-4 py-3 text-sm"
             autoComplete="current-password"
+            enterKeyHint="go"
             required
           />
         </label>
@@ -109,7 +111,7 @@ export default function SignInForm() {
 
         <p className="theme-meta text-sm">
           New here?{" "}
-          <Link href={withCallback("/sign-up", searchParams.get("callbackUrl"))} className="theme-heading font-medium">
+          <Link href={withCallback("/sign-up", searchParams.get("callbackUrl"))} className="theme-heading -my-3.5 inline-block py-3.5 font-medium">
             Create an account
           </Link>
         </p>

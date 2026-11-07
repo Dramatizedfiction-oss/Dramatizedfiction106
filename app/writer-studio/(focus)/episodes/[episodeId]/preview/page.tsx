@@ -26,7 +26,7 @@ export default async function EpisodePreviewPage({ params }: { params: { episode
 
   return (
     <div className="reader-page">
-      <div className="sticky top-0 z-50 border-b border-[var(--paper-rule)] bg-[var(--header-bg)] backdrop-blur-xl">
+      <div className="sticky top-0 z-50 border-b pt-[env(safe-area-inset-top)] border-[var(--paper-rule)] bg-[var(--header-bg)] backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <p className="text-sm text-[var(--studio-text)]">
             <span className={`studio-status mr-2 ${live ? "studio-status-live" : "studio-status-warning"}`}>

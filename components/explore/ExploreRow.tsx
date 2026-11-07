@@ -31,7 +31,7 @@ export default function ExploreRow({
           {highlight ? <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--accent)]" /> : null}
           <h2 className="font-heading text-lg font-semibold tracking-tight text-[var(--text-primary)] sm:text-xl">{title}</h2>
         </div>
-        <div className="hidden items-center gap-1 md:flex">
+        <div className="hidden items-center gap-1 md:flex pointer-coarse:hidden">
           <button
             type="button"
             onClick={() => scroll(-1)}

@@ -108,7 +108,7 @@ export default function BookmarkButton({ variant, episodeTitle }: { variant: "ic
         aria-pressed={bookmarked}
         aria-label={label}
         disabled={pending}
-        className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-5 text-sm font-semibold transition disabled:cursor-wait ${
+        className={`inline-flex min-h-11 min-w-11 items-center gap-2 rounded-full border px-5 text-sm font-semibold transition disabled:cursor-wait ${
           bookmarked
             ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
             : "border-[var(--paper-rule)] text-[var(--paper-ink)] hover:border-[var(--paper-muted)]"

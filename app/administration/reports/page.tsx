@@ -77,7 +77,7 @@ export default async function ReportsPage({
             key={status}
             href={href({ status })}
             aria-current={filter === status ? "page" : undefined}
-            className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-semibold transition ${
+            className={`inline-flex min-h-11 min-w-11 items-center rounded-full border px-4 text-sm font-semibold transition ${
               filter === status
                 ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
                 : "border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
