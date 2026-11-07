@@ -46,8 +46,8 @@ Stop-and-ask rule (from the brief): anything that would delete or alter existing
 
 ## Summary
 
-- **Fixed (7):** BUG-01 to BUG-05, BUG-19 and BUG-20, each with unit tests (`tests/unit/sweep-3-bugs.test.ts`, `tests/unit/sweep-1-security.test.ts`) and a before/after check. Commits are in the table.
-- **Open (14):** BUG-06 to BUG-18 and BUG-21. None of them stops a journey on a normal connection. The two most likely to bite are BUG-06 (connection pool under load) and BUG-09 (two tabs editing one episode).
+- **Fixed (8):** BUG-01 to BUG-05, BUG-09, BUG-19 and BUG-20, each with unit tests (`tests/unit/sweep-3-bugs.test.ts`, `tests/unit/sweep-1-security.test.ts`) and a before/after check. Commits are in the table. BUG-09 (two tabs editing one episode) was fixed after the sweep, on request.
+- **Open (13):** BUG-06 to BUG-08, BUG-10 to BUG-18 and BUG-21. None of them stops a journey on a normal connection. The most likely to bite is BUG-06 (connection pool under load).
 - **Smoke suite:** 10/10 journeys green against the scratch database (`npm run test:smoke`, about 10 minutes on this machine).
 - **Browser pass:** no console errors and no hydration warnings on Home, Explore, a series, an episode, a writer profile, `/status/500` (signed out), and on `/reader`, Settings › Account and Reading, Writer Studio and New series (signed in as a writer).
 - **No dead links:** every internal link, `router.push`, `redirect()` and `location` target in `app/`, `components/` and `lib/` resolves to a route or a configured redirect.
@@ -68,7 +68,7 @@ Severity: **breaks** = a journey fails; **likely** = fails under realistic condi
 | BUG-06 | likely | Server: database connections | `DATABASE_URL` in `.env` / Vercel (no `connection_limit` or `pool_timeout`) | Prisma's default pool here is 5 connections with a 10 s wait. One page already runs several queries at once (root layout + page `Promise.all`), so five visitors at the same moment ran out ("Timed out fetching a new connection from the connection pool", P2024). The page then fails into the error page. | Five parallel loads of `/episode/<id>` on the dev server: every page waited for a connection, and some died with P2024 (server log, 2026-11-06). | Open (needs a Vercel env change) | — |
 | BUG-07 | minor | Navigation: role-protected pages | `app/administration/layout.tsx:12`, `lib/utils.ts:46-64` | A redirect from a page guard after streaming has begun reaches the browser as **200 plus an in-page redirect**, not a 307. No protected content is sent (checked: the HTML holds only the redirect), but the tab title briefly reads "Administration", and tools that don't run JavaScript see 200. | `curl -i` `/administration` with a Reader's cookie → 200, body contains `NEXT_REDIRECT;replace;/status/403`. | Open (by design of Next 14 streaming) | — |
 | BUG-08 | minor | Not-found status codes | `app/episode/[episodeId]/page.tsx:56`, `app/series/[seriesId]/page.tsx`, `app/status/[code]/page.tsx`, `app/ceo-studio/phases/[phase]/page.tsx` | A missing episode shows its own "This story isn't available" screen with status 200. Missing series, `/status/418` and `/ceo-studio/phases/9` render the 404 page, but also with status 200 (streamed `notFound()`). Real unknown URLs return 404 correctly. | `GET /episode/does-not-exist` → 200. | Open (decision D-6) | — |
-| BUG-09 | likely | Concurrency: Writer Studio | `components/writer-studio/editor/use-episode-autosave.ts`, `app/api/writer-studio/episodes/[episodeId]/route.ts:36` | Two tabs or devices editing the same episode overwrite each other silently: each autosave sends the whole text and the last one wins. The local-backup check only runs when the editor opens. | Open the same draft in two tabs, type in both. The text from the tab that saved last is all that's kept. | Open | — |
+| BUG-09 | likely | Concurrency: Writer Studio | `components/writer-studio/editor/use-episode-autosave.ts`, `app/api/writer-studio/episodes/[episodeId]/route.ts:36` | Two tabs or devices editing the same episode overwrite each other silently: each autosave sends the whole text and the last one wins. The local-backup check only runs when the editor opens. | Open the same draft in two tabs, type in both. **Before:** the text from the tab that saved last is all that's kept. **After:** the first save wins; the other tab's next save is refused (409 `EDITED_ELSEWHERE`), that tab stops saving, keeps its text on the device and shows "Reload"; after reloading, the writer picks "Use this device's copy" or "Keep saved version" (the existing backup prompt). Checked by unit tests and the smoke suite (stale save refused, stored text unchanged, a save on the latest version goes through). | Fixed | see Commits |
 | BUG-10 | minor | Phase 3 surface | `app/watch-ad/page.tsx:33-52` | `/watch-ad` opens for anyone while Phase 3 is off (readers shouldn't see ad UI, per CLAUDE.md). Opened without `?episode=`, "Watch Ad" goes to `/episode/null`, and a failed request is never caught. | Open `/watch-ad` and tap "Watch Ad". | Open (phase area) | — |
 | BUG-11 | minor | Auth pages when signed in | `app/sign-in/page.tsx`, `app/sign-up/page.tsx` | A signed-in member still gets the sign-in and sign-up forms. Signing up again there swaps the session to the new account without warning. | Signed in, open `/sign-up`. | Open (auth) | — |
 | BUG-12 | minor | API: JSON vs redirect | `lib/auth-route-guards.ts:13`, `app/ceo/revenue/route.ts` | The middleware prefix `/ceo` also covers the API route `/ceo/revenue`, so a signed-out call gets an HTML redirect to `/sign-in` instead of JSON 401. | `curl -i /ceo/revenue` signed out → 307 to `/sign-in`. | Open (auth/middleware) | — |
@@ -135,10 +135,12 @@ Wrong-person checks: no protected page sent its content to a role without access
 ## Proposed fixes for the open findings
 
 - **BUG-06 (pool), needs you in Vercel:** add `&connection_limit=10&pool_timeout=20` to `DATABASE_URL` (Production and Preview). The URL already points at Neon's pooled host, so more client connections are cheap. Redeploy afterwards. Locally, add the same to `.env.local`.
-- **BUG-09 (two tabs):**
-  - The editor sends the `lastSavedAt` it started from with every autosave. The PATCH route compares it with the stored `lastSavedAt` (no schema change) and answers 409 `EDITED_ELSEWHERE` when they differ.
-  - The editor then stops autosaving and shows "This episode was changed in another tab or device. Reload to see the latest version", keeping the local backup.
-  - Left open because it changes autosave behaviour, which needs its own careful pass and tests.
+- **BUG-09 (two tabs): done, as proposed.**
+  - The editor sends the `lastSavedAt` its copy is built on (`baseLastSavedAt`) with every save, and moves it forward after each save and after publishing. No schema change.
+  - The PATCH route puts that value in the update's own `where`, so the check and the write are one statement and two saves arriving together can't both pass. No match → 409 `EDITED_ELSEWHERE`. A save without the field (an older open tab) is accepted as before.
+  - The editor treats it as a new failure kind, `conflict`: no automatic retry, editing stops, the backup is written at once, and a banner offers Reload. After the reload the existing backup prompt lets the writer keep either copy.
+  - Side benefit: an editor opened from a stale cached page (old text) can no longer overwrite newer text either.
+  - Not covered: the publish route doesn't check the base. It runs right after a checked save and doesn't send the text, so at most it could re-apply this tab's title/description over another tab's.
 - **BUG-07 / BUG-08 (status codes):** call the guard (and `notFound()`) in each page *before* anything streams, or accept it: content never leaks.
 - **BUG-10 (`/watch-ad`):** at the top of the page, show the 404 page unless Phase 3 is active (`isPhaseThreeActive()` only reads the flag), and catch the failed request. Needs your OK, being phase UI.
 - **BUG-11:** on `/sign-in` and `/sign-up`, a signed-in member is sent to the callback (or Explore). Auth surface, so your call.
@@ -163,7 +165,7 @@ npm run test:smoke   # terminal 2
   1. Signed out: public pages load; Studio, Administration, CEO Studio and Settings › Account send you to sign in.
   2. Themed error pages `/status/401…503` and an unknown URL (404).
   3. Sign up → sign out (the old cookie stops working) → wrong password (401) → sign in.
-  4. Become a Writer → create a series and an episode → save text with emoji, Thai, Lao, Chinese and Arabic → open the editor → publish.
+  4. Become a Writer → create a series and an episode → save text with emoji, Thai, Lao, Chinese and Arabic → two saves built on the same version (the second is refused with 409 `EDITED_ELSEWHERE` and changes nothing) → open the editor → publish.
   5. The published series, episode and writer profile open for anyone, and the non-Latin text survives.
   6. Reader: rate (twice: still one rating), bookmark, comment (a double tap returns the same comment), follow the series and the writer, edit the bio, open `/reader` and Settings. The writer can't rate their own episode (403).
   7. Reader is refused Studio (→ Become a Writer), Administration and CEO Studio (→ 403), and the admin API answers JSON 403.
@@ -187,7 +189,7 @@ npm run test:smoke   # terminal 2
      (SELECT count(*) FROM "Episode" WHERE length(body) > 1000000)                       AS episode_body;
    ```
 3. **Decide on the protected items:** BUG-10 (hide `/watch-ad` while Phase 3 is off), BUG-11 (send signed-in members away from sign-in/sign-up), BUG-12 and BUG-13. Each has a proposed fix above.
-4. **BUG-09** (two tabs editing one episode) is the biggest open bug. It deserves its own small sweep with tests.
+4. **BUG-09** (two tabs editing one episode): fixed after the sweep; try it with the phone checklist item below.
 5. **Push:** nothing in this sweep is pushed. `main` is ahead of GitHub by this sweep's commits, the Sweep 1 commit and the four Sweep I commits.
 
 No schema change was needed, so there's no migration SQL.
@@ -205,7 +207,7 @@ Use a phone in **dark** mode, then once in **light** mode.
 - [ ] **Comments:** post one and reload a few minutes later; the "Xm ago" label is right and nothing flickers. (BUG-04)
 - [ ] **Read, rate, bookmark, comment, follow** on someone else's series: each sticks after a reload.
 - [ ] **Become a Writer → New series → Write → Publish:** the episode opens from the series page.
-- [ ] **Studio on two devices** (optional, to see BUG-09): edit the same draft on phone and laptop; only the last save is kept.
+- [ ] **Studio on two devices** (BUG-09): open the same draft on phone and laptop. Type on the laptop and wait for "Saved", then type on the phone. The phone stops saving and shows a banner with **Reload**; after reloading it offers "Use this device's copy" or "Keep saved version", and nothing was overwritten without asking.
 - [ ] **Board / CEO:** Administration opens; CEO Studio opens only for the CEO; a reader account gets the 403 page.
 - [ ] **Error pages:** `/status/404` and `/status/500` show the night-desert scene in both themes, and a made-up URL shows the 404 page.
 
@@ -217,6 +219,7 @@ Use a phone in **dark** mode, then once in **light** mode.
 | `905fdbe` | BUG-03: Back after signing out reloads instead of showing the signed-in page |
 | `cca164a` | BUG-04: relative times without hydration mismatches; adds this report and `tests/unit/sweep-3-bugs.test.ts` |
 | `83cd5a5` | BUG-19, BUG-20: episode page title; CSP allows Google Fonts |
-| (this commit) | Smoke suite `tests/smoke/`, `scripts/test-smoke.mjs`, `npm run test:smoke`; this report completed |
+| `c82d499` | Smoke suite `tests/smoke/`, `scripts/test-smoke.mjs`, `npm run test:smoke`; this report completed |
+| (BUG-09 commit, the one after `c82d499`) | BUG-09: a save built on an older version is refused (409 `EDITED_ELSEWHERE`); the editor stops and offers Reload |
 
 The first three commit subjects begin with an invisible byte-order mark, an artefact of how PowerShell wrote the message files. It's cosmetic, and history wasn't rewritten to remove it.

@@ -24,6 +24,8 @@ const DOMAIN = "@smoke.invalid";
 const PASSWORD = `Smoke-${randomBytes(12).toString("hex")}`;
 const created: string[] = [];
 
+let cookieName = "df.session-token";
+
 type Reply = { status: number; json: any; text: string; cookie: string | null; location: string | null };
 
 async function call(path: string, options: { method?: string; body?: unknown; cookie?: string | null } = {}): Promise<Reply> {
@@ -43,12 +45,15 @@ async function call(path: string, options: { method?: string; body?: unknown; co
   } catch {
     // pages answer HTML
   }
-  const token = /(?:__Secure-)?df\.session-token=([^;]*)/.exec(response.headers.get("set-cookie") ?? "")?.[1];
+  // `next start` (production mode) names the cookie __Secure-df.session-token; keep whichever the server uses.
+  const match = /((?:__Secure-)?df\.session-token)=([^;]*)/.exec(response.headers.get("set-cookie") ?? "");
+  if (match) cookieName = match[1];
+  const token = match?.[2];
   return {
     status: response.status,
     json,
     text,
-    cookie: token ? `df.session-token=${token}` : null,
+    cookie: token ? `${cookieName}=${token}` : null,
     location: response.headers.get("location"),
   };
 }
@@ -78,7 +83,7 @@ async function staff(role: "BOARD" | "CEO") {
   created.push(user.id);
   const token = randomBytes(32).toString("hex");
   await prisma.session.create({ data: { sessionToken: token, userId: user.id, expires: new Date(Date.now() + 3600_000) } });
-  return { id: user.id, cookie: `df.session-token=${token}` };
+  return { id: user.id, cookie: `${cookieName}=${token}` };
 }
 
 let reachable = false;
@@ -181,7 +186,32 @@ describe("smoke journeys", () => {
       body: { title: "Smoke episode one", body: "<p>The first line of the smoke story.</p><p>Emoji 🌙, ไทย, ລາວ, 中文, العربية.</p>" },
     });
     assert.equal(save.status, 200);
-    assert.equal((await page(`/writer-studio/episodes/${story.episodeId}`, writer.cookie)).status, 200, "editor opens");
+
+    // BUG-09: two tabs built on the same saved version. The first save wins;
+    // the second is refused instead of silently replacing it.
+    const base = save.json.episode.lastSavedAt;
+    const tabOne = await call(`/api/writer-studio/episodes/${story.episodeId}`, {
+      method: "PATCH",
+      cookie: writer.cookie,
+      body: { body: save.json.episode.body, baseLastSavedAt: base },
+    });
+    assert.equal(tabOne.status, 200, tabOne.text.slice(0, 200));
+    const tabTwo = await call(`/api/writer-studio/episodes/${story.episodeId}`, {
+      method: "PATCH",
+      cookie: writer.cookie,
+      body: { body: "<p>Stale tab text.</p>", baseLastSavedAt: base },
+    });
+    assert.equal(tabTwo.status, 409);
+    assert.equal(tabTwo.json.code, "EDITED_ELSEWHERE");
+    const editorPage = await page(`/writer-studio/episodes/${story.episodeId}`, writer.cookie);
+    assert.equal(editorPage.status, 200, "editor opens");
+    assert.ok(!editorPage.text.includes("Stale tab text"), "the refused save changed nothing");
+    const fresh = await call(`/api/writer-studio/episodes/${story.episodeId}`, {
+      method: "PATCH",
+      cookie: writer.cookie,
+      body: { title: "Smoke episode one", baseLastSavedAt: tabOne.json.episode.lastSavedAt },
+    });
+    assert.equal(fresh.status, 200, "a save built on the latest version goes through");
 
     const publish = await call(`/api/writer-studio/episodes/${story.episodeId}/publish`, { method: "POST", cookie: writer.cookie, body: {} });
     assert.equal(publish.status, 200, publish.text.slice(0, 200));

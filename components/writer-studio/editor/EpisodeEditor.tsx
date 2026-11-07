@@ -140,6 +140,8 @@ export default function EpisodeEditor({
       coverImage: current.coverImage,
       aiUsageTag: current.aiUsageTag,
       readTime: words === undefined ? undefined : estimateReadTime(words),
+      // The server refuses the save if another tab or device saved since (BUG-09).
+      baseLastSavedAt: baseLastSavedAt.current,
     };
   }, []);
 
@@ -268,6 +270,10 @@ export default function EpisodeEditor({
   });
 
   const blocked = autosave.status.kind === "blocked" && autosave.status.reason !== "rejected" && autosave.status.reason !== "unauthenticated";
+  // Another tab or device saved this episode since this copy was loaded
+  // (BUG-09): editing stops here, and this tab's text waits in the device
+  // backup, which the editor offers next to the newer version after a reload.
+  const editedElsewhere = autosave.status.kind === "blocked" && autosave.status.reason === "conflict";
 
   useEffect(() => {
     // emitUpdate=false: toggling editability is not an edit and must not trigger a save.
@@ -275,6 +281,17 @@ export default function EpisodeEditor({
       editor.setEditable(!readerView && !blocked, false);
     }
   }, [blocked, editor, readerView]);
+
+  useEffect(() => {
+    if (editedElsewhere) writeBackupNow();
+  }, [editedElsewhere, writeBackupNow]);
+
+  const reloadLatest = useCallback(() => {
+    writeBackupNow();
+    // The backup holds this tab's text; nothing here should try to save it on the way out.
+    autosaveRef.current.markClean();
+    window.location.reload();
+  }, [writeBackupNow]);
 
   // Keep the backup current when leaving; clear timers.
   useEffect(
@@ -398,6 +415,8 @@ export default function EpisodeEditor({
       aiUsageTag: current.aiUsageTag,
     });
     if (!result.ok) return { ok: false, message: result.message };
+    // Publishing moves lastSavedAt too; later saves from this tab build on it.
+    baseLastSavedAt.current = result.data.episode.lastSavedAt;
     router.refresh();
     return { ok: true };
   }, [episode.id, router]);
@@ -435,6 +454,20 @@ export default function EpisodeEditor({
         onUpdateLive={() => void updateLive()}
         onViewLive={() => void leaveTo(`/episode/${episode.id}`)}
       />
+
+      {editedElsewhere ? (
+        <div role="alert" className="border-b border-[var(--studio-border)] bg-[var(--studio-surface)]">
+          <div className="mx-auto flex max-w-[760px] flex-col gap-3 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-[var(--studio-text)]">
+              This episode was saved from another tab or device, so this tab stopped saving to avoid overwriting it.
+              Your changes here are kept on this device: reload to see the latest version and choose which copy to keep.
+            </p>
+            <div className="flex shrink-0 gap-2">
+              <NoticeButton onClick={reloadLatest}>Reload</NoticeButton>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <Notices
         notice={notice}

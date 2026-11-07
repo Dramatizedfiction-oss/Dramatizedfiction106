@@ -5,7 +5,10 @@ import {
   badRequest,
   cleanOptionalText,
   conflict,
+  editedElsewhere,
+  isRecordNotFoundError,
   isUniqueConstraintError,
+  parseBaseLastSavedAt,
   STUDIO_TEXT_LIMITS,
   boundedText,
   optionalReadTime,
@@ -32,6 +35,8 @@ const updateEpisodeSchema = z.object({
   aiUsageTag: boundedText(STUDIO_TEXT_LIMITS.aiUsageTag),
   readTime: optionalReadTime,
   locked: z.boolean().optional(),
+  // The lastSavedAt the editor's copy is built on (BUG-09); optional for older clients.
+  baseLastSavedAt: boundedText(40),
 });
 
 export async function PATCH(
@@ -54,9 +59,14 @@ export async function PATCH(
   const cover = decideImageField(input.coverImage, owned.episode.coverImage, "episode-cover");
   if (!cover.ok) return badRequest(cover.message);
 
+  const base = parseBaseLastSavedAt(input.baseLastSavedAt);
+  if (!base.ok) return badRequest("Invalid baseLastSavedAt.");
+
   try {
+    // With a base, the row only matches if nobody saved since: one atomic
+    // statement, so two saves arriving together can't both pass the check.
     const updated = await prisma.episode.update({
-      where: { id: owned.episode.id },
+      where: { id: owned.episode.id, ...(base.value ? { lastSavedAt: base.value } : {}) },
       data: {
         // Omitted fields are left unchanged; a blank title keeps the current
         // one, blank optional text clears it.
@@ -76,6 +86,8 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, episode: updated });
   } catch (error) {
+    // The episode exists and is owned (checked above), so no match means it moved on.
+    if (base.value && isRecordNotFoundError(error)) return editedElsewhere();
     if (isUniqueConstraintError(error)) {
       return conflict("An episode with that number already exists in this series.");
     }

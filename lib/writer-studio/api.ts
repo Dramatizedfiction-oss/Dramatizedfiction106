@@ -10,6 +10,7 @@ export type ApiFailureKind =
   | "unauthenticated" // 401: session expired
   | "forbidden" // 403
   | "not_found" // 404 (missing or not yours)
+  | "conflict" // 409 EDITED_ELSEWHERE: saved from another tab or device since (BUG-09)
   | "rejected"; // 400 / 409 / 413 / other 4xx
 
 export type ApiResult<T> =
@@ -22,6 +23,7 @@ const DEFAULT_MESSAGES: Record<ApiFailureKind, string> = {
   unauthenticated: "Your session has expired. Sign in again to keep saving.",
   forbidden: "You don't have permission to do that.",
   not_found: "This item no longer exists or isn't yours.",
+  conflict: "Changed in another tab or device.",
   rejected: "The server didn't accept that change.",
 };
 
@@ -48,11 +50,12 @@ async function request<T>(url: string, init: RequestInit & { json?: unknown }): 
     return { ok: false, kind: "network", status: 0, message: DEFAULT_MESSAGES.network };
   }
 
-  const payload = (await response.json().catch(() => null)) as (T & { error?: string }) | null;
+  const payload = (await response.json().catch(() => null)) as (T & { error?: string; code?: string }) | null;
 
   if (!response.ok) {
-    const kind = kindForStatus(response.status);
-    const message = payload?.error || DEFAULT_MESSAGES[kind];
+    const kind = payload?.code === "EDITED_ELSEWHERE" ? "conflict" : kindForStatus(response.status);
+    // The top bar has room for a short line; the editor explains a conflict in full.
+    const message = kind === "conflict" ? DEFAULT_MESSAGES.conflict : payload?.error || DEFAULT_MESSAGES[kind];
     return { ok: false, kind, status: response.status, message };
   }
 
@@ -145,6 +148,8 @@ export type EpisodeSaveInput = {
   coverImage?: string;
   aiUsageTag?: string;
   readTime?: number;
+  /** The server lastSavedAt this copy is built on; the save is refused if it has moved (BUG-09). */
+  baseLastSavedAt?: string;
 };
 
 export function saveEpisode(episodeId: string, input: EpisodeSaveInput, options: { keepalive?: boolean } = {}) {
@@ -163,7 +168,7 @@ export type PublishInput = {
 };
 
 export function publishEpisode(episodeId: string, input: PublishInput) {
-  return request<{ episode: { id: string }; seriesId: string }>(
+  return request<{ episode: { id: string; lastSavedAt: string }; seriesId: string }>(
     `/api/writer-studio/episodes/${encodeURIComponent(episodeId)}/publish`,
     { method: "POST", json: input },
   );

@@ -50,6 +50,68 @@ test("BUG-19: the episode page names the episode in the tab, published episodes 
   assert.match(page, /where: \{ id: params\.episodeId, \.\.\.PUBLIC_EPISODE_WHERE \}/);
 });
 
+test("BUG-09: the save route reads the base version, and refuses a bad one", async () => {
+  const { parseBaseLastSavedAt } = await import("@/lib/api/writer-studio-request");
+  assert.deepEqual(parseBaseLastSavedAt(undefined), { ok: true, value: null });
+  assert.deepEqual(parseBaseLastSavedAt(null), { ok: true, value: null });
+  const stamp = "2026-11-06T08:15:30.123Z";
+  const parsed = parseBaseLastSavedAt(stamp);
+  assert.ok(parsed.ok && parsed.value?.toISOString() === stamp, "millisecond precision survives");
+  assert.deepEqual(parseBaseLastSavedAt("yesterday-ish"), { ok: false });
+
+  // The check is in the update's own where clause (atomic), and only a miss with a base becomes 409.
+  const route = read("app/api/writer-studio/episodes/[episodeId]/route.ts");
+  assert.match(route, /where: \{ id: owned\.episode\.id, \.\.\.\(base\.value \? \{ lastSavedAt: base\.value \} : \{\}\) \}/);
+  assert.match(route, /if \(base\.value && isRecordNotFoundError\(error\)\) return editedElsewhere\(\);/);
+});
+
+test("BUG-09: a 409 EDITED_ELSEWHERE becomes a 'conflict' that stops autosave", async () => {
+  const { saveEpisode } = await import("@/lib/writer-studio/api");
+  const { autosaveReducer, deriveSaveStatus, initialAutosaveState, isRetryable } = await import(
+    "@/components/writer-studio/editor/autosave-state"
+  );
+  const realFetch = globalThis.fetch;
+  let sent: Record<string, unknown> | null = null;
+  globalThis.fetch = (async (_url: string, init: RequestInit) => {
+    sent = JSON.parse(String(init.body));
+    return new Response(JSON.stringify({ error: "long server text", code: "EDITED_ELSEWHERE" }), { status: 409 });
+  }) as typeof fetch;
+  try {
+    const result = await saveEpisode("ep1", { body: "<p>x</p>", baseLastSavedAt: "2026-11-06T08:15:30.123Z" });
+    assert.equal(sent!.baseLastSavedAt, "2026-11-06T08:15:30.123Z", "the base is sent");
+    assert.ok(!result.ok);
+    assert.equal(result.kind, "conflict");
+    assert.equal(isRetryable("conflict"), false, "never retried automatically");
+
+    let state = autosaveReducer(initialAutosaveState(null), { type: "edit" });
+    state = autosaveReducer(state, { type: "saveStarted", version: 1 });
+    state = autosaveReducer(state, { type: "saveFailed", version: 1, kind: result.kind, message: result.message, at: 0 });
+    const status = deriveSaveStatus(state);
+    assert.equal(status.kind, "blocked");
+    assert.equal(status.kind === "blocked" && status.reason, "conflict");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+
+  // Other 409s keep their old meaning.
+  globalThis.fetch = (async () => new Response(JSON.stringify({ error: "Taken", code: "CONFLICT" }), { status: 409 })) as typeof fetch;
+  try {
+    const other = await saveEpisode("ep1", {});
+    assert.ok(!other.ok && other.kind === "rejected" && other.message === "Taken");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test("BUG-09: the editor sends its base, keeps it current, and offers a reload on conflict", () => {
+  const editor = read("components/writer-studio/editor/EpisodeEditor.tsx");
+  assert.match(editor, /baseLastSavedAt: baseLastSavedAt\.current,/);
+  assert.match(editor, /baseLastSavedAt\.current = lastSavedAt;/, "after each save");
+  assert.match(editor, /baseLastSavedAt\.current = result\.data\.episode\.lastSavedAt;/, "after publishing");
+  assert.match(editor, /status\.reason === "conflict"/);
+  assert.match(editor, /if \(editedElsewhere\) writeBackupNow\(\);/, "this tab's text is kept on the device");
+});
+
 test("BUG-03: a page restored by Back after sign-out reloads instead of showing signed-in content", () => {
   const shell = read("components/app-shell/AppShell.tsx");
   assert.match(shell, /addEventListener\("pageshow"/);

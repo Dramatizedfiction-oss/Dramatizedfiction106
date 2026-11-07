@@ -62,6 +62,30 @@ export function isUniqueConstraintError(error: unknown) {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
 }
 
+/** An update whose `where` matched no row (Prisma P2025). */
+export function isRecordNotFoundError(error: unknown) {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025";
+}
+
+/*
+ * Two tabs or devices editing one episode (BUG-09, Sweep 3). The editor sends
+ * the `lastSavedAt` its working copy is built on; a save is refused when the
+ * stored one has moved since, instead of silently replacing the other copy.
+ */
+export const EDITED_ELSEWHERE_MESSAGE =
+  "This episode was changed in another tab or device, so this tab stopped saving. Your changes here are kept on this device.";
+
+export function editedElsewhere() {
+  return NextResponse.json({ error: EDITED_ELSEWHERE_MESSAGE, code: "EDITED_ELSEWHERE" }, { status: 409 });
+}
+
+/** Missing: no check (older clients). Present: must be a real date, else the request is refused. */
+export function parseBaseLastSavedAt(value: string | null | undefined): { ok: true; value: Date | null } | { ok: false } {
+  if (value === undefined || value === null || value === "") return { ok: true, value: null };
+  const time = Date.parse(value);
+  return Number.isFinite(time) ? { ok: true, value: new Date(time) } : { ok: false };
+}
+
 export function cleanOptionalText(value: unknown) {
   if (typeof value !== "string") {
     return null;
